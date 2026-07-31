@@ -64,7 +64,7 @@ apps/remote/
 - [ ] Add the approved GRmetro logo to:
 
 ```text
-assets/grmetro-logo.png
+assets/branding/grmetro-logo.png
 ```
 
 - [ ] Add the approved dashboard reference image to:

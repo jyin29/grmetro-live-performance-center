@@ -86,7 +86,7 @@ Requirements:
 Recommended repository destination:
 
 ```text
-assets/grmetro-logo.png
+assets/branding/grmetro-logo.png
 ```
 
 ## 3.2 Dashboard Reference
