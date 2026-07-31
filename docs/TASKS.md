@@ -528,85 +528,85 @@ feat: implement Phase 6 REST API
 
 ## Normalizer
 
-- [ ] Create ServiceTitan-to-internal normalizer.
-- [ ] Map configured technician names.
-- [ ] Map direct confirmed KPIs.
-- [ ] Convert ratios to percentages.
-- [ ] Preserve zero values.
-- [ ] Convert missing values to no-data.
-- [ ] Add data-quality status.
-- [ ] Remove private fields.
-- [ ] Avoid mutating raw input.
+- [x] Create ServiceTitan-to-internal normalizer.
+- [x] Map configured technician names.
+- [x] Map direct confirmed KPIs.
+- [x] Convert ratios to percentages.
+- [x] Preserve zero values.
+- [x] Convert missing values to no-data.
+- [x] Add data-quality status.
+- [x] Remove private fields.
+- [x] Avoid mutating raw input.
 
 ## Goal Engine
 
-- [ ] Resolve technician-specific goal override.
-- [ ] Fall back to default goal.
-- [ ] Calculate percent complete.
-- [ ] Calculate remaining amount.
-- [ ] Calculate reached state.
-- [ ] Allow over-100% progress.
-- [ ] Handle null and invalid goals.
+- [x] Resolve technician-specific goal override.
+- [x] Fall back to default goal.
+- [x] Calculate percent complete.
+- [x] Calculate remaining amount.
+- [x] Calculate reached state.
+- [x] Allow over-100% progress.
+- [x] Handle null and invalid goals.
 
 ## Ranking Engine
 
-- [ ] Rank each KPI.
-- [ ] Exclude no-data technicians from ranked positions.
-- [ ] Use deterministic tie-breaking.
-- [ ] Track previous ranks.
-- [ ] Calculate rank changes.
-- [ ] Sort slide rows by primary KPI.
+- [x] Rank each KPI.
+- [x] Exclude no-data technicians from ranked positions.
+- [x] Use deterministic tie-breaking.
+- [x] Track previous ranks.
+- [x] Calculate rank changes.
+- [x] Sort slide rows by primary KPI.
 
 ## Overall Score
 
-- [ ] Add configurable weights.
-- [ ] Validate weight total.
-- [ ] Normalize against goals.
-- [ ] Cap each KPI at 150%.
-- [ ] Redistribute missing-data weights.
-- [ ] Enforce minimum valid coverage.
-- [ ] Mark insufficient-data technicians.
-- [ ] Produce overall ranks.
-- [ ] Produce overall Top 3.
+- [x] Add configurable weights.
+- [x] Validate weight total.
+- [x] Normalize against goals.
+- [x] Cap each KPI at 150%.
+- [x] Redistribute missing-data weights.
+- [x] Enforce minimum valid coverage.
+- [x] Mark insufficient-data technicians.
+- [x] Produce overall ranks.
+- [x] Produce overall Top 3.
 
 ## Achievement Events
 
-- [ ] Detect new overall leader.
-- [ ] Detect entered Top 3.
-- [ ] Detect newly reached goal.
-- [ ] Add created and expiration timestamps.
-- [ ] Prevent duplicate repeated events.
-- [ ] Expire presentation events.
+- [x] Detect new overall leader.
+- [x] Detect entered Top 3.
+- [x] Detect newly reached goal.
+- [x] Add created and expiration timestamps.
+- [x] Prevent duplicate repeated events.
+- [x] Expire presentation events.
 
 ## Axis Calculation
 
-- [ ] Calculate pleasant maximum.
-- [ ] Add visual headroom.
-- [ ] Generate four to six ticks.
-- [ ] Use fixed 100% performance axis.
-- [ ] Handle all-zero data.
-- [ ] Add compact format metadata.
+- [x] Calculate pleasant maximum.
+- [x] Add visual headroom.
+- [x] Generate four to six ticks.
+- [x] Use fixed 100% performance axis.
+- [x] Handle all-zero data.
+- [x] Add compact format metadata.
 
 ## Dashboard Builder
 
-- [ ] Build Revenue slide payload.
-- [ ] Build Activity slide payload.
-- [ ] Build Performance slide payload.
-- [ ] Build Average Ticket slide payload.
-- [ ] Build dedicated Top 3 payload.
-- [ ] Build full technician records.
-- [ ] Add rotation epoch.
-- [ ] Add status metadata.
-- [ ] Add events.
-- [ ] Include normalized ratios.
+- [x] Build Revenue slide payload.
+- [x] Build Activity slide payload.
+- [x] Build Performance slide payload.
+- [x] Build Average Ticket slide payload.
+- [x] Build dedicated Top 3 payload.
+- [x] Build full technician records.
+- [x] Add rotation epoch.
+- [x] Add status metadata.
+- [x] Add events.
+- [x] Include normalized ratios.
 
 ## Verification
 
-- [ ] Business-logic unit tests pass.
-- [ ] Missing data never ranks as zero.
-- [ ] Exactly five slides are emitted.
-- [ ] Top 3 is not embedded in KPI slides.
-- [ ] Frontend receives no raw ServiceTitan field names.
+- [x] Business-logic unit tests pass.
+- [x] Missing data never ranks as zero.
+- [x] Exactly five slides are emitted.
+- [x] Top 3 is not embedded in KPI slides.
+- [x] Frontend receives no raw ServiceTitan field names.
 
 Recommended commits:
 
@@ -615,6 +615,13 @@ feat: normalize KPI values and goals
 feat: add KPI rankings and overall Top 3 scoring
 feat: build presentation-ready dashboard payloads
 ```
+
+Progress note (2026-07-31): Phase 7 is complete. Pure backend modules now normalize only the
+confirmed ServiceTitan mappings, resolve goals, calculate deterministic KPI and overall rankings,
+detect transition-based achievement events, generate presentation axes, and build exactly five
+presentation-ready slides. The overall-score configuration remains explicitly provisional pending
+management approval. Unresolved live KPI mappings and production goals remain unavailable; mock-only
+values remain isolated to explicit mock mode. Phase 8 has not started.
 
 ---
 
