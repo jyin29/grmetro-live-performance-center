@@ -111,101 +111,110 @@ chore: initialize repository and workspace structure
 
 ## Technicians
 
-- [ ] Create `shared/technicians.js`.
-- [ ] Add Julio Torres with ID `134926818`.
-- [ ] Add Shamon Ward with ID `3841`.
-- [ ] Add Charlie E with ID `3853`.
-- [ ] Add Alex K with ID `133469538`.
-- [ ] Add Dwight with ID `127491426`.
-- [ ] Add short names and initials.
-- [ ] Validate unique technician IDs.
+- [x] Create `shared/technicians.js`.
+- [x] Add Julio Torres with ID `134926818`.
+- [x] Add Shamon Ward with ID `3841`.
+- [x] Add Charlie E with ID `3853`.
+- [x] Add Alex K with ID `133469538`.
+- [x] Add Dwight with ID `127491426`.
+- [x] Add short names and initials.
+- [x] Validate unique technician IDs.
 
 ## KPIs
 
-- [ ] Create `shared/kpis.js`.
-- [ ] Define stable ID `revenue`.
-- [ ] Define stable ID `billableServiceCalls`.
-- [ ] Define stable ID `serviceRevenue`.
-- [ ] Define stable ID `opportunities`.
-- [ ] Define stable ID `leadConversionRate`.
-- [ ] Define stable ID `techLeads`.
-- [ ] Define stable ID `marketedLeads`.
-- [ ] Define stable ID `closingRate`.
-- [ ] Define stable ID `installs`.
-- [ ] Define stable ID `installAverageTicket`.
-- [ ] Define stable ID `installRevenue`.
-- [ ] Add labels.
-- [ ] Add number formats.
-- [ ] Add colors.
-- [ ] Add goal support.
-- [ ] Add higher-is-better configuration.
+- [x] Create `shared/kpis.js`.
+- [x] Define stable ID `revenue`.
+- [x] Define stable ID `billableServiceCalls`.
+- [x] Define stable ID `serviceRevenue`.
+- [x] Define stable ID `opportunities`.
+- [x] Define stable ID `leadConversionRate`.
+- [x] Define stable ID `techLeads`.
+- [x] Define stable ID `marketedLeads`.
+- [x] Define stable ID `closingRate`.
+- [x] Define stable ID `installs`.
+- [x] Define stable ID `installAverageTicket`.
+- [x] Define stable ID `installRevenue`.
+- [x] Add labels.
+- [x] Add number formats.
+- [x] Add colors.
+- [x] Add goal support.
+- [x] Add higher-is-better configuration.
 
 ## Slides
 
-- [ ] Create `shared/slides.js`.
-- [ ] Add Revenue slide.
-- [ ] Add Activity slide.
-- [ ] Add Performance slide.
-- [ ] Add Average Ticket slide.
-- [ ] Add Top 3 slide.
-- [ ] Confirm there are exactly five live slides.
-- [ ] Set default KPI-slide duration to 15 seconds.
-- [ ] Set Top 3 duration to 25 seconds.
-- [ ] Confirm slide order is fixed.
+- [x] Create `shared/slides.js`.
+- [x] Add Revenue slide.
+- [x] Add Activity slide.
+- [x] Add Performance slide.
+- [x] Add Average Ticket slide.
+- [x] Add Top 3 slide.
+- [x] Confirm there are exactly five live slides.
+- [x] Set default KPI-slide duration to 15 seconds.
+- [x] Set Top 3 duration to 25 seconds.
+- [x] Confirm slide order is fixed.
 
 ## Televisions
 
-- [ ] Create `shared/televisions.js`.
-- [ ] Add initial placeholder TV room names.
-- [ ] Ensure every TV ID is lowercase and URL-safe.
-- [ ] Validate unique TV IDs.
-- [ ] Replace placeholders when final rooms are confirmed.
+- [x] Create `shared/televisions.js`.
+- [x] Add initial placeholder TV room names.
+- [x] Ensure every TV ID is lowercase and URL-safe.
+- [x] Validate unique TV IDs.
+- [ ] Replace placeholders when final rooms are confirmed. **Blocked: final room names and hardware are not yet confirmed.**
 
 ## Goals
 
-- [ ] Create `shared/goals.js`.
-- [ ] Add company-wide default goal structure.
-- [ ] Add technician-specific overrides.
-- [ ] Use `null` for unconfigured goals.
-- [ ] Do not invent final management goals.
-- [ ] Add validation for unknown KPI goal IDs.
+- [x] Create `shared/goals.js`.
+- [x] Add company-wide default goal structure.
+- [x] Add technician-specific overrides.
+- [x] Use `null` for unconfigured goals.
+- [x] Do not invent final management goals.
+- [x] Add validation for unknown KPI goal IDs.
 
 ## Job Classification
 
-- [ ] Create `shared/jobClassifications.js`.
-- [ ] Add service classification structure.
-- [ ] Add installation classification structure.
-- [ ] Support IDs and name patterns.
-- [ ] Leave unverified job-type lists empty.
-- [ ] Mark classification setup as production-blocking.
+- [x] Create `shared/jobClassifications.js`.
+- [x] Add service classification structure.
+- [x] Add installation classification structure.
+- [x] Support IDs and name patterns.
+- [x] Leave unverified job-type lists empty.
+- [x] Mark classification setup as production-blocking.
 
 ## Shared Constants and Validation
 
-- [ ] Create `shared/constants.js`.
-- [ ] Define TV modes.
-- [ ] Define WebSocket event names.
-- [ ] Define default slide.
-- [ ] Define client types.
-- [ ] Create `shared/validation.js`.
-- [ ] Validate TV IDs.
-- [ ] Validate technician IDs.
-- [ ] Validate KPI IDs.
-- [ ] Validate slide IDs.
-- [ ] Validate remote selection combinations.
+- [x] Create `shared/constants.js`.
+- [x] Define TV modes.
+- [x] Define WebSocket event names.
+- [x] Define default slide.
+- [x] Define client types.
+- [x] Create `shared/validation.js`.
+- [x] Validate TV IDs.
+- [x] Validate technician IDs.
+- [x] Validate KPI IDs.
+- [x] Validate slide IDs.
+- [x] Validate remote selection combinations.
 
 ## Verification
 
-- [ ] Exactly five technicians are configured.
-- [ ] Exactly eleven approved KPI IDs exist.
-- [ ] Exactly five live slides exist.
-- [ ] Shared validation tests pass.
-- [ ] No business calculations exist in shared UI configuration.
+- [x] Exactly five technicians are configured.
+- [x] Exactly eleven approved KPI IDs exist.
+- [x] Exactly five live slides exist.
+- [x] Shared validation tests pass.
+- [x] No business calculations exist in shared UI configuration.
 
 Recommended commit:
 
 ```text
 feat: add shared technician KPI slide and TV configuration
 ```
+
+
+## Phase 1 Progress Note
+
+Phase 1 shared configuration and validation are complete. All production goals remain
+`null`, and service/install classification lists remain empty and explicitly
+production-blocking until GRmetro confirms the business definitions. Television IDs
+and room labels are clearly marked placeholders pending final room and hardware
+assignments. Phase 2 has not begun.
 
 ---
 
