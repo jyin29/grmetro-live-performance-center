@@ -1,0 +1,10 @@
+{
+  "name": "@grmetro/remote",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../scripts/workspace-status.js remote dev",
+    "build": "node ../../scripts/workspace-status.js remote build",
+    "test": "node ../../scripts/workspace-status.js remote test"
+  }
+}

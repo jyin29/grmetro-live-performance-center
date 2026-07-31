@@ -41,9 +41,10 @@ Legend:
 
 ## Repository
 
-- [ ] Confirm the GitHub repository is private.
-- [ ] Clone the repository locally.
-- [ ] Create the root folder structure:
+- [!] Confirm the GitHub repository is private.
+  - Blocked in the isolated Codex work branch: remote inspection is intentionally unavailable. A repository administrator must confirm visibility in GitHub.
+- [x] Clone the repository locally.
+- [x] Create the root folder structure:
 
 ```text
 apps/
@@ -53,7 +54,7 @@ docs/
 scripts/
 ```
 
-- [ ] Create the three application folders:
+- [x] Create the three application folders:
 
 ```text
 apps/backend/
@@ -61,13 +62,13 @@ apps/dashboard/
 apps/remote/
 ```
 
-- [ ] Add the approved GRmetro logo to:
+- [x] Add the approved GRmetro logo to:
 
 ```text
 assets/branding/grmetro-logo.png
 ```
 
-- [ ] Add the approved dashboard reference image to:
+- [x] Add the approved dashboard reference image to:
 
 ```text
 assets/references/dashboard-reference.png
@@ -75,26 +76,28 @@ assets/references/dashboard-reference.png
 
 ## Root Configuration
 
-- [ ] Create root `package.json`.
-- [ ] Configure npm workspaces.
-- [ ] Add root `npm run dev`.
-- [ ] Add root `npm run build`.
-- [ ] Add root `npm test`.
-- [ ] Add root `npm start`.
-- [ ] Add root QR-generation command.
-- [ ] Create `.gitignore`.
-- [ ] Create `.env.example`.
-- [ ] Create `.nvmrc` or `.node-version`.
-- [ ] Create `README.md`.
-- [ ] Create `AGENTS.md`.
-- [ ] Confirm no secrets are committed.
+- [x] Create root `package.json`.
+- [x] Configure npm workspaces.
+- [x] Add root `npm run dev`.
+- [x] Add root `npm run build`.
+- [x] Add root `npm test`.
+- [x] Add root `npm start`.
+- [x] Add root QR-generation command.
+- [x] Create `.gitignore`.
+- [x] Create `.env.example`.
+- [x] Create `.nvmrc` or `.node-version`.
+- [x] Create `README.md`.
+- [x] Create `AGENTS.md`.
+- [x] Confirm no secrets are committed.
 
 ## Verification
 
-- [ ] `npm install` succeeds.
-- [ ] Workspace commands resolve.
-- [ ] Repository structure matches the specification.
-- [ ] Project builds without undeclared global dependencies.
+- [x] `npm install` succeeds.
+- [x] Workspace commands resolve.
+- [x] Repository structure matches the specification.
+- [x] Project builds without undeclared global dependencies.
+
+Progress note (July 31, 2026): Phase 0 repository scaffolding, workspace commands, environment template, asset verification, and foundation tests are complete. Application runtimes and functional QR generation remain assigned to their later implementation phases. GitHub repository visibility is the only Phase 0 item requiring external confirmation.
 
 Recommended commit:
 

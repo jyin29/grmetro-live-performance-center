@@ -1,0 +1,31 @@
+# Dependencies and package-manager caches
+node_modules/
+.npm/
+
+# Environment files may contain local configuration or secrets
+.env
+.env.*
+!.env.example
+
+# Build and test output
+dist/
+build/
+coverage/
+.vite/
+
+# Runtime output
+*.log
+logs/
+*.pid
+
+# Generated QR codes
+assets/qr/*.png
+assets/qr/*.svg
+!assets/qr/.gitkeep
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

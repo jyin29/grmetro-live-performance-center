@@ -1,0 +1,11 @@
+{
+  "name": "@grmetro/backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../scripts/workspace-status.js backend dev",
+    "build": "node ../../scripts/workspace-status.js backend build",
+    "test": "node ../../scripts/workspace-status.js backend test",
+    "start": "node ../../scripts/workspace-status.js backend start"
+  }
+}
