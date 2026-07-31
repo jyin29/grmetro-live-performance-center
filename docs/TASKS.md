@@ -403,50 +403,56 @@ feat: implement dashboard cache and refresh scheduler
 
 ## State Model
 
-- [ ] Create canonical TV state shape.
-- [ ] Initialize every TV in live mode.
-- [ ] Include revision number.
-- [ ] Include selected technician.
-- [ ] Include selected KPI.
-- [ ] Include selected slide.
-- [ ] Include override start time.
-- [ ] Include expiration time.
-- [ ] Include update time.
+- [x] Create canonical TV state shape.
+- [x] Initialize every TV in live mode.
+- [x] Include revision number.
+- [x] Include selected technician.
+- [x] Include selected KPI.
+- [x] Include selected slide.
+- [x] Include override start time.
+- [x] Include expiration time.
+- [x] Include update time.
 
 ## TV Manager
 
-- [ ] Create TV-state map keyed by TV ID.
-- [ ] Implement get-all TVs.
-- [ ] Implement get-one TV.
-- [ ] Implement technician-only override.
-- [ ] Implement KPI-only override.
-- [ ] Implement technician-plus-KPI override.
-- [ ] Implement manual resume.
-- [ ] Reset timeout on repeated command.
-- [ ] Increment revision on every change.
-- [ ] Ensure latest command wins.
-- [ ] Ensure other TVs remain unchanged.
+- [x] Create TV-state map keyed by TV ID.
+- [x] Implement get-all TVs.
+- [x] Implement get-one TV.
+- [x] Implement technician-only override.
+- [x] Implement KPI-only override.
+- [x] Implement technician-plus-KPI override.
+- [x] Implement manual resume.
+- [x] Reset timeout on repeated command.
+- [x] Increment revision on every change.
+- [x] Ensure latest command wins.
+- [x] Ensure other TVs remain unchanged.
 
 ## Expiration Monitor
 
-- [ ] Check expirations every second.
-- [ ] Change expired TV to returning mode.
-- [ ] Broadcast returning state.
-- [ ] Wait configured return-transition time.
-- [ ] Clear selections.
-- [ ] Return TV to live mode.
-- [ ] Broadcast live state.
-- [ ] Stop monitor on shutdown.
+- [x] Check expirations every second.
+- [x] Change expired TV to returning mode.
+- [x] Emit returning state for later broadcast integration.
+- [x] Wait configured return-transition time.
+- [x] Clear selections.
+- [x] Return TV to live mode.
+- [x] Emit live state for later broadcast integration.
+- [x] Stop monitor and pending transition timers on shutdown.
 
 ## Verification
 
-- [ ] Empty selection is rejected.
-- [ ] Invalid TV is rejected.
-- [ ] Invalid technician is rejected.
-- [ ] Invalid KPI is rejected.
-- [ ] Five TVs can have independent state.
-- [ ] Backend restart initializes all TVs to live.
-- [ ] Fake-timer tests cover expiration.
+- [x] Empty selection is rejected.
+- [x] Invalid TV is rejected.
+- [x] Invalid technician is rejected.
+- [x] Invalid KPI is rejected.
+- [x] Five TVs can have independent state.
+- [x] Backend restart initializes all TVs to live.
+- [x] Fake-timer tests cover expiration.
+
+Progress note (2026-07-31): Phase 5 is complete. The memory-only manager supports strict independent
+technician, KPI, and combined remote view types within the approved `LIVE`, `REMOTE`, and `RETURNING`
+modes; revisioned state-change subscriptions; full timeout resets; and the shared `RETURNING` → `LIVE`
+sequence for automatic expiration and manual resume.
+Phase 6 REST and WebSocket work has not started.
 
 Recommended commit:
 
