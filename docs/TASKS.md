@@ -466,54 +466,60 @@ feat: implement independent TV state and override expiration
 
 ## Health
 
-- [ ] Implement `GET /api/v1/health`.
-- [ ] Include backend status.
-- [ ] Include browser status.
-- [ ] Include ServiceTitan status.
-- [ ] Include cache status.
-- [ ] Include last successful refresh.
-- [ ] Include cache age.
-- [ ] Include application version.
-- [ ] Exclude secrets.
+- [x] Implement `GET /api/v1/health`.
+- [x] Include backend status.
+- [x] Include browser status.
+- [x] Include ServiceTitan status.
+- [x] Include cache status.
+- [x] Include last successful refresh.
+- [x] Include cache age.
+- [x] Include application version.
+- [x] Exclude secrets.
 
 ## Dashboard
 
-- [ ] Implement `GET /api/v1/dashboard`.
-- [ ] Return normalized presentation payload.
-- [ ] Return cache-unavailable error when necessary.
-- [ ] Never return raw ServiceTitan records.
+- [x] Implement `GET /api/v1/dashboard`.
+- [x] Return normalized presentation payload.
+- [x] Return cache-unavailable error when necessary.
+- [x] Never return raw ServiceTitan records.
 
 ## Televisions
 
-- [ ] Implement `GET /api/v1/tvs`.
-- [ ] Implement `GET /api/v1/tvs/:tvId`.
-- [ ] Implement `POST /api/v1/tvs/:tvId/override`.
-- [ ] Implement `POST /api/v1/tvs/:tvId/resume`.
-- [ ] Return stable validation error codes.
-- [ ] Include remaining override seconds.
+- [x] Implement `GET /api/v1/tvs`.
+- [x] Implement `GET /api/v1/tvs/:tvId`.
+- [x] Implement `POST /api/v1/tvs/:tvId/override`.
+- [x] Implement `POST /api/v1/tvs/:tvId/resume`.
+- [x] Return stable validation error codes.
+- [x] Include remaining override seconds.
 
 ## Development Routes
 
-- [ ] Implement manual refresh route.
-- [ ] Implement mock-scenario route if useful.
-- [ ] Disable development routes in production.
-- [ ] Return `REFRESH_IN_PROGRESS` when appropriate.
+- [x] Implement manual refresh route.
+- [x] Mock-scenario route intentionally omitted as optional; deterministic scenarios remain provider-level controls.
+- [x] Disable development routes in production.
+- [x] Return `REFRESH_IN_PROGRESS` when appropriate.
 
 ## API Tests
 
-- [ ] Test valid responses.
-- [ ] Test malformed JSON.
-- [ ] Test invalid IDs.
-- [ ] Test missing selections.
-- [ ] Test unknown fields.
-- [ ] Test request-size limit.
-- [ ] Test rate limiting.
-- [ ] Test no-secret exposure.
+- [x] Test valid responses.
+- [x] Test malformed JSON.
+- [x] Test invalid IDs.
+- [x] Test missing selections.
+- [x] Test unknown fields.
+- [x] Test request-size limit.
+- [x] Test rate limiting.
+- [x] Test no-secret exposure.
+
+Progress note (2026-07-31): Phase 6 REST API is complete. Domain-isolated routers expose cached
+dashboard reads, safe health status, independent TV reads and commands, and an explicitly enabled
+development refresh endpoint. All errors use the standard envelope, production errors suppress
+internal details, remote mutations are rate-limited, and REST responses do not initiate provider
+requests. The optional mock-scenario route was not added. Phase 7 has not started.
 
 Recommended commit:
 
 ```text
-feat: add dashboard TV and health REST APIs
+feat: implement Phase 6 REST API
 ```
 
 ---

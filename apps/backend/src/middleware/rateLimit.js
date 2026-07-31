@@ -15,7 +15,7 @@ function createRateLimiter({ windowMilliseconds, maxRequests, clock = Date.now }
     response.set("RateLimit-Limit", String(maxRequests));
     response.set("RateLimit-Remaining", String(Math.max(0, maxRequests - state.count)));
     response.set("RateLimit-Reset", String(Math.ceil(state.resetAt / 1000)));
-    if (state.count > maxRequests) return response.status(429).json({ error: { code: "RATE_LIMITED", message: "Too many remote-control requests. Try again later." } });
+    if (state.count > maxRequests) return response.status(429).json({ ok: false, error: { code: "RATE_LIMITED", message: "Too many remote-control requests. Try again later.", details: null } });
     next();
   };
 }
