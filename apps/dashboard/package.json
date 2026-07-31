@@ -1,0 +1,10 @@
+{
+  "name": "@grmetro/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Dashboard workspace scaffolded; implementation pending Phase 13')\"",
+    "build": "node -e \"console.log('Dashboard: no build step yet')\"",
+    "test": "node --test"
+  }
+}

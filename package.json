@@ -1,0 +1,22 @@
+{
+  "name": "grmetro-live-performance-center",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal live technician-performance digital signage for GRmetro Heating & Cooling",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:backend": "npm run dev --workspace=@grmetro/backend",
+    "dev:dashboard": "npm run dev --workspace=@grmetro/dashboard",
+    "dev:remote": "npm run dev --workspace=@grmetro/remote",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "start": "npm run start --workspace=@grmetro/backend",
+    "generate:qr": "node scripts/generate-qr-codes.js"
+  },
+  "engines": {
+    "node": ">=22 <23"
+  }
+}

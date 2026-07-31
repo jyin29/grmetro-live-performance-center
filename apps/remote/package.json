@@ -1,0 +1,10 @@
+{
+  "name": "@grmetro/remote",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Remote workspace scaffolded; implementation pending Phase 17')\"",
+    "build": "node -e \"console.log('Remote: no build step yet')\"",
+    "test": "node --test"
+  }
+}

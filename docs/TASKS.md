@@ -42,8 +42,8 @@ Legend:
 ## Repository
 
 - [ ] Confirm the GitHub repository is private.
-- [ ] Clone the repository locally.
-- [ ] Create the root folder structure:
+- [x] Clone the repository locally.
+- [x] Create the root folder structure:
 
 ```text
 apps/
@@ -53,7 +53,7 @@ docs/
 scripts/
 ```
 
-- [ ] Create the three application folders:
+- [x] Create the three application folders:
 
 ```text
 apps/backend/
@@ -75,26 +75,26 @@ assets/dashboard-reference.png
 
 ## Root Configuration
 
-- [ ] Create root `package.json`.
-- [ ] Configure npm workspaces.
-- [ ] Add root `npm run dev`.
-- [ ] Add root `npm run build`.
-- [ ] Add root `npm test`.
-- [ ] Add root `npm start`.
-- [ ] Add root QR-generation command.
-- [ ] Create `.gitignore`.
-- [ ] Create `.env.example`.
-- [ ] Create `.nvmrc` or `.node-version`.
-- [ ] Create `README.md`.
-- [ ] Create `AGENTS.md`.
-- [ ] Confirm no secrets are committed.
+- [x] Create root `package.json`.
+- [x] Configure npm workspaces.
+- [x] Add root `npm run dev`.
+- [x] Add root `npm run build`.
+- [x] Add root `npm test`.
+- [x] Add root `npm start`.
+- [x] Add root QR-generation command.
+- [x] Create `.gitignore`.
+- [x] Create `.env.example`.
+- [x] Create `.nvmrc` or `.node-version`.
+- [x] Create `README.md`.
+- [x] Create `AGENTS.md`.
+- [x] Confirm no secrets are committed.
 
 ## Verification
 
-- [ ] `npm install` succeeds.
-- [ ] Workspace commands resolve.
-- [ ] Repository structure matches the specification.
-- [ ] Project builds without undeclared global dependencies.
+- [x] `npm install` succeeds.
+- [x] Workspace commands resolve.
+- [x] Repository structure matches the specification.
+- [x] Project builds without undeclared global dependencies.
 
 Recommended commit:
 
@@ -1634,6 +1634,38 @@ Next task:
 ```
 
 Do not place long debugging transcripts in this file.
+
+---
+
+## 2026-07-31 — Repository foundation scaffold
+
+Work completed:
+
+- Added the npm workspace root and three application workspace scaffolds.
+- Added environment, Node version, ignore, QR command, and repository instruction files.
+- Removed the unused Turborepo configuration because Version 1.0 uses npm workspaces directly.
+
+Files changed:
+
+- Root project configuration and lockfile.
+- Backend, dashboard, and remote workspace manifests.
+- Foundation directories and placeholder QR script.
+- `docs/TASKS.md`.
+
+Tests run:
+
+- `npm install`
+- `npm test`
+- `npm run build`
+
+Blockers:
+
+- Repository visibility cannot be confirmed because no Git remote is configured.
+- `assets/grmetro-logo.png` and `assets/dashboard-reference.png` were not supplied; the existing `assets/grmetro.png` is an empty file and cannot be treated as an approved visual asset.
+
+Next task:
+
+- Supply the approved logo and dashboard reference assets to finish Phase 0, then begin shared configuration.
 
 ---
 

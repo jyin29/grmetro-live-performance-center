@@ -1,0 +1,11 @@
+{
+  "name": "@grmetro/backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Backend workspace scaffolded; implementation pending Phase 3')\"",
+    "build": "node -e \"console.log('Backend: no build step yet')\"",
+    "test": "node --test",
+    "start": "node -e \"console.error('Backend implementation is pending Phase 3'); process.exitCode = 1\""
+  }
+}
