@@ -274,58 +274,58 @@ feat: add deterministic mock dashboard data mode
 
 ## Backend Workspace
 
-- [ ] Create `apps/backend/package.json`.
-- [ ] Add Express.
-- [ ] Add Playwright.
-- [ ] Add WebSocket dependency.
-- [ ] Add environment loader.
-- [ ] Add validation dependency only if justified.
-- [ ] Add test runner.
-- [ ] Add development restart command.
+- [x] Create `apps/backend/package.json`.
+- [x] Add Express.
+- [x] Add Playwright.
+- [x] Add WebSocket dependency.
+- [x] Add environment loader.
+- [x] Add validation dependency only if justified. (No validation package needed.)
+- [x] Add test runner.
+- [x] Add development restart command.
 
 ## Application Entry
 
-- [ ] Create `src/index.js`.
-- [ ] Create `src/app.js`.
-- [ ] Add graceful shutdown handling.
-- [ ] Avoid business logic in entry files.
-- [ ] Add startup logs.
-- [ ] Add application-version reporting.
+- [x] Create `src/index.js`.
+- [x] Create `src/app.js`.
+- [x] Add graceful shutdown handling.
+- [x] Avoid business logic in entry files.
+- [x] Add startup logs.
+- [x] Add application-version reporting.
 
 ## Configuration
 
-- [ ] Create `src/config.js`.
-- [ ] Validate `PORT`.
-- [ ] Validate `HOST`.
-- [ ] Validate `EDGE_DEBUG_URL`.
-- [ ] Validate ServiceTitan base URL.
-- [ ] Validate time zone.
-- [ ] Validate refresh interval.
-- [ ] Validate override timeout.
-- [ ] Validate stale thresholds.
-- [ ] Validate mock-mode configuration.
-- [ ] Validate development-route configuration.
+- [x] Create `src/config.js`.
+- [x] Validate `PORT`.
+- [x] Validate `HOST`.
+- [x] Validate `EDGE_DEBUG_URL`.
+- [x] Validate ServiceTitan base URL.
+- [x] Validate time zone.
+- [x] Validate refresh interval.
+- [x] Validate override timeout.
+- [x] Validate stale thresholds.
+- [x] Validate mock-mode configuration.
+- [x] Validate development-route configuration.
 
 ## Middleware
 
-- [ ] Add JSON request parsing.
-- [ ] Add request-size limit.
-- [ ] Add request logging.
-- [ ] Add not-found handler.
-- [ ] Add standard error handler.
-- [ ] Hide stack traces in production.
-- [ ] Add rate limiting for remote commands.
-- [ ] Configure development CORS.
-- [ ] Prefer same-origin production serving.
+- [x] Add JSON request parsing.
+- [x] Add request-size limit.
+- [x] Add request logging.
+- [x] Add not-found handler.
+- [x] Add standard error handler.
+- [x] Hide stack traces in production.
+- [x] Add rate limiting for remote commands.
+- [x] Configure development CORS.
+- [x] Prefer same-origin production serving.
 
 ## Logger
 
-- [ ] Create structured logger.
-- [ ] Support debug, info, warn, and error.
-- [ ] Add timestamps.
-- [ ] Redact secrets.
-- [ ] Avoid raw ServiceTitan payload logging.
-- [ ] Add log rotation or documented rotation strategy.
+- [x] Create structured logger.
+- [x] Support debug, info, warn, and error.
+- [x] Add timestamps.
+- [x] Redact secrets.
+- [x] Avoid raw ServiceTitan payload logging.
+- [x] Add log rotation or documented rotation strategy.
 
 Recommended commits:
 
@@ -333,6 +333,11 @@ Recommended commits:
 feat: add backend application and configuration
 feat: add backend middleware logging and error handling
 ```
+
+
+Progress note: Phase 3 adds only the backend application shell. Mock-provider
+selection is wired at startup without starting refreshes; cache, scheduling, REST
+routes, WebSockets, and live ServiceTitan behavior remain deferred to later phases.
 
 ---
 
