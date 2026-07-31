@@ -121,11 +121,11 @@ class MockRefreshProvider {
     this.scenario = this.#validateScenario(name);
   }
 
-  async refresh({ now = FIXED_TIME } = {}) {
+  async refresh({ now = FIXED_TIME, date, previousPayload } = {}) {
     const definition = scenarios[this.scenario];
     const timestamp = new Date(now).toISOString();
     const values = scenarioValues(this.scenario);
-    const records = technicians.map((technician, technicianIndex) => ({
+    let records = technicians.map((technician, technicianIndex) => ({
       ...technician,
       stale: definition.staleTechnicianIndex === technicianIndex || definition.failedTechnicianIndex === technicianIndex,
       available: definition.failedTechnicianIndex !== technicianIndex,
@@ -133,6 +133,16 @@ class MockRefreshProvider {
         ? new Date(new Date(timestamp).getTime() - 240000).toISOString() : timestamp,
       kpis: Object.fromEntries(KPI_IDS.map((id, index) => [id, makeMetric(id, values[technicianIndex][index])]))
     }));
+    if (definition.failedTechnicianIndex !== undefined && previousPayload) {
+      const failedId = technicians[definition.failedTechnicianIndex].id;
+      const retained = previousPayload.technicians?.find((record) => record.id === failedId);
+      if (retained) {
+        records = records.map((record) => record.id === failedId ? {
+          ...clone(retained), available: false, stale: true,
+          lastSuccessfulUpdate: retained.lastSuccessfulUpdate || previousPayload.lastSuccessfulRefreshAt
+        } : record);
+      }
+    }
     rankMetrics(records, getRankSnapshot(BASE_VALUES));
     const overallOrder = [...records].sort((a, b) => b.kpis.revenue.value - a.kpis.revenue.value || a.id - b.id);
     const previousOverall = getRankSnapshot(BASE_VALUES).revenue;
@@ -149,7 +159,10 @@ class MockRefreshProvider {
       slides: buildSlides(records), technicians: records,
       overallTopThree: overallOrder.slice(0, 3).map((record) => ({ technicianId: record.id, name: record.name, ...record.overall })),
       events: event,
-      diagnostics: { results: records.map((record) => ({ technicianId: record.id, ok: record.available, stale: record.stale })) }
+      diagnostics: { date: date || null, results: records.map((record) => ({
+        technicianId: record.id, ok: record.available, stale: record.stale,
+        lastSuccessfulUpdate: record.lastSuccessfulUpdate
+      })) }
     };
   }
 }

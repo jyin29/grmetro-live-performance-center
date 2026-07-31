@@ -345,42 +345,51 @@ routes, WebSockets, and live ServiceTitan behavior remain deferred to later phas
 
 ## Cache
 
-- [ ] Create dashboard-cache module.
-- [ ] Store latest successful payload.
-- [ ] Store last successful refresh time.
-- [ ] Store refresh-start time.
-- [ ] Calculate cache age.
-- [ ] Support unavailable cache state.
-- [ ] Preserve payload after refresh failure.
-- [ ] Preserve individual technician data after partial failure.
+- [x] Create dashboard-cache module.
+- [x] Store latest successful payload.
+- [x] Store last successful refresh time.
+- [x] Store refresh-start time.
+- [x] Calculate cache age.
+- [x] Support unavailable cache state.
+- [x] Preserve payload after refresh failure.
+- [x] Preserve individual technician data after partial failure.
 
 ## Scheduler
 
-- [ ] Create refresh scheduler.
-- [ ] Run refresh immediately at startup.
-- [ ] Schedule refresh every sixty seconds.
-- [ ] Prevent overlapping refreshes.
-- [ ] Log skipped overlapping refreshes.
-- [ ] Continue scheduling after failure.
-- [ ] Stop scheduler during graceful shutdown.
-- [ ] Handle midnight date rollover.
+- [x] Create refresh scheduler.
+- [x] Run refresh immediately at startup.
+- [x] Schedule refresh every sixty seconds.
+- [x] Prevent overlapping refreshes.
+- [x] Log skipped overlapping refreshes.
+- [x] Continue scheduling after failure.
+- [x] Stop scheduler during graceful shutdown.
+- [x] Handle midnight date rollover.
 
 ## Refresh Provider Interface
 
-- [ ] Define common refresh-provider contract.
-- [ ] Implement mock refresh provider.
-- [ ] Reserve implementation for live ServiceTitan provider.
-- [ ] Return per-technician result objects.
-- [ ] Support partial successes.
-- [ ] Include refresh diagnostics.
+- [x] Define common refresh-provider contract.
+- [x] Implement mock refresh provider.
+- [x] Reserve implementation for live ServiceTitan provider.
+- [x] Return per-technician result objects.
+- [x] Support partial successes.
+- [x] Include refresh diagnostics.
 
 ## Verification
 
-- [ ] Immediate startup refresh works.
-- [ ] Sixty-second scheduling works.
-- [ ] Failed refresh preserves cache.
-- [ ] Empty cache returns correct error.
-- [ ] Scheduler tests use fake timers.
+- [x] Immediate startup refresh works.
+- [x] Sixty-second scheduling works.
+- [x] Failed refresh preserves cache.
+- [x] Empty cache returns correct error.
+- [x] Scheduler tests use fake timers.
+
+Progress note (July 31, 2026): Phase 4 is complete. The in-memory dashboard cache
+tracks refresh lifecycle and cache-age metadata, reports `CACHE_UNAVAILABLE` before
+the first success, and retains successful presentation data across total and partial
+failures. The scheduler performs an immediate mock-provider refresh, recalculates the
+America/New_York date on every attempt, skips overlap, continues after failure, and
+stops during graceful shutdown. The live ServiceTitan provider remains explicitly
+reserved for its later phase; no TV state, routes, WebSockets, or live access were
+introduced.
 
 Recommended commit:
 
