@@ -8,6 +8,7 @@ const { loadMockConfig } = require("./config/mockMode");
 const DEFAULTS = Object.freeze({
   NODE_ENV: "development", HOST: "127.0.0.1", PORT: "3000",
   EDGE_DEBUG_URL: "http://127.0.0.1:9222",
+  EDGE_CONNECTION_TIMEOUT_MILLISECONDS: "30000",
   SERVICETITAN_BASE_URL: "https://go.servicetitan.com",
   TIMEZONE: "America/New_York", REFRESH_INTERVAL_SECONDS: "60",
   REMOTE_OVERRIDE_SECONDS: "120", RETURN_TRANSITION_MILLISECONDS: "1000",
@@ -65,6 +66,7 @@ function loadConfig(environment = process.env, options = {}) {
     nodeEnv: env.NODE_ENV, isProduction: env.NODE_ENV === "production",
     host: validateHost(env.HOST), port: integer(env.PORT, "PORT", { max: 65535 }),
     edgeDebugUrl: url(env.EDGE_DEBUG_URL, "EDGE_DEBUG_URL", { protocols: ["http:", "https:"], loopbackOnly: true }),
+    edgeConnectionTimeoutMilliseconds: integer(env.EDGE_CONNECTION_TIMEOUT_MILLISECONDS, "EDGE_CONNECTION_TIMEOUT_MILLISECONDS", { min: 1000, max: 120000 }),
     serviceTitanBaseUrl: url(env.SERVICETITAN_BASE_URL, "SERVICETITAN_BASE_URL", { protocols: ["https:"] }),
     dashboardBaseUrl: env.DASHBOARD_BASE_URL ? url(env.DASHBOARD_BASE_URL, "DASHBOARD_BASE_URL", { protocols: ["http:", "https:"] }) : null,
     timeZone: validateTimeZone(env.TIMEZONE),

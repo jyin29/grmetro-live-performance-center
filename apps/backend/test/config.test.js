@@ -23,6 +23,7 @@ test("invalid ports, hosts, URLs, intervals, and timeouts fail clearly", () => {
   assert.throws(() => load({ PORT: "70000" }), /PORT/);
   assert.throws(() => load({ HOST: "http:\/\/127.0.0.1" }), /HOST/);
   assert.throws(() => load({ EDGE_DEBUG_URL: "http://office-host:9222" }), /EDGE_DEBUG_URL/);
+  assert.throws(() => load({ EDGE_CONNECTION_TIMEOUT_MILLISECONDS: "999" }), /EDGE_CONNECTION_TIMEOUT_MILLISECONDS/);
   assert.throws(() => load({ SERVICETITAN_BASE_URL: "http://go.servicetitan.com" }), /SERVICETITAN_BASE_URL/);
   assert.throws(() => load({ REFRESH_INTERVAL_SECONDS: "0" }), /REFRESH_INTERVAL_SECONDS/);
   assert.throws(() => load({ REMOTE_OVERRIDE_SECONDS: "later" }), /REMOTE_OVERRIDE_SECONDS/);
