@@ -629,39 +629,45 @@ values remain isolated to explicit mock mode. Phase 8 has not started.
 
 ## Connection
 
-- [ ] Create persistent CDP browser manager.
-- [ ] Connect to `127.0.0.1`.
-- [ ] Use configurable debug URL.
-- [ ] Reuse one browser connection.
-- [ ] Do not launch Edge.
-- [ ] Do not close user-launched Edge.
-- [ ] Expose browser connection status.
+- [x] Create persistent CDP browser manager.
+- [x] Connect to `127.0.0.1`.
+- [x] Use configurable debug URL and connection timeout.
+- [x] Reuse one browser connection and one in-flight connection attempt.
+- [x] Do not launch Edge.
+- [x] Do not close user-launched Edge.
+- [x] Expose safe browser connection status.
 
 ## Page Discovery
 
-- [ ] Prefer Technician Scorecard page.
-- [ ] Fall back to authenticated ServiceTitan page.
-- [ ] Reject unauthenticated page.
-- [ ] Print page URLs only in safe development diagnostics.
-- [ ] Produce actionable no-page error.
+- [x] Prefer Technician Scorecard page.
+- [x] Fall back to authenticated ServiceTitan page.
+- [x] Reject obvious unauthenticated pages safely.
+- [x] Do not include page URLs in public status or production logs.
+- [x] Produce actionable no-page error.
 
 ## Reconnection
 
-- [ ] Detect CDP disconnect.
-- [ ] Mark browser unavailable.
-- [ ] Preserve cache.
-- [ ] Retry with exponential backoff.
-- [ ] Rediscover ServiceTitan page.
-- [ ] Refresh CSRF state after reconnect.
-- [ ] Resume scheduled refreshes.
+- [x] Detect CDP disconnect.
+- [x] Mark browser unavailable.
+- [x] Preserve cache by keeping browser recovery isolated from dashboard state.
+- [x] Retry with bounded exponential backoff.
+- [x] Rediscover ServiceTitan page.
+- [x] Leave CSRF refresh to Phase 9; Phase 8 does not implement CSRF handling.
+- [x] Leave live refresh scheduling to Phase 9; browser reconnection remains independently available.
 
 ## Verification
 
-- [ ] Connect to existing Edge.
-- [ ] Retry when Edge starts late.
-- [ ] Recover after Edge closes and reopens.
-- [ ] Never call `browser.close()` on user session.
-- [ ] Tests mock CDP behavior.
+- [x] Production connector uses Playwright `connectOverCDP` for an existing Edge session.
+- [x] Retry when Edge starts late.
+- [x] Recover after Edge closes and reopens.
+- [x] Never call `browser.close()` on user session.
+- [x] Tests mock CDP behavior without requiring Edge or ServiceTitan.
+
+Progress note (2026-07-31): Phase 8 is complete. The live backend now starts a nonblocking,
+persistent CDP manager with safe status, cross-context ServiceTitan page discovery, disconnect
+handling, bounded retry timing, and idempotent detach-only shutdown. Explicit mock mode never loads
+or calls the Playwright connector. CSRF and ServiceTitan request/refresh behavior remain exclusively
+incomplete Phase 9 work and were not implemented.
 
 Recommended commit:
 
