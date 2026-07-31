@@ -222,38 +222,45 @@ assignments. Phase 2 has not begun.
 
 ## Fixtures
 
-- [ ] Create backend fixture directory.
-- [ ] Add normal successful technician data.
-- [ ] Add zero-value technician data.
-- [ ] Add missing-data fixture.
-- [ ] Add no-install fixture.
-- [ ] Add partial-failure fixture.
-- [ ] Add stale-data fixture.
-- [ ] Add ranking-change fixture.
-- [ ] Add new-leader fixture.
-- [ ] Add goal-reached fixture.
-- [ ] Add entered-Top-3 fixture.
-- [ ] Sanitize all fixture data.
+- [x] Create backend fixture directory.
+- [x] Add normal successful technician data.
+- [x] Add zero-value technician data.
+- [x] Add missing-data fixture.
+- [x] Add no-install fixture.
+- [x] Add partial-failure fixture.
+- [x] Add stale-data fixture.
+- [x] Add ranking-change fixture.
+- [x] Add new-leader fixture.
+- [x] Add goal-reached fixture.
+- [x] Add entered-Top-3 fixture.
+- [x] Sanitize all fixture data.
 
 ## Mock Provider
 
-- [ ] Implement explicit `MOCK_MODE`.
-- [ ] Implement mock refresh provider.
-- [ ] Generate all five technicians.
-- [ ] Generate all five slide payloads.
-- [ ] Generate deterministic ranks.
-- [ ] Generate deterministic goals.
-- [ ] Generate deterministic overall Top 3.
-- [ ] Support switching fixture scenarios in development.
-- [ ] Ensure production never silently enables mock mode.
+- [x] Implement explicit `MOCK_MODE`.
+- [x] Implement mock refresh provider.
+- [x] Generate all five technicians.
+- [x] Generate all five slide payloads.
+- [x] Generate deterministic ranks.
+- [x] Generate deterministic goals.
+- [x] Generate deterministic overall Top 3.
+- [x] Support switching fixture scenarios in development.
+- [x] Ensure production never silently enables mock mode.
 
 ## Verification
 
-- [ ] Backend can start without Edge in mock mode.
-- [ ] Dashboard data route works in mock mode.
-- [ ] TV routes work in mock mode.
-- [ ] Remote override behavior works in mock mode.
-- [ ] Tests do not require live ServiceTitan.
+- [x] Mock provider starts without Edge, CDP, or ServiceTitan.
+- [x] Presentation contract is ready for the Phase 6 dashboard data route.
+- [x] Full technician and KPI records support technician-only, KPI-only, and combined remote views.
+- [x] Partial-failure diagnostics retain all five configured technician records for later cache integration.
+- [x] Tests do not require live ServiceTitan.
+
+Progress note (July 31, 2026): Phase 2 is complete. The deterministic mock refresh
+provider exposes sanitized scenarios, exactly five technicians, eleven KPI records per
+technician, and exactly five presentation-ready slide payloads. Mock-only goals are
+clearly isolated from the production goal configuration. Runtime HTTP routes, TV state,
+and override expiration remain in their assigned later phases and were not pulled into
+Phase 2.
 
 Recommended commit:
 
