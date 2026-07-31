@@ -141,8 +141,10 @@ grmetro-live-performance-center/
 │   └── validation.js
 │
 ├── assets/
-│   ├── grmetro-logo.png
-│   ├── dashboard-reference.png
+│   ├── branding/
+│   │   └── grmetro-logo.png
+│   ├── references/
+│   │   └── dashboard-reference.png
 │   └── qr/
 │
 ├── docs/

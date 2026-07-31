@@ -70,7 +70,7 @@ assets/grmetro-logo.png
 - [ ] Add the approved dashboard reference image to:
 
 ```text
-assets/dashboard-reference.png
+assets/references/dashboard-reference.png
 ```
 
 ## Root Configuration

@@ -61,8 +61,10 @@ The repository shall contain:
 
 ```text
 assets/
-├── grmetro-logo.png
-└── dashboard-reference.png
+├── branding/
+│   └── grmetro-logo.png
+└── references/
+    └── dashboard-reference.png
 ```
 
 ## 3.1 GRmetro Logo
@@ -92,7 +94,7 @@ assets/grmetro-logo.png
 The approved dashboard reference image shall be committed as:
 
 ```text
-assets/dashboard-reference.png
+assets/references/dashboard-reference.png
 ```
 
 The reference establishes:
