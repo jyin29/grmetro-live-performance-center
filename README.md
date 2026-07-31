@@ -1203,3 +1203,11 @@ This is an internal GRmetro Heating & Cooling application.
 A formal repository license may be added according to company policy.
 
 Do not publish ServiceTitan integration details, company configuration, private assets, or production URLs without authorization.
+
+## Backend Log Retention
+
+The backend writes newline-delimited structured JSON to standard output rather than
+creating an unbounded application-owned log file. Secret-like fields and raw
+ServiceTitan payload fields are redacted. Production deployment must redirect these
+streams through a process manager or Windows scheduled-task wrapper configured for
+bounded file rotation and retention.
