@@ -1,0 +1,10 @@
+{
+  "name": "@grmetro/dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../scripts/workspace-status.js dashboard dev",
+    "build": "node ../../scripts/workspace-status.js dashboard build",
+    "test": "node ../../scripts/workspace-status.js dashboard test"
+  }
+}
