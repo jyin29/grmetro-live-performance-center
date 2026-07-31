@@ -1,11 +1,12 @@
 "use strict";
 
-function installGracefulShutdown({ server, logger, processTarget = process, timeoutMilliseconds = 10000 } = {}) {
+function installGracefulShutdown({ server, logger, scheduler, processTarget = process, timeoutMilliseconds = 10000 } = {}) {
   let shuttingDown = false;
   const shutdown = (signal) => {
     if (shuttingDown) return Promise.resolve();
     shuttingDown = true;
     logger.info("Graceful shutdown started", { signal });
+    scheduler?.stop();
     return new Promise((resolve) => {
       const timer = setTimeout(() => { logger.warn("Graceful shutdown timed out"); resolve(); }, timeoutMilliseconds);
       timer.unref?.();

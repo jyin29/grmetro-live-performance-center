@@ -7,4 +7,12 @@ function assertRefreshProvider(provider) {
   return provider;
 }
 
-module.exports = { assertRefreshProvider };
+function safeRefreshDiagnostic(error) {
+  const allowedCodes = new Set(["AUTHENTICATION_REQUIRED", "BROWSER_DISCONNECTED", "REQUEST_TIMEOUT", "INVALID_RESPONSE", "REFRESH_FAILED"]);
+  return Object.freeze({
+    code: allowedCodes.has(error?.code) ? error.code : "REFRESH_FAILED",
+    retryable: error?.retryable !== false
+  });
+}
+
+module.exports = { assertRefreshProvider, safeRefreshDiagnostic };
