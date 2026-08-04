@@ -795,6 +795,9 @@ feat: add resilient five-technician refresh pipeline
 - [ ] Identify status field.
 - [ ] Identify recall/warranty flags.
 - [ ] Document `KpiType` meaning.
+- [x] Add development-only network research observer for Technician Scorecard drilldowns.
+- [x] Add sanitized start, stop, results, and clear research routes.
+- [x] Add privacy and lifecycle tests for research observer results.
 - [x] Update `docs/SERVICETITAN.md`.
 
 ## Classification
@@ -829,6 +832,8 @@ This phase is release-blocking.
 
 
 Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Added a development-only sanitized drilldown route, strict allow-list sanitizer, pure configuration-driven job classifier, and pure derivation functions for the five service/install KPIs. Production classification remains disabled with `classificationApproved: false`; normal live refresh does not yet fetch drilldown records, and live service/install KPIs remain unavailable until GRmetro reviews sanitized records and approves job classification. Follow-up correction (2026-08-04): tightened completed-status and drilldown-date validation, preserved missing monetary values as missing instead of zero, and made derived KPI metadata track each KPI's own required-field completeness. Production classification remains disabled.
+
+Progress note (2026-08-04): Added a development-only network research observer for manually clicked ServiceTitan Technician Scorecard drilldowns. The observer is gated behind development routes, attaches idempotently, retains at most 100 sanitized schema-only events, excludes raw records and private values, and is documented with exact PowerShell start/stop/save commands. Production derivations remain disabled and Phase 11 has not started.
 
 Recommended commit:
 

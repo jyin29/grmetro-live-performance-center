@@ -753,6 +753,102 @@ Classification status: not approved. The following remain unknown until sanitize
 
 ---
 
+# 21B. Development Network Research Observer
+
+The backend also exposes a development-only ServiceTitan network research observer for Phase 10 datasource discovery. It is intended only for a manually authenticated ServiceTitan Technician Scorecard page while a developer clicks drilldowns in the real UI. It does not automate login, does not click the UI, and does not enable production derivations.
+
+Routes:
+
+```text
+POST /api/v1/dev/servicetitan/research/start
+POST /api/v1/dev/servicetitan/research/stop
+GET /api/v1/dev/servicetitan/research/results
+DELETE /api/v1/dev/servicetitan/research/results
+```
+
+Availability and lifecycle rules:
+
+- Routes are registered only when `ENABLE_DEVELOPMENT_ROUTES=true` and `NODE_ENV` is not `production`.
+- Start attaches at most one observer to the currently selected ServiceTitan page.
+- Repeated starts are idempotent and do not duplicate listeners.
+- Stop detaches request and response listeners.
+- Shutdown stops the observer and clears retained results.
+- Results are held in memory only, capped at 100 events, and the oldest events are discarded when full.
+
+Observed request scope:
+
+- URLs containing `/app/api/reporting/`.
+- `GetDatasourceData` requests.
+- `GetDatasourceForTechScorecards` requests.
+- Modular dashboard reporting endpoints.
+
+Sanitized result contract:
+
+```json
+{
+  "ok": true,
+  "research": {
+    "active": true,
+    "maxEvents": 100,
+    "count": 1,
+    "events": [
+      {
+        "timestamp": "2026-08-04T12:00:00.000Z",
+        "endpoint": "/app/api/reporting/CustomReport/GetDatasourceData",
+        "datasource": "TechnicianJobsExtendedDrilldownDatasource",
+        "parentDatasource": "Technicians",
+        "request": {
+          "method": "POST",
+          "bodyFields": ["From", "KpiType", "TechnicianId", "To"],
+          "safeValues": {
+            "TechnicianId": "134926818",
+            "KpiType": "2",
+            "From": "2026-08-04",
+            "To": "2026-08-04"
+          }
+        },
+        "response": {
+          "status": 200,
+          "contentType": "application/json",
+          "shape": "array",
+          "recordCount": 3,
+          "fields": [
+            { "field": "JobTypeId", "types": ["number"], "presentInRecords": 3 }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+The observer retains only endpoint path, datasource names, request body field names, approved scalar request values (`TechnicianId`, `KpiType`, `From`, and `To`), response status/content type, top-level JSON shape, response field-name schema, and record counts. It never returns CSRF tokens, cookies, headers, customer values, invoice values, addresses, phone numbers, email addresses, raw response records, authentication data, or unknown response values. HTML, non-JSON, and malformed JSON responses are summarized by shape only.
+
+PowerShell research workflow for Windows:
+
+```powershell
+$BaseUrl = "http://127.0.0.1:3000"
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/dev/servicetitan/research/start"
+```
+
+Then, in the manually authenticated ServiceTitan Edge window, open Julio Torres and click relevant Technician Scorecard KPI cards or drilldowns, including Completed Jobs, Revenue, Opportunities, service-call-related metrics, and install-related metrics. The goal is to identify alternative datasource names, `KpiType` values, request body differences, response fields, job type fields, status fields, and billable/recall/warranty/no-charge indicators.
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/dev/servicetitan/research/stop"
+$Research = Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/v1/dev/servicetitan/research/results"
+$Research | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 ".\servicetitan-research-results.json"
+```
+
+Optional cleanup after saving:
+
+```powershell
+Invoke-RestMethod -Method Delete -Uri "$BaseUrl/api/v1/dev/servicetitan/research/results"
+```
+
+Classification status remains not approved. The live finding that `KpiType` `2` returned three Julio Torres records totaling `$266.99` validates only the aggregate Revenue match for that observed case. The observed fields (`JobId`, `JobNumber`, `BusinessUnit`, `CompletionDate`, `Converted`, `Opportunity`, `Revenue`, `Split`, and `Subtotal`) are still insufficient to classify service and installation jobs because they do not expose job type, recall, warranty, no-charge, canceled/completed status beyond completion date, or an explicit billable indicator. Production derivations must remain disabled while `classificationApproved` is false.
+
+---
+
 # 22. Datasource Metadata Endpoints
 
 Known endpoints:
