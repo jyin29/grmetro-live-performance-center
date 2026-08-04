@@ -37,6 +37,19 @@ class BrowserManager {
     this.lastDisconnectedAt = null;
     this.lastError = null;
     this.disconnectHandler = () => this.handleDisconnect();
+    this.listeners = new Set();
+  }
+
+  subscribe(listener) {
+    if (typeof listener !== "function") throw new TypeError("Browser listener must be a function.");
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  notify(event) {
+    for (const listener of this.listeners) {
+      try { listener(event); } catch { /* observers must not break browser recovery */ }
+    }
   }
 
   getStatus() {
@@ -59,7 +72,10 @@ class BrowserManager {
 
   getServiceTitanPage() {
     const browser = this.getBrowser();
-    if (!this.page || this.page.isClosed?.()) this.page = findServiceTitanPage(browser);
+    if (!this.page || this.page.isClosed?.()) {
+      this.page = findServiceTitanPage(browser);
+      this.notify({ type: "page-changed", page: this.page });
+    }
     return this.page;
   }
 
@@ -86,6 +102,7 @@ class BrowserManager {
       browser.on?.("disconnected", this.disconnectHandler);
       const page = findServiceTitanPage(browser);
       this.page = page;
+      this.notify({ type: "page-changed", page });
       this.lastConnectedAt = this.clock().toISOString();
       this.lastError = null;
       this.reconnectAttempt = 0;
@@ -109,6 +126,7 @@ class BrowserManager {
     this.detachBrowserListener();
     this.browser = null;
     this.page = null;
+    this.notify({ type: "disconnected", page: null });
     this.lastDisconnectedAt = this.clock().toISOString();
     this.lastError = new BrowserManagerError("BROWSER_NOT_CONNECTED");
     this.logger.warn("Microsoft Edge disconnected; cached dashboard data will be preserved", { code: "BROWSER_NOT_CONNECTED" });
@@ -148,6 +166,8 @@ class BrowserManager {
     this.detachBrowserListener();
     this.browser = null;
     this.page = null;
+    this.notify({ type: "stopped", page: null });
+    this.listeners.clear();
   }
 }
 

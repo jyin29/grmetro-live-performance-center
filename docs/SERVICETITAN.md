@@ -1330,6 +1330,16 @@ The response shall be inspected before JSON parsing.
 
 ---
 
+## Phase 9 Client Implementation (2026-07-31)
+
+The implemented backend client keeps endpoint paths in `apps/backend/src/servicetitan/endpoints.js` and the captured Technician Datasource field selection in `apps/backend/src/servicetitan/fields.js`. Request builders are pure and recalculate the configured local date for every refresh.
+
+The CSRF provider observes successful response-associated request headers on the selected authenticated page, stores the token only in memory, moves its single listener when the browser page changes, and clears the token on reconnect, authentication/CSRF failures, HTTP 401/403, and shutdown. Request execution uses an authenticated in-page `fetch` with a bounded timeout and only the required JSON, XMLHttpRequest, and CSRF headers.
+
+The live provider attempts the configured five technicians with concurrency two. It validates Overview and Datasource responses independently, passes only the allow-listed aggregate record into the Phase 7 normalizer, and retains prior normalized technician data after an isolated failure. Metadata requests and job drilldown requests are not part of the one-minute refresh. The job drilldown builder exists for Phase 10 research, but no service/install derivation or Lead Conversion mapping is implemented.
+
+Automated verification uses fake pages and browser managers. Actual endpoint success and refresh duration against the office's manually authenticated Edge session remain operational verification steps and are not claimed by this implementation record.
+
 # 38. HTML Response Detection
 
 Reject when:

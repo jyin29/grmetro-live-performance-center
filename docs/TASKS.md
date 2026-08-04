@@ -681,79 +681,82 @@ feat: connect to persistent authenticated Edge session
 
 ## Endpoint Registry
 
-- [ ] Centralize Technician Overview endpoint.
-- [ ] Centralize Technician Datasource endpoint.
-- [ ] Centralize Job Drilldown endpoint.
-- [ ] Centralize metadata endpoints.
-- [ ] Duplicate no endpoint string elsewhere.
+- [x] Centralize Technician Overview endpoint.
+- [x] Centralize Technician Datasource endpoint.
+- [x] Centralize Job Drilldown endpoint.
+- [x] Centralize metadata endpoints.
+- [x] Duplicate no endpoint string elsewhere.
 
 ## Field Registry
 
-- [ ] Centralize Technician Datasource field list.
-- [ ] Add required confirmed fields.
-- [ ] Avoid requesting unnecessary private fields.
-- [ ] Document field additions.
+- [x] Centralize Technician Datasource field list.
+- [x] Add required confirmed fields.
+- [x] Avoid requesting unnecessary private fields.
+- [x] Document field additions.
 
 ## Request Builders
 
-- [ ] Build today's local date.
-- [ ] Build Technician Overview payload.
-- [ ] Build Technician Datasource payload.
-- [ ] Build Job Drilldown payload.
-- [ ] Substitute technician ID.
-- [ ] Add business-unit IDs.
-- [ ] Add time zone.
-- [ ] Add reload key.
-- [ ] Keep reload-key logic centralized.
+- [x] Build today's local date.
+- [x] Build Technician Overview payload.
+- [x] Build Technician Datasource payload.
+- [x] Build Job Drilldown payload.
+- [x] Substitute technician ID.
+- [x] Add business-unit IDs.
+- [x] Add time zone.
+- [x] Add reload key.
+- [x] Keep reload-key logic centralized.
 
 ## CSRF
 
-- [ ] Implement dynamic token provider.
-- [ ] Observe successful ServiceTitan requests when necessary.
-- [ ] Cache token only in memory.
-- [ ] Refresh after 401.
-- [ ] Refresh after 403.
-- [ ] Refresh after reconnect.
-- [ ] Never log token.
+- [x] Implement dynamic token provider.
+- [x] Observe successful ServiceTitan requests when necessary.
+- [x] Cache token only in memory.
+- [x] Refresh after 401.
+- [x] Refresh after 403.
+- [x] Refresh after reconnect.
+- [x] Never log token.
 
 ## Request Execution
 
-- [ ] Send POST requests.
-- [ ] Include credentials.
-- [ ] Include required JSON headers.
-- [ ] Include CSRF token.
-- [ ] Add timeout.
-- [ ] Return status, final URL, content type, and body.
-- [ ] Parse JSON only after validation.
+- [x] Send POST requests.
+- [x] Include credentials.
+- [x] Include required JSON headers.
+- [x] Include CSRF token.
+- [x] Add timeout.
+- [x] Return status, final URL, content type, and body.
+- [x] Parse JSON only after validation.
 
 ## Response Validation
 
-- [ ] Reject `text/html`.
-- [ ] Reject app-shell HTML.
-- [ ] Reject hash-route redirects.
-- [ ] Reject malformed JSON.
-- [ ] Classify authentication failures.
-- [ ] Classify CSRF failures.
-- [ ] Classify timeouts.
-- [ ] Include safe diagnostic preview.
+- [x] Reject `text/html`.
+- [x] Reject app-shell HTML.
+- [x] Reject hash-route redirects.
+- [x] Reject malformed JSON.
+- [x] Classify authentication failures.
+- [x] Classify CSRF failures.
+- [x] Classify timeouts.
+- [x] Include safe diagnostic preview.
 
 ## Technician Refresh
 
-- [ ] Refresh all five technicians.
-- [ ] Limit concurrency to two or use reliable sequential calls.
-- [ ] Merge Overview and Datasource only where needed.
-- [ ] Preserve per-technician failures.
-- [ ] Record request durations.
-- [ ] Avoid frontend-triggered ServiceTitan requests.
+- [x] Refresh all five technicians.
+- [x] Limit concurrency to two or use reliable sequential calls.
+- [x] Merge Overview and Datasource only where needed.
+- [x] Preserve per-technician failures.
+- [x] Record request durations.
+- [x] Avoid frontend-triggered ServiceTitan requests.
 
 ## Verification
 
 - [ ] All five technician datasource requests return JSON.
-- [ ] No HTML response is accepted.
-- [ ] No credentials are stored.
-- [ ] No token is committed.
+- [x] No HTML response is accepted.
+- [x] No credentials are stored.
+- [x] No token is committed.
 - [ ] Refresh completes within interval.
 - [ ] Live integration tests are performed manually.
+
+
+Progress note (2026-07-31): Phase 9 implementation is complete. The backend now uses a centralized endpoint and field registry, pure New York-date request builders, dynamic memory-only CSRF observation, authenticated in-page JSON POST execution, defensive response validation, and a concurrency-two five-technician live provider. Partial technician failures retain prior records, direct Phase 7 mappings alone are normalized, and unresolved lead/service/install KPIs remain unavailable. Dependency-isolated fake-page and fake-browser tests cover the client without requiring Edge or ServiceTitan. The live-environment verification items below remain intentionally unchecked until an authenticated office Edge session is available; Phase 10 derivations have not started.
 
 Recommended commits:
 
