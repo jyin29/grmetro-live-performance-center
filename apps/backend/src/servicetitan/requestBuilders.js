@@ -20,7 +20,8 @@ function datasourceBase(config, technicianId, now) {
 function buildTechnicianDatasourceRequest(config, technicianId, now = new Date()) {
   return { ...datasourceBase(config, technicianId, now), Fields: TECHNICIAN_DATASOURCE_FIELD_STRING, VisibleFields: TECHNICIAN_DATASOURCE_FIELD_STRING, TimeZone: config.timeZone };
 }
-function buildTechnicianJobDrilldownRequest(config, technicianId, now = new Date()) {
-  return { ...datasourceBase(config, technicianId, now), KpiType: config.serviceTitanDrilldownKpiType, TimeZone: config.timeZone };
+function buildTechnicianJobDrilldownRequest(config, technicianId, now = new Date(), options = {}) {
+  const kpiType = options.kpiType === undefined ? config.serviceTitanDrilldownKpiType : String(options.kpiType);
+  return { ...datasourceBase(config, technicianId, now), KpiType: kpiType, TimeZone: config.timeZone };
 }
 module.exports = { buildTechnicianOverviewRequest, buildTechnicianDatasourceRequest, buildTechnicianJobDrilldownRequest };

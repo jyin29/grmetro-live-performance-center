@@ -671,6 +671,117 @@ Do not guess its meaning.
 
 ---
 
+# 21A. Development Drilldown Capture Route
+
+The backend exposes a development-only research route for sanitized job drilldown capture:
+
+```text
+POST /api/v1/dev/servicetitan/drilldown
+```
+
+Request body:
+
+```json
+{
+  "technicianId": 134926818,
+  "date": "2026-08-04",
+  "kpiType": "2",
+  "includeMetadata": true
+}
+```
+
+Availability rules:
+
+- The route is registered only when `ENABLE_DEVELOPMENT_ROUTES=true`.
+- The route is never registered when `NODE_ENV=production`.
+- `technicianId` must match one of the five configured Version 1.0 technicians.
+- `date` must use `YYYY-MM-DD`.
+- Optional `kpiType` must be an explicit one- or two-digit numeric string for bounded research.
+- Optional `includeMetadata: true` includes a sanitized datasource metadata summary.
+- The route uses the authenticated Edge session, dynamic CSRF token, centralized endpoint registry, and centralized `TechnicianJobsExtendedDrilldownDatasource` request builder.
+- The route does not persist records automatically.
+
+Sanitized response contract:
+
+```json
+{
+  "ok": true,
+  "drilldown": {
+    "technicianId": 134926818,
+    "date": "2026-08-04",
+    "recordCount": 1,
+    "requestedKpiType": "2",
+    "removedFields": ["CustomerName"],
+    "fieldSchema": [
+      {
+        "field": "JobTypeId",
+        "types": ["number"],
+        "presentInRecords": 1,
+        "retained": true
+      }
+    ],
+    "records": [
+      {
+        "recordKey": 123456,
+        "technicianId": 134926818,
+        "jobTypeId": 111,
+        "jobTypeName": "Example Job Type",
+        "businessUnitId": 1103,
+        "businessUnitName": "Example Business Unit",
+        "businessUnit": "Service",
+        "converted": false,
+        "opportunity": true,
+        "split": 100,
+        "subtotal": 250,
+        "status": "Completed",
+        "completedOn": "2026-08-04T14:30:00",
+        "revenue": 250,
+        "isBillable": true,
+        "isRecall": false,
+        "isWarranty": false,
+        "isNoCharge": false
+      }
+    ],
+    "datasourceMetadata": {
+      "datasource": "TechnicianJobsExtendedDrilldownDatasource",
+      "fields": [
+        { "field": "JobTypeId", "label": "Job Type", "type": "number" }
+      ]
+    }
+  }
+}
+```
+
+The sanitizer is allow-list based. Unknown field values do not pass through automatically; schema inspection returns raw field names, inferred value types, count of records containing each field, and retained/removed status without returning unknown values. Customer names, customer IDs where unnecessary, addresses, phone numbers, emails, notes, appointment text, invoice descriptions, private employee information, cookies, CSRF tokens, session IDs, and other authentication values are removed. `removedFields` lists redacted or discarded source field names where useful.
+
+Current live finding: `KpiType` value `2` yielded three Julio Torres records on August 4, 2026 whose revenue totals matched the aggregate Revenue KPI, but those returned records did not yet expose identified job type, status, billable, recall, warranty, or no-charge fields. This is research evidence only; it does not approve classification.
+
+PowerShell capture command for Julio Torres on August 4, 2026:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:3000/api/v1/dev/servicetitan/drilldown" -ContentType "application/json" -Body '{"technicianId":134926818,"date":"2026-08-04","kpiType":"2","includeMetadata":true}' | ConvertTo-Json -Depth 20
+```
+
+
+PowerShell command for sanitized drilldown datasource metadata only:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:3000/api/v1/dev/servicetitan/drilldown/metadata" | ConvertTo-Json -Depth 20
+```
+
+Live research workflow:
+
+1. Start the manually authenticated Edge profile with CDP on `http://127.0.0.1:9222`.
+2. Sign in to ServiceTitan manually; do not store credentials, cookies, session IDs, CSRF tokens, or MFA codes.
+3. Start the backend with `MOCK_MODE=false`, `ENABLE_DEVELOPMENT_ROUTES=true`, and a non-production `NODE_ENV`.
+4. Run the PowerShell command above for a selected configured technician and date.
+5. Save or share only the sanitized JSON response. Do not capture browser DevTools exports or raw ServiceTitan records.
+6. Review the sanitized job type, business unit, status, revenue, billable, recall, warranty, and no-charge fields with GRmetro before populating production classification rules.
+
+Classification status: not approved. The following remain unknown until sanitized drilldown records are captured and reviewed: final service job type IDs, final install job type IDs, exclusions, status field semantics, revenue field basis, billable indicator, recall indicator, warranty indicator, no-charge indicator, and `KpiType` meanings. `KpiType` values may be tested only one explicit bounded value at a time; the tooling must not automatically cycle large or unbounded ranges. Derived service/install KPIs must remain unavailable in production while `classificationApproved` is false.
+
+---
+
 # 22. Datasource Metadata Endpoints
 
 Known endpoints:

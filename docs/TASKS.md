@@ -787,26 +787,26 @@ feat: add resilient five-technician refresh pipeline
 - [ ] Identify status field.
 - [ ] Identify recall/warranty flags.
 - [ ] Document `KpiType` meaning.
-- [ ] Update `docs/SERVICETITAN.md`.
+- [x] Update `docs/SERVICETITAN.md`.
 
 ## Classification
 
 - [ ] Populate service job-type configuration.
 - [ ] Populate install job-type configuration.
 - [ ] Configure exclusions.
-- [ ] Log ambiguous records.
-- [ ] Exclude unclassified records from confirmed totals.
+- [x] Log/count ambiguous records in derivation results.
+- [x] Exclude unclassified records from confirmed totals.
 
 ## Derived KPIs
 
-- [ ] Derive Billable Service Calls.
-- [ ] Derive Service Revenue.
-- [ ] Derive Install Revenue.
-- [ ] Derive Number of Installs.
-- [ ] Derive Install Average Ticket.
-- [ ] Return no-data when install denominator is zero.
-- [ ] Mark derived data quality.
-- [ ] Add calculation tests.
+- [x] Derive Billable Service Calls.
+- [x] Derive Service Revenue.
+- [x] Derive Install Revenue.
+- [x] Derive Number of Installs.
+- [x] Derive Install Average Ticket.
+- [x] Return no-data when install denominator is zero.
+- [x] Mark derived data quality.
+- [x] Add calculation tests.
 
 ## Business Validation
 
@@ -818,6 +818,9 @@ feat: add resilient five-technician refresh pipeline
 - [ ] Approve production classification.
 
 This phase is release-blocking.
+
+
+Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Added a development-only sanitized drilldown route, strict allow-list sanitizer, schema inspection, sanitized datasource metadata lookup, bounded explicit `KpiType` research support, pure configuration-driven job classifier, and pure derivation functions for the five service/install KPIs. Live testing showed `KpiType: "2"` returned revenue-matching records for Julio but did not expose identified job-type/status/billable/recall/warranty/no-charge fields, so live research and business validation remain incomplete. Production classification remains disabled with `classificationApproved: false`; normal live refresh does not yet fetch drilldown records, and live service/install KPIs remain unavailable until GRmetro reviews sanitized records and approves job classification.
 
 Recommended commit:
 

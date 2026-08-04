@@ -181,3 +181,22 @@ test("production internal errors hide stacks and unknown routes use the error co
     assert.deepEqual(missing.body, { ok: false, error: { code: "NOT_FOUND", message: "The requested resource was not found.", details: null } });
   });
 });
+
+test("development drilldown route validates input, gates production, and returns sanitized records", async () => {
+  let called = null;
+  const serviceTitanClient = { async fetchTechnicianJobDrilldown(args) { called = args; return { ...args, requestedKpiType: args.kpiType, records: [{ jobTypeId: 1, jobTypeName: "Service", revenue: 10 }], fieldSchema: [{ field:"CustomerName", types:["string"], presentInRecords:1, retained:false }], removedFields: ["CustomerName"], recordCount: 1, datasourceMetadata: { fields: [] } }; }, async fetchJobDrilldownMetadata() { return { datasource:"TechnicianJobsExtendedDrilldownDatasource", fields:[{ field:"JobTypeId", label:"Job Type", type:"number" }] }; } };
+  const setup = fixture({ config: { developmentRoutesEnabled: true }, serviceTitanClient });
+  setup.app._router = setup.app._router;
+  await run(createApp({
+    config: configuration("test", { developmentRoutesEnabled: true }), logger, cache: setup.cache, tvManager: setup.tvManager, scheduler: setup.scheduler, clock: () => new Date(), serviceTitanClient
+  }), async (base) => {
+    const ok = await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"2026-08-04", kpiType:"2", includeMetadata:true }) });
+    assert.equal(ok.response.status, 200); assert.deepEqual(called, { technicianId:134926818, date:"2026-08-04", kpiType:"2", includeMetadata:true }); assert.equal(ok.body.drilldown.removedFields[0], "CustomerName"); assert.equal(ok.body.drilldown.requestedKpiType, "2"); assert.equal(ok.body.drilldown.fieldSchema[0].retained, false);
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"2026-08-04", kpiType:"123" }) })).response.status, 400);
+    const meta = await json(base, "/api/v1/dev/servicetitan/drilldown/metadata"); assert.equal(meta.body.metadata.fields[0].field, "JobTypeId");
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:999, date:"2026-08-04" }) })).response.status, 400);
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"08/04/2026" }) })).response.status, 400);
+  });
+  const prod = fixture({ nodeEnv: "production", config: { developmentRoutesEnabled: true } });
+  await run(prod.app, async (base) => assert.equal((await fetch(`${base}/api/v1/dev/servicetitan/drilldown`, { method: "POST", headers:{"content-type":"application/json"}, body:"{}" })).status, 404));
+});

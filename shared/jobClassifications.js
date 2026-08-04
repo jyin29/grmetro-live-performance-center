@@ -4,6 +4,10 @@
 // classification rules. Empty lists intentionally prevent guessed mappings.
 module.exports = {
   productionReady: false,
+  classificationApproved: false,
+  excludeRecalls: true,
+  excludeWarranty: true,
+  excludeNoCharge: true,
   unresolvedReason: "Service and completed-install job classifications require business validation.",
   service: {
     includedJobTypeIds: [],

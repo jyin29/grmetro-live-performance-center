@@ -35,7 +35,7 @@ function start() {
     lastErrorCode: null, lastErrorMessage: null });
   const app = createApp({ config, logger, cache, tvManager, scheduler, applicationVersion: packageJson.version,
     browserStatusProvider: browserManager ? () => browserManager.getStatus() : mockBrowserStatus,
-    serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }) });
+    serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }), serviceTitanClient });
   const server = app.listen(config.port, config.host, () => logger.info("Backend application started", {
     application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv,
     host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan"
