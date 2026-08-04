@@ -181,3 +181,20 @@ test("production internal errors hide stacks and unknown routes use the error co
     assert.deepEqual(missing.body, { ok: false, error: { code: "NOT_FOUND", message: "The requested resource was not found.", details: null } });
   });
 });
+
+test("development drilldown route validates input, gates production, and returns sanitized records", async () => {
+  let called = null;
+  const serviceTitanClient = { async fetchTechnicianJobDrilldown(args) { called = args; return { ...args, records: [{ jobTypeId: 1, jobTypeName: "Service", revenue: 10 }], removedFields: ["CustomerName"], recordCount: 1 }; } };
+  const setup = fixture({ config: { developmentRoutesEnabled: true }, serviceTitanClient });
+  setup.app._router = setup.app._router;
+  await run(createApp({
+    config: configuration("test", { developmentRoutesEnabled: true }), logger, cache: setup.cache, tvManager: setup.tvManager, scheduler: setup.scheduler, clock: () => new Date(), serviceTitanClient
+  }), async (base) => {
+    const ok = await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"2026-08-04" }) });
+    assert.equal(ok.response.status, 200); assert.deepEqual(called, { technicianId:134926818, date:"2026-08-04" }); assert.equal(ok.body.drilldown.removedFields[0], "CustomerName");
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:999, date:"2026-08-04" }) })).response.status, 400);
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"08/04/2026" }) })).response.status, 400);
+  });
+  const prod = fixture({ nodeEnv: "production", config: { developmentRoutesEnabled: true } });
+  await run(prod.app, async (base) => assert.equal((await fetch(`${base}/api/v1/dev/servicetitan/drilldown`, { method: "POST", headers:{"content-type":"application/json"}, body:"{}" })).status, 404));
+});
