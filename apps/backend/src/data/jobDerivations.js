@@ -1,12 +1,38 @@
 "use strict";
 const { classifyJob, helpers } = require("./jobClassifier");
-function empty(q="unavailable", counts={}){return {value:null,hasData:false,dataQuality:q,includedRecordCount:0,excludedRecordCount:0,unknownRecordCount:0,ambiguousRecordCount:0,...counts};}
+function empty(q="unavailable", counts={}){return {value:null,hasData:false,dataQuality:q,includedRecordCount:0,excludedRecordCount:0,unknownRecordCount:0,ambiguousRecordCount:0,missingRequiredFieldCount:0,...counts};}
+function baseCounts(){return {includedRecordCount:0,excludedRecordCount:0,unknownRecordCount:0,ambiguousRecordCount:0,missingRequiredFieldCount:0};}
+function finish(value, counts, options={}){const hasMissing=counts.missingRequiredFieldCount>0; if(options.noData) return empty(hasMissing?"unavailable":"derived",counts); return {value,hasData:!hasMissing,dataQuality:hasMissing?"unavailable":"derived",...counts};}
+function markClassification(counts, classification){if(classification==="excluded") counts.excludedRecordCount++; else if(classification==="unknown") counts.unknownRecordCount++; else if(classification==="ambiguous") counts.ambiguousRecordCount++;}
 function deriveServiceInstallKpis(records, configuration={}){
- const counts={includedRecordCount:0,excludedRecordCount:0,unknownRecordCount:0,ambiguousRecordCount:0};
  if(!configuration.classificationApproved) return { billableServiceCalls:empty(), serviceRevenue:empty(), installRevenue:empty(), installs:empty(), installAverageTicket:empty() };
- let calls=0, serviceRevenue=0, installRevenue=0, installs=0;
- for(const original of records||[]){const r={...original}; const c=classifyJob(r,configuration); if(c==="excluded"){counts.excludedRecordCount++;continue;} if(c==="unknown"){counts.unknownRecordCount++;continue;} if(c==="ambiguous"){counts.ambiguousRecordCount++;continue;} if(!helpers.statusCompleted(r.status)){counts.excludedRecordCount++;continue;} const revenue=helpers.money(r.revenue)??0; counts.includedRecordCount++; if(c==="service"){serviceRevenue+=revenue;if(helpers.truthy(r.isBillable)) calls++;} if(c==="install"){installRevenue+=revenue;installs++;}}
- const quality="derived"; const base={...counts,dataQuality:quality};
- return { billableServiceCalls:{value:calls,hasData:true,...base}, serviceRevenue:{value:serviceRevenue,hasData:true,...base}, installRevenue:{value:installRevenue,hasData:true,...base}, installs:{value:installs,hasData:true,...base}, installAverageTicket: installs>0?{value:installRevenue/installs,hasData:true,...base}:{...empty(quality,counts)} };
+ const counts={billableServiceCalls:baseCounts(),serviceRevenue:baseCounts(),installRevenue:baseCounts(),installs:baseCounts(),installAverageTicket:baseCounts()};
+ let calls=0, serviceRevenue=0, installRevenue=0, installs=0, avgInstallRevenue=0, avgInstallCount=0;
+ for(const original of records||[]){
+  const r={...original}; const c=classifyJob(r,configuration);
+  for(const key of Object.keys(counts)) markClassification(counts[key],c);
+  if(c!=="service"&&c!=="install") continue;
+  if(!helpers.statusCompleted(r.status,configuration)){for(const key of Object.keys(counts)) counts[key].excludedRecordCount++; continue;}
+  if(c==="service"){
+   const billable=helpers.tristate(r.isBillable); counts.billableServiceCalls.includedRecordCount++;
+   if(billable===true) calls++; else if(billable===null) counts.billableServiceCalls.missingRequiredFieldCount++;
+   const revenue=helpers.money(r.revenue); counts.serviceRevenue.includedRecordCount++;
+   if(revenue===null) counts.serviceRevenue.missingRequiredFieldCount++; else serviceRevenue+=revenue;
+  }
+  if(c==="install"){
+   counts.installs.includedRecordCount++; installs++;
+   const revenue=helpers.money(r.revenue);
+   counts.installRevenue.includedRecordCount++; counts.installAverageTicket.includedRecordCount++;
+   if(revenue===null){counts.installRevenue.missingRequiredFieldCount++; counts.installAverageTicket.missingRequiredFieldCount++;}
+   else {installRevenue+=revenue; avgInstallRevenue+=revenue; avgInstallCount++;}
+  }
+ }
+ return {
+  billableServiceCalls:finish(calls,counts.billableServiceCalls),
+  serviceRevenue:finish(serviceRevenue,counts.serviceRevenue),
+  installRevenue:finish(installRevenue,counts.installRevenue),
+  installs:finish(installs,counts.installs),
+  installAverageTicket:avgInstallCount>0?finish(avgInstallRevenue/avgInstallCount,counts.installAverageTicket):finish(null,counts.installAverageTicket,{noData:true})
+ };
 }
 module.exports={deriveServiceInstallKpis};

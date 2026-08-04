@@ -10,8 +10,11 @@ function validateDrilldownBody(body) {
   if (extra.length) throw new ApiError(400, "INVALID_DRILLDOWN_REQUEST", "Only technicianId and date are allowed.", { fields: extra });
   const technicianId = Number(body?.technicianId);
   if (!Number.isSafeInteger(technicianId) || !validTechnicianIds.has(technicianId)) throw new ApiError(400, "INVALID_TECHNICIAN_ID", "Technician ID is not configured for Version 1.0.");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(body?.date || ""))) throw new ApiError(400, "INVALID_DATE", "Date must use YYYY-MM-DD format.");
-  return { technicianId, date: body.date };
+  const date = String(body?.date || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new ApiError(400, "INVALID_DATE", "Date must use YYYY-MM-DD format.");
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) throw new ApiError(400, "INVALID_DATE", "Date must be a real calendar date in YYYY-MM-DD format.");
+  return { technicianId, date };
 }
 function createDevelopmentRoutes({ scheduler, serviceTitanClient } = {}) {
   if (!scheduler || typeof scheduler.refresh !== "function") throw new TypeError("Development routes require a scheduler.");
