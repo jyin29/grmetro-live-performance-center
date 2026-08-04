@@ -758,6 +758,11 @@ feat: connect to persistent authenticated Edge session
 
 Progress note (2026-07-31): Phase 9 implementation is complete. The backend now uses a centralized endpoint and field registry, pure New York-date request builders, dynamic memory-only CSRF observation, authenticated in-page JSON POST execution, defensive response validation, and a concurrency-two five-technician live provider. Partial technician failures retain prior records, direct Phase 7 mappings alone are normalized, and unresolved lead/service/install KPIs remain unavailable. Dependency-isolated fake-page and fake-browser tests cover the client without requiring Edge or ServiceTitan. The live-environment verification items below remain intentionally unchecked until an authenticated office Edge session is available; Phase 10 derivations have not started.
 
+Corrective note (2026-08-04): The backend syntax build no longer depends on the Unix-only
+`find | xargs` pipeline. A dependency-free Node script now discovers and syntax-checks JavaScript
+recursively on Windows, macOS, and Linux, with automated coverage for invalid files, nested and
+space-containing paths, and missing directories. Phase 9 business behavior is unchanged.
+
 Recommended commits:
 
 ```text

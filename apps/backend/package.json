@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "build": "find src -name '*.js' -print0 | xargs -0 -n1 node --check",
+    "build": "node ../../scripts/check-javascript.js src",
     "test": "node --test test/*.test.js",
     "start": "node src/index.js"
   },
