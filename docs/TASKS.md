@@ -828,7 +828,7 @@ feat: add resilient five-technician refresh pipeline
 This phase is release-blocking.
 
 
-Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Added a development-only sanitized drilldown route, strict allow-list sanitizer, pure configuration-driven job classifier, and pure derivation functions for the five service/install KPIs. Production classification remains disabled with `classificationApproved: false`; normal live refresh does not yet fetch drilldown records, and live service/install KPIs remain unavailable until GRmetro reviews sanitized records and approves job classification.
+Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Added a development-only sanitized drilldown route, strict allow-list sanitizer, pure configuration-driven job classifier, and pure derivation functions for the five service/install KPIs. Production classification remains disabled with `classificationApproved: false`; normal live refresh does not yet fetch drilldown records, and live service/install KPIs remain unavailable until GRmetro reviews sanitized records and approves job classification. Follow-up correction (2026-08-04): tightened completed-status and drilldown-date validation, preserved missing monetary values as missing instead of zero, and made derived KPI metadata track each KPI's own required-field completeness. Production classification remains disabled.
 
 Recommended commit:
 

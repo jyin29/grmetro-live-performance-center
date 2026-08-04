@@ -194,6 +194,8 @@ test("development drilldown route validates input, gates production, and returns
     assert.equal(ok.response.status, 200); assert.deepEqual(called, { technicianId:134926818, date:"2026-08-04" }); assert.equal(ok.body.drilldown.removedFields[0], "CustomerName");
     assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:999, date:"2026-08-04" }) })).response.status, 400);
     assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"08/04/2026" }) })).response.status, 400);
+    for (const date of ["2026-02-31", "2026-13-01", "2026-00-00", "2025-02-29"]) assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date }) })).response.status, 400);
+    assert.equal((await json(base, "/api/v1/dev/servicetitan/drilldown", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ technicianId:134926818, date:"2024-02-29" }) })).response.status, 200);
   });
   const prod = fixture({ nodeEnv: "production", config: { developmentRoutesEnabled: true } });
   await run(prod.app, async (base) => assert.equal((await fetch(`${base}/api/v1/dev/servicetitan/drilldown`, { method: "POST", headers:{"content-type":"application/json"}, body:"{}" })).status, 404));

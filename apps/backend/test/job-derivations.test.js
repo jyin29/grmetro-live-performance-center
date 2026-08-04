@@ -1,6 +1,6 @@
 "use strict";
 const test=require("node:test");const assert=require("node:assert/strict");
-const { classifyJob }=require("../src/data/jobClassifier");
+const { classifyJob, helpers }=require("../src/data/jobClassifier");
 const { deriveServiceInstallKpis }=require("../src/data/jobDerivations");
 const { sanitizeDrilldownRecords }=require("../src/servicetitan/drilldownSanitizer");
 const cfg={classificationApproved:true,excludeRecalls:true,excludeWarranty:true,excludeNoCharge:true,service:{includedJobTypeIds:[1],includedJobTypeNames:["Maintenance"],includedNamePatterns:["service"],excludedJobTypeIds:[9],excludedJobTypeNames:["Exclude"],excludedNamePatterns:["bad"]},install:{includedJobTypeIds:[2],includedJobTypeNames:[],includedNamePatterns:["install"],excludedJobTypeIds:[],excludedJobTypeNames:[],excludedNamePatterns:[]}};
@@ -8,3 +8,50 @@ test("strict drilldown sanitization keeps only classification research fields",(
 test("classification supports IDs, fallback names, priority, exclusions, unknown, ambiguous and flags",()=>{assert.equal(classifyJob({jobTypeId:1,jobTypeName:"Install tune",status:"Completed"},cfg),"service");assert.equal(classifyJob({jobTypeId:2,status:"Completed"},cfg),"install");assert.equal(classifyJob({jobTypeName:"emergency service",status:"Completed"},cfg),"service");assert.equal(classifyJob({jobTypeId:9,jobTypeName:"service",status:"Completed"},cfg),"excluded");assert.equal(classifyJob({jobTypeName:"mystery",status:"Completed"},cfg),"unknown");assert.equal(classifyJob({jobTypeName:"service install",status:"Completed"},cfg),"ambiguous");for(const flag of ["isRecall","isWarranty","isNoCharge"])assert.equal(classifyJob({jobTypeId:1,status:"Completed",[flag]:true},cfg),"excluded");assert.equal(classifyJob({jobTypeId:1,status:"Canceled"},cfg),"excluded");});
 test("derivations compute counts/revenue/average and do not mutate input",()=>{const records=[{jobTypeId:1,status:"Completed",isBillable:true,revenue:100},{jobTypeId:1,status:"Completed",isBillable:false,revenue:50},{jobTypeId:2,status:"Completed",revenue:300},{jobTypeName:"install",status:"Completed",revenue:500},{jobTypeName:"unknown",status:"Completed",revenue:999},{jobTypeName:"service install",status:"Completed",revenue:999},{jobTypeId:1,status:"Canceled",isBillable:true,revenue:999},{jobTypeId:1,status:"Completed",isRecall:true,revenue:999},{jobTypeId:1,status:"Completed",isWarranty:true,revenue:999},{jobTypeId:1,status:"Completed",isNoCharge:true,revenue:999}];const before=structuredClone(records);const k=deriveServiceInstallKpis(records,cfg);assert.equal(k.billableServiceCalls.value,1);assert.equal(k.serviceRevenue.value,150);assert.equal(k.installs.value,2);assert.equal(k.installRevenue.value,800);assert.equal(k.installAverageTicket.value,400);assert.equal(k.serviceRevenue.unknownRecordCount,1);assert.equal(k.serviceRevenue.ambiguousRecordCount,1);assert.deepEqual(records,before);});
 test("zero installs produces no data and unapproved config keeps production KPIs unavailable",()=>{const noInstalls=deriveServiceInstallKpis([{jobTypeId:1,status:"Completed",isBillable:true,revenue:10}],cfg);assert.equal(noInstalls.installAverageTicket.hasData,false);assert.equal(noInstalls.installAverageTicket.value,null);const off=deriveServiceInstallKpis([{jobTypeId:1,status:"Completed",isBillable:true,revenue:10}],{...cfg,classificationApproved:false});assert.equal(off.billableServiceCalls.hasData,false);assert.equal(off.billableServiceCalls.dataQuality,"unavailable");assert.equal(off.serviceRevenue.value,null);});
+
+
+test("completed status matching is exact and rejects substring false positives",()=>{
+  assert.equal(helpers.statusCompleted("Completed",cfg),true);
+  assert.equal(helpers.statusCompleted("complete",cfg),true);
+  assert.equal(helpers.statusCompleted("done",cfg),true);
+  for (const status of ["Incomplete","Not Completed","Undone","completion pending",""]) assert.equal(helpers.statusCompleted(status,cfg),false);
+  assert.equal(helpers.statusCompleted("Finished",{...cfg,completedStatuses:["Finished"]}),true);
+});
+
+test("money helper preserves zero but returns null for missing blank or malformed values",()=>{
+  const cases=[[null,null],[undefined,null],["",null],["   ",null],["$0",0],[0,0],["not-money",null],["$1,234.50",1234.5]];
+  for (const [input, expected] of cases) assert.equal(helpers.money(input),expected);
+});
+
+test("missing revenue and billable fields produce KPI-specific unavailable quality",()=>{
+  const k=deriveServiceInstallKpis([
+    {jobTypeId:1,status:"Completed",isBillable:true,revenue:100},
+    {jobTypeId:1,status:"Completed",revenue:""},
+    {jobTypeId:2,status:"Completed",revenue:300},
+    {jobTypeId:2,status:"Completed",revenue:null}
+  ],cfg);
+  assert.equal(k.billableServiceCalls.value,1);
+  assert.equal(k.billableServiceCalls.hasData,false);
+  assert.equal(k.billableServiceCalls.dataQuality,"unavailable");
+  assert.equal(k.billableServiceCalls.missingRequiredFieldCount,1);
+  assert.equal(k.serviceRevenue.value,100);
+  assert.equal(k.serviceRevenue.hasData,false);
+  assert.equal(k.serviceRevenue.missingRequiredFieldCount,1);
+  assert.equal(k.installRevenue.value,300);
+  assert.equal(k.installRevenue.hasData,false);
+  assert.equal(k.installRevenue.missingRequiredFieldCount,1);
+  assert.equal(k.installs.value,2);
+  assert.equal(k.installs.hasData,true);
+  assert.equal(k.installs.missingRequiredFieldCount,0);
+  assert.equal(k.installAverageTicket.value,300);
+  assert.equal(k.installAverageTicket.hasData,false);
+  assert.equal(k.installAverageTicket.missingRequiredFieldCount,1);
+  assert.notDeepEqual(k.installs,k.installRevenue);
+});
+
+test("install average ticket excludes installs whose revenue basis is missing",()=>{
+  const k=deriveServiceInstallKpis([{jobTypeId:2,status:"Completed",revenue:""},{jobTypeId:2,status:"Completed",revenue:500}],cfg);
+  assert.equal(k.installs.value,2);
+  assert.equal(k.installAverageTicket.value,500);
+  assert.equal(k.installAverageTicket.hasData,false);
+});
