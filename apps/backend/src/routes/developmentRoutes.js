@@ -24,6 +24,31 @@ function createDevelopmentRoutes({ scheduler, serviceTitanClient } = {}) {
       response.json({ ok: result.ok, refresh: result });
     } catch (error) { next(error); }
   });
+  router.post("/servicetitan/research/start", (request, response, next) => {
+    try {
+      if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
+      response.json({ ok: true, research: serviceTitanClient.researchObserver.start() });
+    } catch (error) { next(error); }
+  });
+  router.post("/servicetitan/research/stop", (request, response, next) => {
+    try {
+      if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
+      response.json({ ok: true, research: serviceTitanClient.researchObserver.stop() });
+    } catch (error) { next(error); }
+  });
+  router.get("/servicetitan/research/results", (request, response, next) => {
+    try {
+      if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
+      response.json({ ok: true, research: serviceTitanClient.researchObserver.results() });
+    } catch (error) { next(error); }
+  });
+  router.delete("/servicetitan/research/results", (request, response, next) => {
+    try {
+      if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
+      serviceTitanClient.researchObserver.clear();
+      response.json({ ok: true, research: serviceTitanClient.researchObserver.results() });
+    } catch (error) { next(error); }
+  });
   router.post("/servicetitan/drilldown", async (request, response, next) => {
     try {
       if (!serviceTitanClient?.fetchTechnicianJobDrilldown) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
