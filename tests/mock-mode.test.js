@@ -21,7 +21,7 @@ test("mock mode must be enabled explicitly and never silently replaces the live 
   assert.equal(loadMockConfig({ MOCK_MODE: "false" }).mockMode, false);
   assert.equal(loadMockConfig({ MOCK_MODE: "true" }).mockMode, true);
   assert.throws(() => loadMockConfig({ MOCK_MODE: "TRUE" }), /exactly/);
-  assert.throws(() => createRefreshProvider({ config: loadMockConfig({}) }), /not implemented/);
+  assert.throws(() => createRefreshProvider({ config: loadMockConfig({}) }), /requires the Edge browser manager/);
   assert.throws(() => new MockRefreshProvider({ config: loadMockConfig({}) }), /explicit/);
 });
 

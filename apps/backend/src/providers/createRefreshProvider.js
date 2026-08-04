@@ -2,13 +2,13 @@
 
 const { assertRefreshProvider } = require("./refreshProvider");
 const { MockRefreshProvider } = require("./mockRefreshProvider");
+const { ServiceTitanRefreshProvider } = require("./serviceTitanRefreshProvider");
 
-function createRefreshProvider({ config, scenario } = {}) {
+function createRefreshProvider({ config, scenario, browserManager, executor, logger } = {}) {
   if (!config) throw new Error("Refresh provider configuration is required.");
-  if (!config.mockMode) {
-    throw new Error("Live refresh provider is not implemented; mock data will not be used as a fallback.");
-  }
-  return assertRefreshProvider(new MockRefreshProvider({ config, scenario }));
+  if (config.mockMode) return assertRefreshProvider(new MockRefreshProvider({ config, scenario }));
+  if (!browserManager || !executor) throw new Error("Live mode requires the Edge browser manager and ServiceTitan request executor; mock data will not be used as a fallback.");
+  return assertRefreshProvider(new ServiceTitanRefreshProvider({ config, browserManager, executor, logger }));
 }
 
 module.exports = { createRefreshProvider };
