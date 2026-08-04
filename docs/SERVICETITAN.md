@@ -330,11 +330,15 @@ A captured token is temporary and must not be placed in source code.
 
 The backend shall obtain the current token dynamically.
 
-Preferred strategies:
+Startup acquisition order:
 
-1. Observe a successful ServiceTitan request and read its `x-csrf-token` header
-2. Read a confirmed token from ServiceTitan application state
-3. Read a confirmed browser-storage or cookie value if ServiceTitan exposes it there
+1. Attach one response observer to the selected authenticated ServiceTitan page as soon as the page is selected.
+2. Attempt passive token discovery from known page-local sources, including CSRF meta tags and confirmed ServiceTitan application globals.
+3. If passive discovery fails, send one safe authenticated `GET` metadata request through the page context to `technicianMetadata`; this request must not mutate ServiceTitan state and must not include a CSRF token.
+4. Share the single in-flight acquisition promise across concurrent technician refreshes so startup does not create five independent waits or five acquisition requests.
+5. Cache the acquired token in backend memory and allow the first live refresh to await acquisition instead of requiring a manual page refresh.
+
+The startup acquisition flow is noninteractive. If acquisition fails or times out, the backend returns a retryable `SERVICE_TITAN_CSRF_ERROR`, preserves the previous dashboard cache, and retries on the next scheduled refresh without a tight retry loop.
 
 Refresh the cached token after:
 

@@ -17,7 +17,7 @@ function start() {
   const config = loadConfig();
   const logger = createLogger({ level: config.logLevel });
   const browserManager = createBrowserManagerForConfig(config, logger);
-  const serviceTitanClient = browserManager ? createServiceTitanClient({ config, browserManager }) : null;
+  const serviceTitanClient = browserManager ? createServiceTitanClient({ config, browserManager, logger }) : null;
   const provider = createRefreshProvider({ config, browserManager, executor: serviceTitanClient?.executor, logger });
   const cache = new DashboardCache();
   const tvManager = new TvManager({
