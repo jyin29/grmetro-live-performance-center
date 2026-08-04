@@ -5,8 +5,8 @@ const { ENDPOINTS } = require("./endpoints");
 const { buildTechnicianJobDrilldownRequest } = require("./requestBuilders");
 const { validateJsonResponse } = require("./responseValidation");
 const { sanitizeDrilldownRecords } = require("./drilldownSanitizer");
-function createServiceTitanClient({ config, browserManager }) {
-  const csrfTokenProvider = new CsrfTokenProvider({ browserManager, timeoutMilliseconds: config.serviceTitanCsrfTimeoutMilliseconds });
+function createServiceTitanClient({ config, browserManager, logger }) {
+  const csrfTokenProvider = new CsrfTokenProvider({ browserManager, baseUrl: config.serviceTitanBaseUrl, timeoutMilliseconds: config.serviceTitanCsrfTimeoutMilliseconds, logger });
   const executor = new ServiceTitanRequestExecutor({ browserManager, csrfTokenProvider, baseUrl: config.serviceTitanBaseUrl, timeoutMilliseconds: config.serviceTitanRequestTimeoutMilliseconds });
   return { csrfTokenProvider, executor, async fetchTechnicianJobDrilldown({ technicianId, date }) {
     const response = await executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(config, technicianId, new Date(`${date}T12:00:00Z`)));

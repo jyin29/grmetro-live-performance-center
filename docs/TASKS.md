@@ -715,6 +715,11 @@ feat: connect to persistent authenticated Edge session
 - [x] Refresh after 403.
 - [x] Refresh after reconnect.
 - [x] Never log token.
+- [x] Attach the CSRF observer when an already-open authenticated ServiceTitan page is selected.
+- [x] Attempt passive token lookup before live requests proceed.
+- [x] Use one safe non-mutating GET metadata acquisition request when passive lookup fails.
+- [x] Share one in-flight acquisition promise across concurrent technician requests.
+- [x] Return retryable acquisition failures and recover automatically on later scheduled refreshes.
 
 ## Request Execution
 
@@ -757,6 +762,9 @@ feat: connect to persistent authenticated Edge session
 
 
 Progress note (2026-07-31): Phase 9 implementation is complete. The backend now uses a centralized endpoint and field registry, pure New York-date request builders, dynamic memory-only CSRF observation, authenticated in-page JSON POST execution, defensive response validation, and a concurrency-two five-technician live provider. Partial technician failures retain prior records, direct Phase 7 mappings alone are normalized, and unresolved lead/service/install KPIs remain unavailable. Dependency-isolated fake-page and fake-browser tests cover the client without requiring Edge or ServiceTitan. The live-environment verification items below remain intentionally unchecked until an authenticated office Edge session is available; Phase 10 derivations have not started.
+
+
+Corrective note (2026-08-04): Live Windows restart testing found that Phase 9 could connect to an already-authenticated Edge page but miss the CSRF token until a user manually refreshed ServiceTitan. The CSRF provider now attaches immediately, performs passive page-local lookup, falls back to one non-mutating authenticated metadata GET, shares a single in-flight acquisition across concurrent technician requests, clears only on reconnect/page replacement/401/403/CSRF rejection, and retries automatically on later scheduled refreshes without exposing the token. Automated fake-page tests cover unattended startup, shared concurrency, retry, reconnect, safe logging, non-mutating acquisition, and shutdown cleanup.
 
 Corrective note (2026-08-04): The backend syntax build no longer depends on the Unix-only
 `find | xargs` pipeline. A dependency-free Node script now discovers and syntax-checks JavaScript
