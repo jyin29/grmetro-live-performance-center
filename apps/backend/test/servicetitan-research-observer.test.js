@@ -3,7 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const EventEmitter = require("node:events");
-const { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson } = require("../src/servicetitan/researchObserver");
+const { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson, discoverNativeKpis, buildNativeKpiDiscoveryReport } = require("../src/servicetitan/researchObserver");
 const classifications = require("../../../shared/jobClassifications");
 
 class Page extends EventEmitter {
@@ -136,4 +136,59 @@ test("request filtering records safe URL diagnostics and captures GetTechnicianO
     { timestamp: "2026-08-10T12:00:00.000Z", method: "POST", url: "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview" }
   ]);
   assert.equal(results.events[0].endpoint, "/app/api/reporting/modulardashboard/GetTechnicianOverview");
+});
+
+test("native KPI discovery recursively searches safe metadata descriptors and matching value field names", () => {
+  const discovery = discoverNativeKpis({
+    Charts: [{ ChartName: "Revenue Mix", Metrics: [
+      { MetricId: 17, Label: "Service Revenue", InternalName: "SvcSales", Datasource: "TechnicianSummary", ValueType: "Currency" },
+      { KpiId: "i-1", DisplayName: "Install Avg Ticket", FieldName: "InstallTicket", GroupName: "Install", DataType: "Money", ActualValue: 12345, TechnicianName: "Private Person" }
+    ] }],
+    Data: [{ InstallRevenue: 99999, InstallCount: 2, CustomerName: "Private Customer" }]
+  }, "Technicians");
+  assert.deepEqual(discovery.metadataMatches, [
+    { endpointDatasource: "Technicians", datasource: "TechnicianSummary", metricId: "17", label: "Service Revenue", internalFieldName: "SvcSales", chartOrGroupName: null, valueType: "Currency", matchedTerms: ["service revenue"] },
+    { endpointDatasource: "Technicians", datasource: "Technicians", metricId: "i-1", label: "Install Avg Ticket", internalFieldName: "InstallTicket", chartOrGroupName: "Install", valueType: "Money", matchedTerms: ["install avg ticket", "install ticket"] }
+  ]);
+  assert.deepEqual(discovery.valueMatches, [
+    { fieldName: "InstallRevenue", detectedType: "number", present: true, matchedTerms: ["install revenue"] },
+    { fieldName: "InstallCount", detectedType: "number", present: true, matchedTerms: ["install count"] }
+  ]);
+  const serialized = JSON.stringify(discovery);
+  for (const forbidden of ["12345", "99999", "Private Person", "Private Customer", "ActualValue", "TechnicianName", "CustomerName"]) assert.doesNotMatch(serialized, new RegExp(forbidden));
+});
+
+test("observer reports every searched endpoint and one native discovery status per desired KPI without values", async () => {
+  const page = new Page();
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) }); observer.start();
+  const metadataRequest = request({ url: "https://go.servicetitan.com/app/api/reporting/CustomReport/GetDatasourceForTechScorecards?name=Technicians", method: "GET" });
+  page.emit("request", metadataRequest); page.emit("response", response(metadataRequest, { data: { Fields: [
+    { Id: 1, Label: "Install Sales", FieldName: "InstallSales", DataType: "Currency" },
+    { Id: 2, Label: "Number of Installs", FieldName: "InstallCount", DataType: "Integer" }
+  ] } }));
+  const overviewRequest = request({ url: "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview" });
+  page.emit("request", overviewRequest); page.emit("response", response(overviewRequest, { data: { Data: [{ ServiceRevenue: 10 }] } }));
+  await new Promise((resolve) => setImmediate(resolve));
+  const results = observer.results();
+  assert.deepEqual(results.endpointsSearched, [
+    "/app/api/reporting/CustomReport/GetDatasourceForTechScorecards",
+    "/app/api/reporting/modulardashboard/GetTechnicianOverview"
+  ]);
+  assert.deepEqual(results.nativeKpiDiscoveryReport, [
+    { kpi: "Service Revenue", status: "FOUND", candidateFieldNames: ["ServiceRevenue"] },
+    { kpi: "Install Revenue", status: "POSSIBLE ALIAS", candidateFieldNames: ["InstallSales"] },
+    { kpi: "Number of Installs", status: "FOUND", candidateFieldNames: ["InstallCount"] },
+    { kpi: "Install Average Ticket", status: "NOT FOUND", candidateFieldNames: [] }
+  ]);
+  assert.deepEqual(results.events[1].response.valueMatches[0], { endpoint: "/app/api/reporting/modulardashboard/GetTechnicianOverview", fieldName: "ServiceRevenue", detectedType: "number", present: true, matchedTerms: ["service revenue"] });
+  assert.doesNotMatch(JSON.stringify(results), /:10[,}]/);
+  assert.equal(classifications.classificationApproved, false);
+});
+
+test("native discovery report never upgrades a possible alias over an exact match", () => {
+  const report = buildNativeKpiDiscoveryReport([{ response: { metadataMatches: [
+    { internalFieldName: "InstallRevenue", matchedTerms: ["install revenue"] },
+    { internalFieldName: "InstallSales", matchedTerms: ["install sales"] }
+  ] } }]);
+  assert.deepEqual(report.find(({ kpi }) => kpi === "Install Revenue"), { kpi: "Install Revenue", status: "FOUND", candidateFieldNames: ["InstallRevenue", "InstallSales"] });
 });
