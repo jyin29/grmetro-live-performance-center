@@ -845,7 +845,41 @@ feat: derive validated service and installation KPIs
 
 ---
 
-# 13. Phase 11 — Lead Conversion Definition
+# 13. Phase 11 — Dashboard Production Foundation
+
+## Application Foundation
+
+- [x] Create the dashboard React and Vite application structure.
+- [x] Add the branded, light-theme production shell.
+- [x] Add a header, refresh indicator, KPI summaries, main content region, technician leaderboard, and footer status bar.
+- [x] Add modular layout, header, KPI, leaderboard, technician, status, loading, error, and empty-state components.
+- [x] Connect only to the stable `GET /api/v1/dashboard` REST endpoint through a reusable API service and hook.
+- [x] Preserve the last successful payload when a background REST refresh fails.
+- [x] Add an explicit retry action for initial request failures.
+- [x] Add responsive 720p, 1080p, widescreen, and 4K-oriented scaling.
+- [x] Reserve labeled placeholders without implementing charts, TV rotation, AI insights, remote integration, or WebSockets.
+- [x] Add focused tests for API response handling, metric formatting, no-data semantics, freshness, and backend-provided ordering.
+- [!] Install the new frontend dependencies and verify the production bundle in the implementation environment.
+  - Blocked on 2026-08-10 because the configured network proxy returns HTTP 403 for the npm registry. Source, tests, and build configuration are committed, but dependency-backed tests and the Vite build require `npm install` in an environment with registry access.
+
+## Remaining Dashboard Foundation Work
+
+- [ ] Complete dependency installation and run the dashboard test/build commands in a network-enabled environment.
+- [ ] Perform stakeholder visual review at 1280×720, 1920×1080, and 3840×2160 after the Vite application can run.
+- [ ] Replace the chart-region foundation placeholder only when the chart implementation task begins.
+- [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
+
+Progress note (2026-08-10): Began Phase 11 with a production dashboard foundation that consumes the stable cached dashboard REST payload without modifying backend logic, ServiceTitan integration, refresh providers, or job derivation. The shell renders backend-prepared KPI records and overall ranks, keeps missing values distinct from zero, and retains visible data across background request failures. Future chart, TV rotation, WebSocket, AI, and remote-control regions remain placeholders only. Dependency installation is externally blocked by npm registry HTTP 403 and must be completed before visual approval.
+
+Recommended commit:
+
+```text
+feat: create production dashboard foundation
+```
+
+---
+
+# 13A. Phase 11 Business Follow-up — Lead Conversion Definition
 
 ## Business Decision
 
