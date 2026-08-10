@@ -27,16 +27,18 @@ function createDevelopmentRoutes({ scheduler, serviceTitanClient } = {}) {
       response.json({ ok: result.ok, refresh: result });
     } catch (error) { next(error); }
   });
-  router.post("/servicetitan/research/start", (request, response, next) => {
+  router.post("/servicetitan/research/start", async (request, response, next) => {
     try {
       if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
-      response.json({ ok: true, research: serviceTitanClient.researchObserver.start() });
-    } catch (error) { next(error); }
+      response.json({ ok: true, research: await serviceTitanClient.researchObserver.start() });
+    } catch (error) {
+      next(error.code === "RESEARCH_INTERCEPTION_FAILED" ? new ApiError(503, error.code, "ServiceTitan fetch/XHR interception could not be verified.") : error);
+    }
   });
-  router.post("/servicetitan/research/stop", (request, response, next) => {
+  router.post("/servicetitan/research/stop", async (request, response, next) => {
     try {
       if (!serviceTitanClient?.researchObserver) throw new ApiError(503, "SERVICETITAN_UNAVAILABLE", "Live ServiceTitan client is unavailable.");
-      response.json({ ok: true, research: serviceTitanClient.researchObserver.stop() });
+      response.json({ ok: true, research: await serviceTitanClient.researchObserver.stop() });
     } catch (error) { next(error); }
   });
   router.get("/servicetitan/research/results", (request, response, next) => {

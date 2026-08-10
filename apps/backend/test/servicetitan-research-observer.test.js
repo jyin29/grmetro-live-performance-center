@@ -3,91 +3,121 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const EventEmitter = require("node:events");
-const { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson } = require("../src/servicetitan/researchObserver");
-const classifications = require("../../../shared/jobClassifications");
+const vm = require("node:vm");
+const { ServiceTitanResearchObserver, isObservedEndpoint } = require("../src/servicetitan/researchObserver");
 
-class Page extends EventEmitter { listenerCountFor(name) { return this.listenerCount(name); } }
-function request({ url = "https://go.servicetitan.com/app/api/reporting/CustomReport/GetDatasourceData?datasource=Jobs&parentDatasource=Technicians", method = "POST", body = {} } = {}) {
-  return { url: () => url, method: () => method, postDataJSON: () => body };
+class Frame {
+  constructor(observations) {
+    this.context = vm.createContext({
+      URL,
+      fetch: async () => ({ status: 204, headers: { get: () => "application/json" } }),
+      __grmetroResearchObservation: (value) => observations.push(value)
+    });
+    vm.runInContext(`globalThis.XMLHttpRequest = class XMLHttpRequest {
+      constructor() { this.listeners = {}; this.status = 200; }
+      open(method, url) { this.nativeOpen = { method, url }; }
+      send() { this.nativeSend = true; }
+      addEventListener(name, callback) { this.listeners[name] = callback; }
+      getResponseHeader() { return "application/json; charset=utf-8"; }
+    }`, this.context);
+  }
+  evaluate(fn, arg) { return vm.runInContext(`(${fn.toString()})(${JSON.stringify(arg)})`, this.context); }
+  run(source) { return vm.runInContext(source, this.context); }
 }
-function response(req, { status = 200, contentType = "application/json", data = [] } = {}) {
-  return { request: () => req, status: () => status, headers: () => ({ "content-type": contentType, cookie: "private" }), json: async () => data };
+
+class Page extends EventEmitter {
+  constructor(frame) { super(); this.frame = frame; this.bindings = 0; this.bindingCalls = 0; }
+  frames() { return [this.frame]; }
+  url() { return "https://go.servicetitan.com/technician-scorecard"; }
+  async exposeBinding(_name, callback) {
+    this.bindings += 1;
+    this.frame.context.__grmetroResearchObservation = (value) => { this.bindingCalls += 1; return callback({}, value); };
+  }
 }
+
 function manager(page) {
   const listeners = new Set();
-  return { page, subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }, getServiceTitanPage() { return this.page; }, change(next) { this.page = next; for (const fn of listeners) fn({ type: "page-changed", page: next }); }, stop() { for (const fn of listeners) fn({ type: "stopped", page: null }); } };
+  return {
+    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    getServiceTitanPage() { return page; },
+    stop() { for (const fn of listeners) fn({ type: "stopped" }); }
+  };
 }
 
-test("research observer attaches once, repeated start is idempotent, stop and shutdown detach listeners", () => {
-  const page = new Page();
-  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) });
-  assert.deepEqual(observer.start(), { active: true, attached: true, eventCount: 0 });
-  assert.deepEqual(observer.start(), { active: true, attached: true, eventCount: 0 });
-  assert.equal(page.listenerCountFor("request"), 1);
-  assert.equal(page.listenerCountFor("response"), 1);
-  observer.stop();
-  assert.equal(page.listenerCountFor("request"), 0);
-  assert.equal(page.listenerCountFor("response"), 0);
-  observer.start();
-  observer.shutdown();
-  assert.equal(page.listenerCountFor("request"), 0);
-});
+async function settle() { await new Promise((resolve) => setImmediate(resolve)); }
 
-test("observer filters endpoints and extracts datasource, KpiType, body fields, and array schema without values", async () => {
-  const page = new Page();
-  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page), clock: () => new Date("2026-08-04T12:00:00.000Z") });
-  observer.start();
-  const ignored = request({ url: "https://go.servicetitan.com/app/api/private/customer", body: { csrf: "token" } });
-  page.emit("request", ignored); page.emit("response", response(ignored, { data: [{ Secret: "x" }] }));
-  const req = request({ body: { TechnicianId: 134926818, KpiType: 2, From: "2026-08-04", To: "2026-08-04", CustomerName: "Jane", InvoiceNumber: "INV-1", Unknown: "secret" } });
-  page.emit("request", req);
-  page.emit("response", response(req, { data: [{ JobTypeId: 1, CustomerName: "Jane", Revenue: 12.3 }, { JobTypeId: null, Revenue: 0 }] }));
-  await new Promise((resolve) => setImmediate(resolve));
+test("verified fetch interception captures GetTechnicianOverview and filters analytics", async () => {
+  const observations = [];
+  const frame = new Frame(observations);
+  const page = new Page(frame);
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page), clock: () => new Date("2026-08-10T12:00:00Z") });
+  const started = await observer.start();
+  assert.equal(started.interceptionActive, true);
+  assert.equal(started.fetchPatched, true);
+  assert.equal(started.xhrPatched, true);
+  assert.equal(started.pageUrl, page.url());
+  assert.equal(started.frameCount, 1);
+
+  await frame.run(`fetch("https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview?token=private", { method: "POST" })`);
+  await frame.run(`fetch("https://edge.fullstory.com/analytics?session=private")`);
+  await frame.run(`fetch("https://example.test/unrelated-analytics")`);
+  await settle();
   const results = observer.results();
-  assert.equal(results.count, 1);
-  const event = results.events[0];
-  assert.equal(event.endpoint, "/app/api/reporting/CustomReport/GetDatasourceData");
-  assert.equal(event.datasource, "Jobs");
-  assert.equal(event.parentDatasource, "Technicians");
-  assert.deepEqual(event.request.safeValues, { TechnicianId: "134926818", KpiType: "2", From: "2026-08-04", To: "2026-08-04" });
-  assert.ok(event.request.bodyFields.includes("CustomerName"));
-  assert.equal(event.response.shape, "array");
-  assert.equal(event.response.recordCount, 2);
-  assert.deepEqual(event.response.fields.find((field) => field.field === "JobTypeId"), { field: "JobTypeId", types: ["null", "number"], presentInRecords: 2 });
-  const serialized = JSON.stringify(results).toLowerCase();
-  for (const privateText of ["token", "cookie", "headers", "jane", "inv-1", "secret", "12.3"]) assert.equal(serialized.includes(privateText), false);
+  assert.equal(results.observedRequestCount, 1);
+  assert.equal(results.ignoredRequestCount, 2);
+  assert.deepEqual(results.events, [{ timestamp: "2026-08-10T12:00:00.000Z", method: "POST", url: "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview", status: 204, contentType: "application/json" }]);
+  assert.doesNotMatch(JSON.stringify(results), /private|fullstory/i);
 });
 
-test("observer summarizes object, malformed json, and html safely", async () => {
-  assert.deepEqual(summarizeJson({ data: [{ Status: "Completed" }, { Status: null, JobTypeName: "Install" }] }), { shape: "object", recordCount: 2, fields: [
-    { field: "JobTypeName", types: ["string"], presentInRecords: 1 },
-    { field: "Status", types: ["null", "string"], presentInRecords: 2 }
-  ] });
-  const page = new Page();
+test("XHR interception captures reporting requests", async () => {
+  const frame = new Frame([]);
+  const page = new Page(frame);
   const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) });
-  observer.start();
-  const html = request(); page.emit("request", html); page.emit("response", response(html, { contentType: "text/html", data: "<html>private</html>" }));
-  const bad = request({ body: { KpiType: 7 } }); page.emit("request", bad); page.emit("response", { request: () => bad, status: () => 200, headers: () => ({ "content-type": "application/json" }), json: async () => { throw Error("bad raw"); } });
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(observer.results().events.map((event) => event.response.shape), ["html", "malformed-json"]);
+  await observer.start();
+  frame.run(`globalThis.xhr = new XMLHttpRequest(); xhr.open("POST", "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview"); xhr.send()`);
+  frame.run("xhr.listeners.loadend()");
+  assert.equal(frame.run("xhr.__grmetroResearchRequest.url"), "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview");
+  assert.equal(frame.run("typeof xhr.listeners.loadend"), "function");
+  assert.equal(page.bindingCalls, 1);
+  await settle();
+  assert.equal(observer.results().count, 1);
+  assert.equal(observer.results().events[0].method, "POST");
 });
 
-test("observer keeps bounded storage and handles page changes", async () => {
-  const first = new Page(); const mgr = manager(first);
-  const observer = new ServiceTitanResearchObserver({ browserManager: mgr, maxEvents: 2 });
-  observer.start();
-  const second = new Page(); mgr.change(second);
-  assert.equal(first.listenerCountFor("request"), 0);
-  assert.equal(second.listenerCountFor("request"), 1);
-  for (let index = 0; index < 3; index += 1) { const req = request({ body: { KpiType: index } }); second.emit("request", req); second.emit("response", response(req, { data: [{ Field: index }] })); }
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(observer.results().count, 2);
+test("repeated start does not double patch and stop restores originals", async () => {
+  const frame = new Frame([]);
+  frame.run("globalThis.originalFetch = fetch; globalThis.originalOpen = XMLHttpRequest.prototype.open; globalThis.originalSend = XMLHttpRequest.prototype.send");
+  const page = new Page(frame);
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) });
+  await observer.start();
+  const patchedFetch = frame.run("fetch");
+  await observer.start();
+  assert.equal(page.bindings, 1);
+  assert.equal(frame.run("fetch") === patchedFetch, true);
+  await observer.stop();
+  assert.equal(frame.run("fetch === originalFetch && XMLHttpRequest.prototype.open === originalOpen && XMLHttpRequest.prototype.send === originalSend"), true);
 });
 
-test("pure filters and request summary approve only safe scalar request values", () => {
-  assert.equal(isObservedEndpoint("https://x/app/api/reporting/modulardashboard/GetTechnicianOverview"), true);
-  assert.equal(isObservedEndpoint("https://x/GetDatasourceForTechScorecards?name=Technicians"), true);
-  assert.equal(isObservedEndpoint("https://x/customer/invoice"), false);
-  assert.deepEqual(requestBodySummary(request({ body: { TechnicianId: 1, KpiType: 7, Nested: { private: true }, Cookie: "x", Token: "y" } })), { bodyFields: ["KpiType", "Nested", "TechnicianId"], safeValues: { KpiType: "7", TechnicianId: "1" } });
-  assert.equal(classifications.classificationApproved, false);
+test("start fails rather than reporting attached when interception cannot be verified", async () => {
+  const brokenFrame = { evaluate: async () => { throw new Error("wrong execution context"); } };
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(new Page(brokenFrame)) });
+  await assert.rejects(observer.start(), (error) => error.code === "RESEARCH_INTERCEPTION_FAILED");
+  assert.equal(observer.results().active, false);
+});
+
+test("shutdown restores interception and clears retained results", async () => {
+  const frame = new Frame([]);
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(new Page(frame)) });
+  await observer.start();
+  await frame.run(`fetch("https://go.servicetitan.com/app/api/reporting/test")`);
+  await settle();
+  assert.equal(observer.results().count, 1);
+  await observer.shutdown();
+  assert.equal(observer.results().count, 0);
+  assert.equal(observer.results().active, false);
+});
+
+test("endpoint filter explicitly includes overview and excludes FullStory", () => {
+  assert.equal(isObservedEndpoint("https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview"), true);
+  assert.equal(isObservedEndpoint("https://edge.fullstory.com/analytics"), false);
 });

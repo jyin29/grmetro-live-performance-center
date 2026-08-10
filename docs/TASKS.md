@@ -835,6 +835,8 @@ Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Add
 
 Progress note (2026-08-04): Added a development-only network research observer for manually clicked ServiceTitan Technician Scorecard drilldowns. The observer is gated behind development routes, attaches idempotently, retains at most 100 sanitized schema-only events, excludes raw records and private values, and is documented with exact PowerShell start/stop/save commands. Production derivations remain disabled and Phase 11 has not started.
 
+Progress note (2026-08-10): Fixed the research observer without beginning Phase 11. The original `attached` diagnostic only confirmed Playwright Page listeners and did not verify interception in the fetch/XHR execution context. The development observer now patches and verifies fetch/XHR in every current and newly navigated frame, captures the Technician Overview request as URL-only metadata, filters FullStory/unrelated analytics, reports safe interception diagnostics, restores native functions on stop/shutdown, and fails start when verification fails.
+
 Recommended commit:
 
 ```text

@@ -769,18 +769,23 @@ DELETE /api/v1/dev/servicetitan/research/results
 Availability and lifecycle rules:
 
 - Routes are registered only when `ENABLE_DEVELOPMENT_ROUTES=true` and `NODE_ENV` is not `production`.
-- Start attaches at most one observer to the currently selected ServiceTitan page.
-- Repeated starts are idempotent and do not duplicate listeners.
-- Stop detaches request and response listeners.
+- Start exposes one private Playwright binding and patches `fetch` plus `XMLHttpRequest` in every frame of the currently selected ServiceTitan page. Frame attachment and navigation are observed so the execution context that actually issues a request is patched, including an embedded scorecard frame.
+- Start verifies the installed wrappers from the page execution contexts. It returns `RESEARCH_INTERCEPTION_FAILED` instead of success if fetch/XHR interception cannot be proved active.
+- Repeated starts are idempotent and do not wrap either browser API twice.
+- Stop restores the original `fetch`, `XMLHttpRequest.prototype.open`, and `XMLHttpRequest.prototype.send` functions in every reachable frame.
 - Shutdown stops the observer and clears retained results.
 - Results are held in memory only, capped at 100 events, and the oldest events are discarded when full.
 
-Observed request scope:
+Observed request scope after verification:
 
 - URLs containing `/app/api/reporting/`.
 - `GetDatasourceData` requests.
 - `GetDatasourceForTechScorecards` requests.
 - Modular dashboard reporting endpoints.
+- `/app/api/reporting/modulardashboard/GetTechnicianOverview` is explicitly included.
+- FullStory and unrelated analytics endpoints are ignored.
+
+The development implementation was verified first with an unfiltered URL-only observation pass. The retained implementation restores the reporting filter. Interception sends only timestamp, method, URL, status, and content type to backend memory. Before retention, the URL is reduced to origin and path, so query values are never recorded; headers, cookies, bodies, CSRF values, and response values never cross the binding.
 
 Sanitized result contract:
 
@@ -789,40 +794,37 @@ Sanitized result contract:
   "ok": true,
   "research": {
     "active": true,
+    "interceptionActive": true,
+    "fetchPatched": true,
+    "xhrPatched": true,
+    "pageUrl": "https://go.servicetitan.com/...",
+    "frameCount": 2,
+    "observedRequestCount": 1,
+    "ignoredRequestCount": 3,
     "maxEvents": 100,
     "count": 1,
     "events": [
       {
         "timestamp": "2026-08-04T12:00:00.000Z",
-        "endpoint": "/app/api/reporting/CustomReport/GetDatasourceData",
-        "datasource": "TechnicianJobsExtendedDrilldownDatasource",
-        "parentDatasource": "Technicians",
-        "request": {
-          "method": "POST",
-          "bodyFields": ["From", "KpiType", "TechnicianId", "To"],
-          "safeValues": {
-            "TechnicianId": "134926818",
-            "KpiType": "2",
-            "From": "2026-08-04",
-            "To": "2026-08-04"
-          }
-        },
-        "response": {
-          "status": 200,
-          "contentType": "application/json",
-          "shape": "array",
-          "recordCount": 3,
-          "fields": [
-            { "field": "JobTypeId", "types": ["number"], "presentInRecords": 3 }
-          ]
-        }
+        "method": "POST",
+        "url": "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview",
+        "status": 200,
+        "contentType": "application/json"
       }
     ]
   }
 }
 ```
 
-The observer retains only endpoint path, datasource names, request body field names, approved scalar request values (`TechnicianId`, `KpiType`, `From`, and `To`), response status/content type, top-level JSON shape, response field-name schema, and record counts. It never returns CSRF tokens, cookies, headers, customer values, invoice values, addresses, phone numbers, email addresses, raw response records, authentication data, or unknown response values. HTML, non-JSON, and malformed JSON responses are summarized by shape only.
+Verification checklist after `start`:
+
+1. `attached`, `interceptionActive`, `fetchPatched`, and `xhrPatched` must all be `true`.
+2. `pageUrl` must identify the intended authenticated ServiceTitan page, and `frameCount` must be nonzero.
+3. Click a Technician Scorecard KPI and confirm `observedRequestCount` and `eventCount` increase.
+4. Confirm the retained URL is `/app/api/reporting/modulardashboard/GetTechnicianOverview` (with its ServiceTitan origin) and contains no query string.
+5. `ignoredRequestCount` may increase for FullStory and unrelated analytics traffic; this is expected.
+
+The former observer only registered Playwright protocol-level `page.on("request")` and `page.on("response")` listeners. Its `attached` value meant only that a Page object had listeners; it did not prove that the page/frame execution context issuing Technician Scorecard requests was intercepted. Consequently it could truthfully report `attached: true` while receiving zero protocol events. The observer now instruments the browser APIs in each execution context and verifies those exact patches before reporting success.
 
 PowerShell research workflow for Windows:
 
