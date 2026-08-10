@@ -2067,14 +2067,15 @@ The initial production dashboard shell uses the approved light theme and exposes
 ```text
 Branded header and last-refresh status
 Four KPI summary cards
-Reserved primary visualization region
-Five-technician overall leaderboard
+Primary revenue visualization region
+Performance KPI comparison region
+Five-technician ranking visualization
 Footer and live-data status
 ```
 
 The KPI summaries display the technician with backend rank `1` for selected approved KPIs. The dashboard does not calculate team totals, KPI rankings, overall scores, or other business meaning. Missing values display as `No data`, and data-quality labels remain visible.
 
-The primary visualization region is deliberately a foundation placeholder. It does not implement charts, slide rotation, remote control, WebSockets, or AI insights. Those features remain assigned to their dedicated implementation tasks.
+The production foundation renders three presentation-only visualizations from backend-prepared data: an SVG overlaid revenue chart, a percentage KPI comparison chart, and an overall technician ranking chart. These components consume backend ordering, normalized ratios, values, and ranks without recalculating business meaning. Slide rotation, remote control, WebSockets, and AI insights remain assigned to their dedicated implementation tasks.
 
 Initial loading preserves the complete shell with skeleton regions. A failed initial request shows a branded friendly error and retry action. A background request failure preserves the last successful payload and adds a nonblocking warning.
 
