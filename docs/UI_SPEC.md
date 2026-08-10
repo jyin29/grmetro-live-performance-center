@@ -2060,6 +2060,26 @@ The UI is accepted when:
 
 ---
 
+# 87. Phase 11 Dashboard Foundation State
+
+The initial production dashboard shell uses the approved light theme and exposes these stable regions:
+
+```text
+Branded header and last-refresh status
+Four KPI summary cards
+Reserved primary visualization region
+Five-technician overall leaderboard
+Footer and live-data status
+```
+
+The KPI summaries display the technician with backend rank `1` for selected approved KPIs. The dashboard does not calculate team totals, KPI rankings, overall scores, or other business meaning. Missing values display as `No data`, and data-quality labels remain visible.
+
+The primary visualization region is deliberately a foundation placeholder. It does not implement charts, slide rotation, remote control, WebSockets, or AI insights. Those features remain assigned to their dedicated implementation tasks.
+
+Initial loading preserves the complete shell with skeleton regions. A failed initial request shows a branded friendly error and retry action. A background request failure preserves the last successful payload and adds a nonblocking warning.
+
+---
+
 # End of UI_SPEC.md
 
 The next companion document is:
