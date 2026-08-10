@@ -1,10 +1,13 @@
 "use strict";
 const technicians = require("../../../../shared/technicians");
+const jobClassifications = require("../../../../shared/jobClassifications");
 const { normalizeServiceTitanTechnician } = require("../data/normalization");
+const { deriveServiceInstallKpis } = require("../data/jobDerivations");
 const { buildDashboardPayload } = require("../data/dashboardBuilder");
 const { ENDPOINTS } = require("../servicetitan/endpoints");
-const { buildTechnicianOverviewRequest, buildTechnicianDatasourceRequest } = require("../servicetitan/requestBuilders");
+const { buildTechnicianOverviewRequest, buildTechnicianDatasourceRequest, buildTechnicianJobDrilldownRequest } = require("../servicetitan/requestBuilders");
 const { validateJsonResponse } = require("../servicetitan/responseValidation");
+const { sanitizeDrilldownRecords } = require("../servicetitan/drilldownSanitizer");
 const { ERROR_CODES, ServiceTitanError } = require("../servicetitan/errors");
 
 function diagnostic(error) { return error?.toDiagnostic?.() || { code: error?.code || ERROR_CODES.UNAVAILABLE, retryable: true }; }
@@ -14,9 +17,9 @@ async function mapLimited(items, limit, worker) {
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run)); return results;
 }
 class ServiceTitanRefreshProvider {
-  constructor({ config, browserManager, executor, logger, technicianConfiguration = technicians, concurrency = 2 } = {}) {
+  constructor({ config, browserManager, executor, logger, technicianConfiguration = technicians, classificationConfiguration = jobClassifications, concurrency = 2 } = {}) {
     if (!config || !browserManager || !executor) throw new TypeError("Live ServiceTitan provider requires configuration, browser manager, and request executor.");
-    this.config = config; this.browserManager = browserManager; this.executor = executor; this.logger = logger || { info() {}, warn() {} }; this.technicians = technicianConfiguration; this.concurrency = concurrency;
+    this.config = config; this.browserManager = browserManager; this.executor = executor; this.logger = logger || { info() {}, warn() {} }; this.technicians = technicianConfiguration; this.classifications = classificationConfiguration; this.concurrency = concurrency;
   }
   async refreshTechnician(technician, now) {
     const started = Date.now();
@@ -27,8 +30,17 @@ class ServiceTitanRefreshProvider {
       const rows = validateJsonResponse(datasourceResponse, { endpointName: ENDPOINTS.technicianDatasource.name, expectedShape: "array" });
       const raw = rows.find((row) => Number(row?.TechnicianId) === technician.id);
       if (!raw) throw new ServiceTitanError(ERROR_CODES.EMPTY_RESULT, "ServiceTitan returned no matching technician result.", { endpointName: ENDPOINTS.technicianDatasource.name });
-      const record = { ...normalizeServiceTitanTechnician(raw, { technicians: this.technicians }), stale: false, available: true, lastSuccessfulUpdate: new Date(now).toISOString() };
-      return { ok: true, technicianId: technician.id, record, duration: Date.now() - started, requests: { overview: overviewResponse.duration, datasource: datasourceResponse.duration } };
+      const drilldownResponse = await this.executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(this.config, technician.id, new Date(now)));
+      const drilldownRows = validateJsonResponse(drilldownResponse, { endpointName: ENDPOINTS.technicianJobDrilldown.name, expectedShape: "array" });
+      const jobs = sanitizeDrilldownRecords(drilldownRows).records;
+      let derivationDiagnostics;
+      const derivedKpis = deriveServiceInstallKpis(jobs, this.classifications, { onDiagnostics(value) { derivationDiagnostics = value; } });
+      const normalized = normalizeServiceTitanTechnician(raw, { technicians: this.technicians });
+      const kpis = { ...normalized.kpis };
+      for (const [kpiId, derived] of Object.entries(derivedKpis)) kpis[kpiId] = { ...kpis[kpiId], ...derived };
+      const record = { ...normalized, kpis, stale: false, available: true, lastSuccessfulUpdate: new Date(now).toISOString() };
+      const safeDerivationDiagnostics = this.config.developmentRoutesEnabled && !this.config.isProduction ? { drilldownFetched: true, ...derivationDiagnostics } : undefined;
+      return { ok: true, technicianId: technician.id, record, duration: Date.now() - started, requests: { overview: overviewResponse.duration, datasource: datasourceResponse.duration, drilldown: drilldownResponse.duration }, ...(safeDerivationDiagnostics ? { derivation: safeDerivationDiagnostics } : {}) };
     } catch (error) {
       if ([ERROR_CODES.CSRF, ERROR_CODES.AUTH_REQUIRED].includes(error?.code)) this.executor.csrfTokenProvider?.clear?.();
       const result = { ok: false, technicianId: technician.id, stale: true, duration: Date.now() - started, error: diagnostic(error) };

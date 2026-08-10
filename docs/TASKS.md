@@ -784,17 +784,7 @@ feat: add resilient five-technician refresh pipeline
 
 ## Drilldown Research
 
-- [ ] Capture sanitized normal service record.
-- [ ] Capture sanitized installation record.
-- [ ] Capture sanitized recall record.
-- [ ] Capture sanitized warranty record.
-- [ ] Capture sanitized no-charge record.
-- [ ] Capture sanitized canceled record.
-- [ ] Identify job type IDs.
-- [ ] Identify revenue field.
-- [ ] Identify status field.
-- [ ] Identify recall/warranty flags.
-- [ ] Document `KpiType` meaning.
+- [x] Complete native metric-origin and drilldown architecture investigation.
 - [x] Add development-only network research observer for Technician Scorecard drilldowns.
 - [x] Add sanitized start, stop, results, and clear research routes.
 - [x] Add privacy and lifecycle tests for research observer results.
@@ -802,14 +792,15 @@ feat: add resilient five-technician refresh pipeline
 
 ## Classification
 
-- [ ] Populate service job-type configuration.
-- [ ] Populate install job-type configuration.
-- [ ] Configure exclusions.
+- [x] Provide centralized service/install job-type and exclusion configuration.
 - [x] Log/count ambiguous records in derivation results.
 - [x] Exclude unclassified records from confirmed totals.
 
 ## Derived KPIs
 
+- [x] Wire live refresh to the job drilldown, classifier, and derivation pipeline.
+- [x] Execute derivation while unapproved output remains suppressed.
+- [x] Add privacy-safe development pipeline diagnostics.
 - [x] Derive Billable Service Calls.
 - [x] Derive Service Revenue.
 - [x] Derive Install Revenue.
@@ -821,6 +812,9 @@ feat: add resilient five-technician refresh pipeline
 
 ## Business Validation
 
+- [ ] Validate sanitized service, installation, recall, warranty, no-charge, and canceled records.
+- [ ] Populate the validated job type IDs and exclusions in shared configuration.
+- [ ] Confirm the drilldown revenue and status fields, flags, and `KpiType` meaning.
 - [ ] Review calculations with GRmetro management.
 - [ ] Confirm definition of completed install.
 - [ ] Confirm service-call exclusions.
@@ -840,6 +834,8 @@ Progress note (2026-08-10): Fixed the research observer's stale-page attachment 
 Progress note (2026-08-10): Expanded the development observer for native service/install KPI discovery across every observed reporting JSON endpoint. It now searches safe metric/datasource/chart metadata and matching response field names without retaining values, reports every endpoint searched, records attributable safe candidates, and produces one `FOUND`, `NOT FOUND`, or `POSSIBLE ALIAS` result for each of the four requested KPIs. A complete authenticated ServiceTitan click-through is still required before treating `NOT FOUND` as conclusive. Production calculations, refresh behavior, and `classificationApproved: false` are unchanged; Phase 11 has not started.
 
 Progress note (2026-08-10): Completed a repository-wide origin audit for Service Revenue, Install Revenue, Number of Installs, and Install Average Ticket in `docs/PHASE_10_METRIC_ORIGIN_AUDIT.md`. The audit confirms that all four concepts are configured and have isolated derivation functions, but the live provider neither fetches the job drilldown nor invokes those derivations; live normalization therefore leaves them unavailable. `numberOfInstalls` does not exist as an identifier—the approved stable ID is `installs`. No behavior changed, classification remains unapproved, and Phase 11 has not started.
+
+Progress note (2026-08-10): Phase 10 implementation is complete. The live refresh now fetches `TechnicianJobsExtendedDrilldownDatasource`, sanitizes its records, executes the single shared classifier and `deriveServiceInstallKpis()`, and merges the results into normalized KPI records. With `classificationApproved: false`, the full pipeline still executes but the service/install outputs remain exactly unavailable. Development-only diagnostics expose safe counts and execution flags without names, customer data, or revenue values. Automated tests prove both suppression and that changing only the approval flag exposes derived values. Only the Business Validation checklist above remains; Phase 11 has not started.
 
 Recommended commit:
 
