@@ -835,6 +835,8 @@ Progress note (2026-08-04): Phase 10 implementation scaffolding is complete. Add
 
 Progress note (2026-08-04): Added a development-only network research observer for manually clicked ServiceTitan Technician Scorecard drilldowns. The observer is gated behind development routes, attaches idempotently, retains at most 100 sanitized schema-only events, excludes raw records and private values, and is documented with exact PowerShell start/stop/save commands. Production derivations remain disabled and Phase 11 has not started.
 
+Progress note (2026-08-10): Fixed the research observer's stale-page attachment bug without changing its Playwright request/response architecture. Browser page discovery now rescans connected contexts and follows new pages, replacement pages, and frame navigation; the observer reattaches when the selected Scorecard page changes. Development-only safe page/listener/count diagnostics and bounded origin-plus-path request diagnostics now prove receipt of `GetTechnicianOverview`. Added selection, replacement, reattachment, navigation, lifecycle, filtering, and endpoint-capture tests. Phase 11 has not started.
+
 Recommended commit:
 
 ```text

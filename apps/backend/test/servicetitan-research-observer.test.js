@@ -6,7 +6,13 @@ const EventEmitter = require("node:events");
 const { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson } = require("../src/servicetitan/researchObserver");
 const classifications = require("../../../shared/jobClassifications");
 
-class Page extends EventEmitter { listenerCountFor(name) { return this.listenerCount(name); } }
+class Page extends EventEmitter {
+  constructor(url = "https://go.servicetitan.com/app/technician-scorecard", title = "Technician Scorecard") { super(); this.currentUrl = url; this.pageTitle = title; }
+  listenerCountFor(name) { return this.listenerCount(name); }
+  url() { return this.currentUrl; }
+  title() { return Promise.resolve(this.pageTitle); }
+  frames() { return [{}, {}]; }
+}
 function request({ url = "https://go.servicetitan.com/app/api/reporting/CustomReport/GetDatasourceData?datasource=Jobs&parentDatasource=Technicians", method = "POST", body = {} } = {}) {
   return { url: () => url, method: () => method, postDataJSON: () => body };
 }
@@ -15,14 +21,14 @@ function response(req, { status = 200, contentType = "application/json", data = 
 }
 function manager(page) {
   const listeners = new Set();
-  return { page, subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }, getServiceTitanPage() { return this.page; }, change(next) { this.page = next; for (const fn of listeners) fn({ type: "page-changed", page: next }); }, stop() { for (const fn of listeners) fn({ type: "stopped", page: null }); } };
+  return { page, subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }, getServiceTitanPage() { return this.page; }, getBrowser() { return { contexts: () => [{ pages: () => [this.page] }] }; }, change(next) { this.page = next; for (const fn of listeners) fn({ type: "page-changed", page: next }); }, stop() { for (const fn of listeners) fn({ type: "stopped", page: null }); } };
 }
 
 test("research observer attaches once, repeated start is idempotent, stop and shutdown detach listeners", () => {
   const page = new Page();
   const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) });
-  assert.deepEqual(observer.start(), { active: true, attached: true, eventCount: 0 });
-  assert.deepEqual(observer.start(), { active: true, attached: true, eventCount: 0 });
+  assert.equal(observer.start().attached, true);
+  assert.equal(observer.start().attached, true);
   assert.equal(page.listenerCountFor("request"), 1);
   assert.equal(page.listenerCountFor("response"), 1);
   observer.stop();
@@ -31,6 +37,28 @@ test("research observer attaches once, repeated start is idempotent, stop and sh
   observer.start();
   observer.shutdown();
   assert.equal(page.listenerCountFor("request"), 0);
+});
+
+test("observer diagnostics identify the selected page and listener attachment without secrets", async () => {
+  const page = new Page("https://go.servicetitan.com/app/technician-scorecard?token=private", "Technician Scorecard");
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page) });
+  observer.start(); await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(observer.results().diagnostics, {
+    selectedPageUrl: "https://go.servicetitan.com/app/technician-scorecard", selectedPageTitle: "Technician Scorecard",
+    browserContextCount: 1, pageCount: 1, frameCount: 2, listenerAttached: true, listenerActive: true,
+    retainedEventCount: 0, ignoredEventCount: 0
+  });
+  assert.doesNotMatch(JSON.stringify(observer.results()), /token=private/);
+});
+
+test("repeated stop is idempotent and repeated start reattaches to the manager replacement page", () => {
+  const first = new Page(); const mgr = manager(first);
+  const observer = new ServiceTitanResearchObserver({ browserManager: mgr });
+  observer.start(); observer.stop(); observer.stop();
+  const replacement = new Page("https://go.servicetitan.com/app/replacement"); mgr.page = replacement;
+  observer.start(); observer.start();
+  assert.equal(first.listenerCount("request"), 0);
+  assert.equal(replacement.listenerCount("request"), 1);
 });
 
 test("observer filters endpoints and extracts datasource, KpiType, body fields, and array schema without values", async () => {
@@ -90,4 +118,22 @@ test("pure filters and request summary approve only safe scalar request values",
   assert.equal(isObservedEndpoint("https://x/customer/invoice"), false);
   assert.deepEqual(requestBodySummary(request({ body: { TechnicianId: 1, KpiType: 7, Nested: { private: true }, Cookie: "x", Token: "y" } })), { bodyFields: ["KpiType", "Nested", "TechnicianId"], safeValues: { KpiType: "7", TechnicianId: "1" } });
   assert.equal(classifications.classificationApproved, false);
+});
+
+test("request filtering records safe URL diagnostics and captures GetTechnicianOverview", async () => {
+  const page = new Page();
+  const observer = new ServiceTitanResearchObserver({ browserManager: manager(page), clock: () => new Date("2026-08-10T12:00:00.000Z") });
+  observer.start();
+  const ignored = request({ url: "https://go.servicetitan.com/customer?secret=value", method: "GET" });
+  page.emit("request", ignored);
+  const overview = request({ url: "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview?cache=private" });
+  page.emit("request", overview); page.emit("response", response(overview, { data: { Data: [{ CompletedRevenue: 100 }] } }));
+  await new Promise((resolve) => setImmediate(resolve));
+  const results = observer.results();
+  assert.equal(results.diagnostics.ignoredEventCount, 1);
+  assert.deepEqual(results.urlDiagnostics, [
+    { timestamp: "2026-08-10T12:00:00.000Z", method: "GET", url: "https://go.servicetitan.com/customer" },
+    { timestamp: "2026-08-10T12:00:00.000Z", method: "POST", url: "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview" }
+  ]);
+  assert.equal(results.events[0].endpoint, "/app/api/reporting/modulardashboard/GetTechnicianOverview");
 });

@@ -37,6 +37,8 @@ class BrowserManager {
     this.lastDisconnectedAt = null;
     this.lastError = null;
     this.disconnectHandler = () => this.handleDisconnect();
+    this.contextListeners = new Map();
+    this.pageListeners = new Map();
     this.listeners = new Set();
   }
 
@@ -72,17 +74,51 @@ class BrowserManager {
 
   getServiceTitanPage() {
     const browser = this.getBrowser();
-    if (!this.page || this.page.isClosed?.()) {
-      this.page = findServiceTitanPage(browser);
-      this.notify({ type: "page-changed", page: this.page });
+    const selected = findServiceTitanPage(browser);
+    if (selected !== this.page) {
+      this.page = selected;
+      this.notify({ type: "page-changed", page: selected });
     }
     return this.page;
+  }
+
+  watchBrowserPages() {
+    this.unwatchBrowserPages();
+    for (const context of this.browser?.contexts?.() || []) {
+      const onPage = (page) => { this.watchPage(page); this.refreshSelectedPage(); };
+      context.on?.("page", onPage);
+      this.contextListeners.set(context, onPage);
+      for (const page of context.pages?.() || []) this.watchPage(page);
+    }
+  }
+
+  watchPage(page) {
+    if (!page || this.pageListeners.has(page)) return;
+    const refresh = () => this.refreshSelectedPage();
+    page.on?.("framenavigated", refresh);
+    page.on?.("close", refresh);
+    this.pageListeners.set(page, refresh);
+  }
+
+  unwatchBrowserPages() {
+    for (const [context, listener] of this.contextListeners) context.off?.("page", listener);
+    for (const [page, listener] of this.pageListeners) {
+      page.off?.("framenavigated", listener);
+      page.off?.("close", listener);
+    }
+    this.contextListeners.clear();
+    this.pageListeners.clear();
+  }
+
+  refreshSelectedPage() {
+    if (this.stopped || this.browser?.isConnected?.() !== true) return;
+    try { this.getServiceTitanPage(); } catch (error) { this.recordError(error); }
   }
 
   connect() {
     if (this.stopped) return Promise.reject(new BrowserManagerError("BROWSER_MANAGER_STOPPED"));
     if (this.browser?.isConnected?.() === true) {
-      try { this.page = this.page && !this.page.isClosed?.() ? this.page : findServiceTitanPage(this.browser); }
+      try { this.getServiceTitanPage(); }
       catch (error) { this.recordError(error); throw error; }
       return Promise.resolve(this.browser);
     }
@@ -100,6 +136,7 @@ class BrowserManager {
       this.browser = browser;
       this.page = null;
       browser.on?.("disconnected", this.disconnectHandler);
+      this.watchBrowserPages();
       const page = findServiceTitanPage(browser);
       this.page = page;
       this.notify({ type: "page-changed", page });
@@ -124,6 +161,7 @@ class BrowserManager {
   handleDisconnect() {
     if (this.stopped) return;
     this.detachBrowserListener();
+    this.unwatchBrowserPages();
     this.browser = null;
     this.page = null;
     this.notify({ type: "disconnected", page: null });
@@ -164,6 +202,7 @@ class BrowserManager {
     this.stopped = true;
     this.clearReconnectTimer();
     this.detachBrowserListener();
+    this.unwatchBrowserPages();
     this.browser = null;
     this.page = null;
     this.notify({ type: "stopped", page: null });
