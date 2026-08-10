@@ -837,6 +837,10 @@ Progress note (2026-08-04): Added a development-only network research observer f
 
 Progress note (2026-08-10): Fixed the research observer's stale-page attachment bug without changing its Playwright request/response architecture. Browser page discovery now rescans connected contexts and follows new pages, replacement pages, and frame navigation; the observer reattaches when the selected Scorecard page changes. Development-only safe page/listener/count diagnostics and bounded origin-plus-path request diagnostics now prove receipt of `GetTechnicianOverview`. Added selection, replacement, reattachment, navigation, lifecycle, filtering, and endpoint-capture tests. Phase 11 has not started.
 
+Progress note (2026-08-10): Expanded the development observer for native service/install KPI discovery across every observed reporting JSON endpoint. It now searches safe metric/datasource/chart metadata and matching response field names without retaining values, reports every endpoint searched, records attributable safe candidates, and produces one `FOUND`, `NOT FOUND`, or `POSSIBLE ALIAS` result for each of the four requested KPIs. A complete authenticated ServiceTitan click-through is still required before treating `NOT FOUND` as conclusive. Production calculations, refresh behavior, and `classificationApproved: false` are unchanged; Phase 11 has not started.
+
+Progress note (2026-08-10): Completed a repository-wide origin audit for Service Revenue, Install Revenue, Number of Installs, and Install Average Ticket in `docs/PHASE_10_METRIC_ORIGIN_AUDIT.md`. The audit confirms that all four concepts are configured and have isolated derivation functions, but the live provider neither fetches the job drilldown nor invokes those derivations; live normalization therefore leaves them unavailable. `numberOfInstalls` does not exist as an identifier—the approved stable ID is `installs`. No behavior changed, classification remains unapproved, and Phase 11 has not started.
+
 Recommended commit:
 
 ```text
