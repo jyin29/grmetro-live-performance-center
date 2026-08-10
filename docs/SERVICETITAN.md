@@ -769,7 +769,8 @@ DELETE /api/v1/dev/servicetitan/research/results
 Availability and lifecycle rules:
 
 - Routes are registered only when `ENABLE_DEVELOPMENT_ROUTES=true` and `NODE_ENV` is not `production`.
-- Start attaches at most one observer to the currently selected ServiceTitan page.
+- Start asks the browser manager to rescan every connected browser context and attaches at most one observer to the preferred Technician Scorecard page.
+- The browser manager watches new pages, popups, page closure, and frame navigation. When page selection changes, the observer detaches from the old page and attaches to the replacement before retaining further events.
 - Repeated starts are idempotent and do not duplicate listeners.
 - Stop detaches request and response listeners.
 - Shutdown stops the observer and clears retained results.
@@ -789,8 +790,28 @@ Sanitized result contract:
   "ok": true,
   "research": {
     "active": true,
+    "attached": true,
+    "eventCount": 1,
     "maxEvents": 100,
     "count": 1,
+    "diagnostics": {
+      "selectedPageUrl": "https://go.servicetitan.com/app/technician-scorecard",
+      "selectedPageTitle": "Technician Scorecard",
+      "browserContextCount": 1,
+      "pageCount": 2,
+      "frameCount": 3,
+      "listenerAttached": true,
+      "listenerActive": true,
+      "retainedEventCount": 1,
+      "ignoredEventCount": 4
+    },
+    "urlDiagnostics": [
+      {
+        "timestamp": "2026-08-04T12:00:00.000Z",
+        "method": "POST",
+        "url": "https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview"
+      }
+    ],
     "events": [
       {
         "timestamp": "2026-08-04T12:00:00.000Z",
@@ -824,6 +845,10 @@ Sanitized result contract:
 
 The observer retains only endpoint path, datasource names, request body field names, approved scalar request values (`TechnicianId`, `KpiType`, `From`, and `To`), response status/content type, top-level JSON shape, response field-name schema, and record counts. It never returns CSRF tokens, cookies, headers, customer values, invoice values, addresses, phone numbers, email addresses, raw response records, authentication data, or unknown response values. HTML, non-JSON, and malformed JSON responses are summarized by shape only.
 
+Development diagnostics additionally expose the selected page URL with query string and fragment removed, selected page title, browser-context/page/frame counts, listener attachment/activity, retained-event count, and ignored-request count. The bounded `urlDiagnostics` list records each request's timestamp, method, and origin plus pathname only. It never records query strings, headers, or bodies. These diagnostics are available only through the development-only research routes.
+
+Root cause fixed on 2026-08-10: the browser manager cached the first authenticated ServiceTitan `Page` selected during CDP connection. If Technician Scorecard was opened later in a new tab/window, or an existing ServiceTitan page navigated to Scorecard while the cached page remained open, `getServiceTitanPage()` returned the stale page without rescanning. The observer correctly installed `page.on("request")` and `page.on("response")`, but installed them on that stale `Page`; Playwright page events are page-scoped, so the request visible in DevTools for the actual Scorecard page never reached those listeners. The fix preserves page-event interception and adds deterministic rescanning plus page/popup/frame lifecycle tracking and observer reattachment. No fetch/XMLHttpRequest injection is used.
+
 PowerShell research workflow for Windows:
 
 ```powershell
@@ -832,6 +857,16 @@ Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/dev/servicetitan/research/s
 ```
 
 Then, in the manually authenticated ServiceTitan Edge window, open Julio Torres and click relevant Technician Scorecard KPI cards or drilldowns, including Completed Jobs, Revenue, Opportunities, service-call-related metrics, and install-related metrics. The goal is to identify alternative datasource names, `KpiType` values, request body differences, response fields, job type fields, status fields, and billable/recall/warranty/no-charge indicators.
+
+Immediately read the results after clicking **Completed Revenue** and verify all of the following:
+
+1. `diagnostics.selectedPageTitle` and `diagnostics.selectedPageUrl` identify the intended Technician Scorecard page.
+2. `diagnostics.listenerAttached` and `diagnostics.listenerActive` are `true`.
+3. Browser-context, page, and frame counts agree with the open Edge session.
+4. `urlDiagnostics` contains `POST https://go.servicetitan.com/app/api/reporting/modulardashboard/GetTechnicianOverview` (the origin may differ by configured ServiceTitan environment, but the pathname must match exactly).
+5. After its response completes, `events` contains endpoint `/app/api/reporting/modulardashboard/GetTechnicianOverview` and `retainedEventCount` increases.
+
+If the URL diagnostic is absent, the selected page diagnostics identify a remaining page/context mismatch or the listener is inactive. If the URL diagnostic is present but no retained event appears, the request was received and response completion/content handling should be investigated instead; do not replace the observer architecture based only on a zero retained count.
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/v1/dev/servicetitan/research/stop"

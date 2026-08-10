@@ -16,6 +16,12 @@ function safeUrlParts(url) {
     return { path: parsed.pathname, datasource: parsed.searchParams.get("datasource") || parsed.searchParams.get("name") || null, parentDatasource: parsed.searchParams.get("parentDatasource") || null };
   } catch { return { path: null, datasource: null, parentDatasource: null }; }
 }
+function safeDiagnosticUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch { return null; }
+}
 function isObservedEndpoint(url) {
   const text = String(url || "");
   return text.includes("/app/api/reporting/") || text.includes("GetDatasourceData") || text.includes("GetDatasourceForTechScorecards") || /modular.*dashboard|dashboard.*reporting/i.test(text);
@@ -70,6 +76,9 @@ class ServiceTitanResearchObserver {
     this.maxEvents = maxEvents;
     this.logger = logger || { warn() {}, debug() {} };
     this.events = [];
+    this.urlDiagnostics = [];
+    this.ignoredEventCount = 0;
+    this.selectedPageTitle = null;
     this.active = false;
     this.page = null;
     this.unsubscribeBrowser = null;
@@ -78,17 +87,20 @@ class ServiceTitanResearchObserver {
     this.requests = new WeakMap();
   }
   start() {
-    if (this.active) return { active: true, attached: Boolean(this.page), eventCount: this.events.length };
+    if (this.active) {
+      try { this.attachPage(this.browserManager.getServiceTitanPage()); } catch { /* diagnostics retain the current attachment */ }
+      return this.status();
+    }
     this.active = true;
     this.unsubscribeBrowser = this.browserManager.subscribe?.((event) => {
       if (event.type === "page-changed") this.attachPage(event.page);
       if (["disconnected", "stopped"].includes(event.type)) this.detachPage();
     }) || null;
     try { this.attachPage(this.browserManager.getServiceTitanPage()); } catch (error) { this.logger.warn("ServiceTitan research observer could not attach yet", { code: error.code || "OBSERVER_ATTACH_FAILED" }); }
-    return { active: true, attached: Boolean(this.page), eventCount: this.events.length };
+    return this.status();
   }
-  stop() { this.active = false; this.detachPage(); this.unsubscribeBrowser?.(); this.unsubscribeBrowser = null; return { active: false, eventCount: this.events.length }; }
-  clear() { this.events = []; }
+  stop() { this.active = false; this.detachPage(); this.unsubscribeBrowser?.(); this.unsubscribeBrowser = null; return this.status(); }
+  clear() { this.events = []; this.urlDiagnostics = []; this.ignoredEventCount = 0; }
   shutdown() { this.stop(); this.clear(); }
   attachPage(page) {
     if (!this.active || !page || page === this.page) return;
@@ -96,11 +108,16 @@ class ServiceTitanResearchObserver {
     this.page = page;
     page.on?.("request", this.onRequest);
     page.on?.("response", this.onResponse);
+    this.selectedPageTitle = null;
+    Promise.resolve(page.title?.()).then((title) => { if (this.page === page) this.selectedPageTitle = String(title || ""); }).catch(() => {});
   }
-  detachPage() { if (this.page) { this.page.off?.("request", this.onRequest); this.page.off?.("response", this.onResponse); } this.page = null; }
+  detachPage() { if (this.page) { this.page.off?.("request", this.onRequest); this.page.off?.("response", this.onResponse); } this.page = null; this.selectedPageTitle = null; }
   handleRequest(request) {
     const url = request.url?.() || "";
-    if (!isObservedEndpoint(url)) return;
+    const diagnosticUrl = safeDiagnosticUrl(url);
+    this.urlDiagnostics.push({ timestamp: this.clock().toISOString(), method: request.method?.() || null, url: diagnosticUrl });
+    while (this.urlDiagnostics.length > this.maxEvents) this.urlDiagnostics.shift();
+    if (!isObservedEndpoint(url)) { this.ignoredEventCount += 1; return; }
     const parts = safeUrlParts(url);
     this.requests.set(request, { timestamp: this.clock().toISOString(), method: request.method?.() || null, endpoint: parts.path, datasource: parts.datasource, parentDatasource: parts.parentDatasource, ...requestBodySummary(request) });
   }
@@ -116,7 +133,19 @@ class ServiceTitanResearchObserver {
     this.add({ timestamp: observed.timestamp, endpoint: observed.endpoint, datasource: observed.datasource, parentDatasource: observed.parentDatasource, request: { method: observed.method, bodyFields: observed.bodyFields, safeValues: observed.safeValues }, response: { status: response.status?.() || null, contentType: contentType ? contentType.split(";")[0] : null, ...summary } });
   }
   add(event) { this.events.push(event); while (this.events.length > this.maxEvents) this.events.shift(); }
-  results() { return { active: this.active, maxEvents: this.maxEvents, count: this.events.length, events: this.events.map((event) => JSON.parse(JSON.stringify(event))) }; }
+  diagnostics() {
+    let contexts = [];
+    try { contexts = this.browserManager.getBrowser?.().contexts?.() || []; } catch { contexts = []; }
+    const pages = contexts.flatMap((context) => context.pages?.() || []);
+    return {
+      selectedPageUrl: safeDiagnosticUrl(this.page?.url?.()), selectedPageTitle: this.selectedPageTitle,
+      browserContextCount: contexts.length, pageCount: pages.length, frameCount: this.page?.frames?.().length || 0,
+      listenerAttached: Boolean(this.page), listenerActive: this.active && Boolean(this.page),
+      retainedEventCount: this.events.length, ignoredEventCount: this.ignoredEventCount
+    };
+  }
+  status() { return { active: this.active, attached: Boolean(this.page), eventCount: this.events.length, diagnostics: this.diagnostics() }; }
+  results() { return { ...this.status(), maxEvents: this.maxEvents, count: this.events.length, urlDiagnostics: this.urlDiagnostics.map((item) => ({ ...item })), events: this.events.map((event) => JSON.parse(JSON.stringify(event))) }; }
 }
 
-module.exports = { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson, safeUrlParts };
+module.exports = { ServiceTitanResearchObserver, isObservedEndpoint, requestBodySummary, summarizeJson, safeUrlParts, safeDiagnosticUrl };

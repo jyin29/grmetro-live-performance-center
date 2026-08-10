@@ -10,11 +10,18 @@ const { createBrowserManagerForConfig } = require("../src/browser/createBrowserM
 const silentLogger = { debug() {}, info() {}, warn() {}, error() {} };
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
-function page(url, closed = false) { return { url: () => url, isClosed: () => closed }; }
+function page(url, closed = false) {
+  const instance = new EventEmitter();
+  instance.url = () => url;
+  instance.isClosed = () => closed;
+  instance.setUrl = (next) => { url = next; instance.emit("framenavigated", {}); };
+  return instance;
+}
 function browser(contextPages) {
   const instance = new EventEmitter();
+  const contexts = contextPages.map((pages) => { const context = new EventEmitter(); context.pages = () => pages; context.open = (newPage) => { pages.push(newPage); context.emit("page", newPage); }; return context; });
   instance.connected = true;
-  instance.contexts = () => contextPages.map((pages) => ({ pages: () => pages }));
+  instance.contexts = () => contexts;
   instance.isConnected = () => instance.connected;
   return instance;
 }
@@ -76,6 +83,28 @@ test("a closed selected page is rediscovered", async () => {
   assert.equal(setup.instance.getServiceTitanPage(), replacement);
   closed = true;
   assert.equal(setup.instance.getServiceTitanPage(), replacement);
+});
+
+test("a newly opened Technician Scorecard replaces the cached fallback selection", async () => {
+  const home = page("https://go.servicetitan.com/#/home");
+  const edge = browser([[home]]); const setup = manager({ connector: async () => edge });
+  const changes = []; setup.instance.subscribe((event) => { if (event.type === "page-changed") changes.push(event.page); });
+  await setup.instance.connect();
+  const scorecard = page("https://go.servicetitan.com/#/new/dashboards/technician-scorecard");
+  edge.contexts()[0].open(scorecard);
+  assert.equal(setup.instance.getServiceTitanPage(), scorecard);
+  assert.equal(changes.at(-1), scorecard);
+});
+
+test("frame navigation to Technician Scorecard reselects the page and notifies observers", async () => {
+  const home = page("https://go.servicetitan.com/#/home");
+  const other = page("https://go.servicetitan.com/#/dispatch");
+  const edge = browser([[home, other]]); const setup = manager({ connector: async () => edge });
+  const changes = []; setup.instance.subscribe((event) => { if (event.type === "page-changed") changes.push(event.page); });
+  await setup.instance.connect();
+  other.setUrl("https://go.servicetitan.com/#/new/dashboards/technician-scorecard");
+  assert.equal(setup.instance.getServiceTitanPage(), other);
+  assert.equal(changes.at(-1), other);
 });
 
 test("disconnect clears references, starts one bounded retry loop, and reconnection restores status", async () => {
