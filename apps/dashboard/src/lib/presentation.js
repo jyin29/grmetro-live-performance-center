@@ -29,6 +29,34 @@ export function rankedTechnicians(technicians = []) {
   });
 }
 
+export function chartMetric(technician, kpiId) {
+  return technician?.kpis?.[kpiId] ?? null;
+}
+
+export function rankChangeLabel(change) {
+  if (change > 0) return `Up ${change} rank${change === 1 ? "" : "s"}`;
+  if (change < 0) return `Down ${Math.abs(change)} rank${change === -1 ? "" : "s"}`;
+  return "Rank steady";
+}
+
+export function performerGroups(technicians = []) {
+  const qualified = technicians.filter((technician) => technician.overall?.qualifies);
+  return { top: qualified.slice(0, 2), bottom: qualified.slice(-2).reverse() };
+}
+
+export function technicianStatus(technician) {
+  if (technician?.available === false) return { label: "Unavailable", tone: "neutral" };
+  if (technician?.stale) return { label: "Stale", tone: "warning" };
+  return { label: "Healthy", tone: "live" };
+}
+
+export function dashboardStatus(status = {}, { refreshing = false, requestFailed = false } = {}) {
+  if (refreshing) return { label: "Refreshing", tone: "refreshing" };
+  if (status.cache === "unavailable") return { label: "Data unavailable", tone: "neutral" };
+  if (requestFailed || status.cache === "stale") return { label: "Stale data", tone: "warning" };
+  return { label: "Healthy", tone: "live" };
+}
+
 export function summaryMetrics(data) {
   const definitions = [
     ["revenue", "Revenue"], ["billableServiceCalls", "Billable Calls"],

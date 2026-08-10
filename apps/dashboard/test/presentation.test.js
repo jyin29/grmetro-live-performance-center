@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMetric, freshness, rankedTechnicians, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { dashboardStatus, formatMetric, freshness, performerGroups, rankedTechnicians, refreshLabel, summaryMetrics, technicianStatus } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -19,5 +19,20 @@ describe("dashboard presentation helpers", () => {
     expect(rankedTechnicians(technicians).map(({ id }) => id)).toEqual([2, 1]);
     const metric = { value: 10, hasData: true, rank: 1, format: "integer" };
     expect(summaryMetrics({ technicians: [{ shortName: "Alpha", kpis: { revenue: metric } }] })[0]).toMatchObject({ technician: "Alpha", metric });
+  });
+
+  it("builds performer widgets from backend overall ranks", () => {
+    const technicians = [1, 2, 3, 4, 5].map((rank) => ({ id: rank, overall: { rank, qualifies: true } }));
+    expect(performerGroups(technicians).top.map(({ id }) => id)).toEqual([1, 2]);
+    expect(performerGroups(technicians).bottom.map(({ id }) => id)).toEqual([5, 4]);
+  });
+
+  it("distinguishes backend and request status values", () => {
+    expect(technicianStatus({ available: false })).toEqual({ label: "Unavailable", tone: "neutral" });
+    expect(technicianStatus({ stale: true })).toEqual({ label: "Stale", tone: "warning" });
+    expect(technicianStatus({ available: true, stale: false })).toEqual({ label: "Healthy", tone: "live" });
+    expect(dashboardStatus({ cache: "fresh" }, { refreshing: true })).toEqual({ label: "Refreshing", tone: "refreshing" });
+    expect(dashboardStatus({ cache: "stale" })).toEqual({ label: "Stale data", tone: "warning" });
+    expect(dashboardStatus({ cache: "unavailable" })).toEqual({ label: "Data unavailable", tone: "neutral" });
   });
 });

@@ -2074,7 +2074,11 @@ Footer and live-data status
 
 The KPI summaries display the technician with backend rank `1` for selected approved KPIs. The dashboard does not calculate team totals, KPI rankings, overall scores, or other business meaning. Missing values display as `No data`, and data-quality labels remain visible.
 
-The primary visualization region is deliberately a foundation placeholder. It does not implement charts, slide rotation, remote control, WebSockets, or AI insights. Those features remain assigned to their dedicated implementation tasks.
+The primary visualization region now renders three responsive, dependency-free SVG/CSS charts from the existing dashboard payload: Revenue Trend, KPI Comparison, and Technician Ranking. Revenue Trend is explicitly a current-day technician snapshot with backend-provided rank movement; it does not imply historical time-series data. KPI Comparison consumes backend slide rows and normalized ratios, while Technician Ranking consumes backend overall rank and rank change. The dashboard does not calculate goals, scores, rankings, or KPI business meaning.
+
+Reusable production widgets include KPI cards, the overall technician leaderboard, top and bottom performer groups, and technician summary cards. Healthy, stale, unavailable, and refreshing states receive distinct high-contrast treatments. Interactive cards and panels expose keyboard focus, subtle hover elevation, reduced-motion fallbacks, and responsive scaling for 1280×720, 1920×1080, and 3840×2160.
+
+Slide rotation, remote control, WebSockets, and AI insights remain assigned to later tasks.
 
 Initial loading preserves the complete shell with skeleton regions. A failed initial request shows a branded friendly error and retry action. A background request failure preserves the last successful payload and adds a nonblocking warning.
 

@@ -866,10 +866,14 @@ feat: derive validated service and installation KPIs
 
 - [ ] Complete dependency installation and run the dashboard test/build commands in a network-enabled environment.
 - [ ] Perform stakeholder visual review at 1280×720, 1920×1080, and 3840×2160 after the Vite application can run.
-- [ ] Replace the chart-region foundation placeholder only when the chart implementation task begins.
+- [x] Replace the chart-region foundation placeholder with responsive, dependency-free SVG/CSS visualizations using only backend-prepared values, ranks, ordering, and normalized ratios.
+- [x] Add reusable KPI cards, overall leaderboard, top/bottom performer groups, and technician summary cards.
+- [x] Distinguish healthy, stale, unavailable, and refreshing presentation states from backend and request status.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
 
 Progress note (2026-08-10): Began Phase 11 with a production dashboard foundation that consumes the stable cached dashboard REST payload without modifying backend logic, ServiceTitan integration, refresh providers, or job derivation. The shell renders backend-prepared KPI records and overall ranks, keeps missing values distinct from zero, and retains visible data across background request failures. Future chart, TV rotation, WebSocket, AI, and remote-control regions remain placeholders only. Dependency installation is externally blocked by npm registry HTTP 403 and must be completed before visual approval.
+
+Progress note (2026-08-10): Replaced the visualization placeholder with production Revenue Trend, KPI Comparison, and Technician Ranking charts. The charts remain snapshot visualizations: Revenue Trend shows current technician revenue plus backend-provided rank movement because Version 1.0 has no historical database. Reusable performer and technician-summary widgets, explicit status treatments, keyboard focus, reduced-motion behavior, hover polish, and 720p/1080p/4K scaling were added. No backend, ServiceTitan, WebSocket, TV rotation, remote-control, or AI-summary behavior changed. Stakeholder visual approval remains outstanding.
 
 Recommended commit:
 
