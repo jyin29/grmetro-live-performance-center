@@ -13,7 +13,8 @@ button { font: inherit; }
 .header__title { padding-left: clamp(18px, 2vw, 36px); border-left: 1px solid var(--border); }
 .header__title p, .panel__heading p { margin: 0 0 5px; color: var(--teal); font-weight: 750; text-transform: uppercase; letter-spacing: .12em; font-size: clamp(10px, .72vw, 14px); }
 .header h1 { margin: 0; font-size: clamp(24px, 2.1vw, 42px); letter-spacing: -.035em; }
-.header > .status-badge { margin-left: auto; }
+.header__status { margin-left: auto; display: grid; justify-items: end; gap: 7px; }
+.header__clock { font-size: clamp(20px, 1.55vw, 31px); font-weight: 800; font-variant-numeric: tabular-nums; }
 .status-badge { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; border-radius: 99px; padding: 8px 12px; font-size: clamp(11px, .7vw, 14px); font-weight: 700; text-transform: capitalize; }
 .status-badge--live { color: #087157; background: #e7f7f1; }.status-badge--warning { color: #9b5b04; background: #fff3d9; }.status-badge--neutral { color: #687681; background: #eef2f4; }
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px currentColor; opacity: .75; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMetric, freshness, rankedTechnicians, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { formatClock, formatMetric, freshness, rankedTechnicians, refreshLabel, summaryMetrics } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -12,6 +12,8 @@ describe("dashboard presentation helpers", () => {
     const now = Date.parse("2026-08-10T12:05:00Z");
     expect(refreshLabel("2026-08-10T12:01:00Z", now)).toBe("Updated 4 min ago");
     expect(freshness("2026-08-10T12:01:00Z", now)).toBe("stale");
+    expect(refreshLabel(null, now)).toBe("Waiting for live data");
+    expect(formatClock(now)).toMatch(/\d{1,2}:05:00\s[AP]M/);
   });
 
   it("uses backend ranks without recalculating business scores", () => {

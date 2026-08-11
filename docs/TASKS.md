@@ -859,12 +859,11 @@ feat: derive validated service and installation KPIs
 - [x] Add responsive 720p, 1080p, widescreen, and 4K-oriented scaling.
 - [x] Reserve labeled placeholders without implementing charts, TV rotation, AI insights, remote integration, or WebSockets.
 - [x] Add focused tests for API response handling, metric formatting, no-data semantics, freshness, and backend-provided ordering.
-- [!] Install the new frontend dependencies and verify the production bundle in the implementation environment.
-  - Blocked on 2026-08-10 because the configured network proxy returns HTTP 403 for the npm registry. Source, tests, and build configuration are committed, but dependency-backed tests and the Vite build require `npm install` in an environment with registry access.
+- [x] Install the frontend dependencies and verify the production bundle in the implementation environment.
 
 ## Remaining Dashboard Foundation Work
 
-- [ ] Complete dependency installation and run the dashboard test/build commands in a network-enabled environment.
+- [x] Complete dependency installation and run the dashboard test/build commands.
 - [ ] Perform stakeholder visual review at 1280×720, 1920×1080, and 3840×2160 after the Vite application can run.
 - [x] Replace the chart-region foundation placeholder with the requested Revenue, KPI comparison, and technician ranking visualizations.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
@@ -872,6 +871,8 @@ feat: derive validated service and installation KPIs
 Progress note (2026-08-10): Began Phase 11 with a production dashboard foundation that consumes the stable cached dashboard REST payload without modifying backend logic, ServiceTitan integration, refresh providers, or job derivation. The shell renders backend-prepared KPI records and overall ranks, keeps missing values distinct from zero, and retains visible data across background request failures. Future chart, TV rotation, WebSocket, AI, and remote-control regions remain placeholders only. Dependency installation is externally blocked by npm registry HTTP 403 and must be completed before visual approval.
 
 Progress note (2026-08-10): Rebuilt the dashboard delivery directly in this repository and replaced the reserved chart placeholder with production visualization components. The dashboard now renders an overlaid SVG Revenue chart, a Lead Conversion/Closing KPI comparison, and a five-technician overall ranking chart using only backend-prepared values, normalized ratios, and ranks. Loading, no-data, initial error, retry, and cached-data warning states remain intact. Focused component tests cover accessible chart output and zero-versus-no-data presentation; synchronized slide rotation, remote state, and the complete Phase 14 metric-slide engine remain separate work.
+
+Progress note (2026-08-11): Consolidated the current repository's Phase 11 frontend into one runnable production foundation. The production entry point now loads the shared responsive stylesheet, the branded header shows a live clock and continuously updated freshness age, and loading/error states no longer imply a successful refresh. Existing REST hook, cached-data behavior, state views, cards, and visualization components are reused without adding business calculations. Dependency-backed production build verification now passes. Stakeholder visual review remains; display routing, WebSockets, synchronized rotation, and remote control remain later-phase work.
 
 Recommended commit:
 
