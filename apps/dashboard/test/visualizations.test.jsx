@@ -21,52 +21,45 @@ describe("dashboard visualizations", () => {
   it("registers and renders the five indexed dashboard slides", () => {
     const data = {
       technicians: [],
-      slides: { revenue: { rows: [] }, performance: { rows: [] } },
+      slides: { revenue: { rows: [] }, activity: { rows: [] }, performance: { rows: [] }, "average-ticket": { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
     expect(PRESENTATION_SLIDES).toHaveLength(5);
     expect(PRESENTATION_SLIDES.every(({ Component }) => typeof Component === "function")).toBe(true);
-    expect(markup).toContain('data-slide-id="daily-pace"');
-    expect(markup).toContain("Are we on pace?");
+    expect(markup).toContain('data-slide-id="revenue"');
+    expect(markup).toContain("Daily Revenue Progress");
     expect(markup).toContain("Slide 1 of 5");
-    expect(markup).toContain('aria-label="Show Are we on pace?"');
+    expect(markup).toContain('aria-label="Show Revenue"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
       id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
       kpis: { revenue: row.metrics[0], closingRate: { ...row.metrics[0], format: "percentage" }, billableServiceCalls: row.metrics[0], installRevenue: row.metrics[1], installAverageTicket: row.metrics[1] }
     }] }} slideIndex={1} />);
-    expect(performanceMarkup).toContain('data-slide-id="team-performance"');
+    expect(performanceMarkup).toContain('data-slide-id="sales"');
     expect(performanceMarkup).toContain("Slide 2 of 5");
-    expect(performanceMarkup).toContain("Who is performing?");
-    expect(performanceMarkup).toContain("Install Revenue");
-    expect(performanceMarkup).toContain("Data status");
-    expect(performanceMarkup).toContain("No data");
+    expect(performanceMarkup).toContain("Sales");
+    expect(performanceMarkup).toContain("Closing Performance");
 
     const businessMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, slides: {
       revenue: { axis: { maximum: 0, format: "currency" }, metrics: [], rows: [] },
       performance: { metrics: [], rows: [] }
     } }} slideIndex={2} />);
-    expect(businessMarkup).toContain('data-slide-id="revenue-sources"');
+    expect(businessMarkup).toContain('data-slide-id="technicians"');
     expect(businessMarkup).toContain("Slide 3 of 5");
-    expect(businessMarkup).toContain("Where is revenue coming from?");
-    expect(businessMarkup).toContain("Revenue by Technician");
-    expect(businessMarkup).toContain("Service &amp; Install");
+    expect(businessMarkup).toContain("Technicians");
 
     const recognitionMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
       id: 101, name: "Sample Technician", shortName: "Sample", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
       kpis: { revenue: { value: 12000, hasData: true, format: "currency", rank: 1 }, closingRate: { value: 72, hasData: true, format: "percentage", rank: 1 } }
     }] }} slideIndex={3} />);
-    expect(recognitionMarkup).toContain('data-slide-id="top-three"');
+    expect(recognitionMarkup).toContain('data-slide-id="operations"');
     expect(recognitionMarkup).toContain("Slide 4 of 5");
-    expect(recognitionMarkup).toContain("Who deserves recognition?");
-    expect(recognitionMarkup).toContain("Sample Technician");
-    expect(recognitionMarkup).toContain("$12,000");
-    expect(recognitionMarkup).toContain("72%");
-    expect(recognitionMarkup).toContain("Overall Top 3");
+    expect(recognitionMarkup).toContain("Operations");
+    expect(recognitionMarkup).toContain("Service &amp; Install Activity");
 
     const healthMarkup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={4} presentationState={{}} />);
-    expect(healthMarkup).toContain('data-slide-id="management-attention"');
-    expect(healthMarkup).toContain("What needs attention?");
+    expect(healthMarkup).toContain('data-slide-id="recognition"');
+    expect(healthMarkup).toContain("Top 3 coming soon");
     expect(healthMarkup).toContain("Slide 5 of 5");
   });
 

@@ -7,14 +7,14 @@ export function RecognitionSlide({ data }) {
 
   if (!featured) {
     return <main className="recognition-slide recognition-slide--empty dashboard-slide" aria-labelledby="recognition-title">
-      <p>Who deserves recognition?</p>
+      <p>Recognition</p>
       <h2 id="recognition-title">Top 3 coming soon</h2>
       <span>Waiting for a backend-prepared overall ranking.</span>
     </main>;
   }
 
   return <main className="recognition-slide dashboard-slide" aria-labelledby="recognition-title">
-    <header className="top-three-heading"><p>Today’s business question</p><h2 id="recognition-title">Who deserves recognition?</h2><span>Overall Top 3</span></header>
+    <header className="top-three-heading"><p>Tier 1 · Overall standing</p><h2 id="recognition-title">Recognition</h2><span>Overall Top 3</span></header>
     <section className="podium" aria-label="Top three technicians">{[podium[1], podium[0], podium[2]].filter(Boolean).map((technician) => <article className={`podium-card podium-card--${technician.overall.rank}`} key={technician.id}>
       <span className="podium-card__place">#{technician.overall.rank}</span><span className="recognition-hero__avatar">{technician.initials}</span><h3>{technician.name}</h3>
       <div><span>Revenue</span><AnimatedMetric metric={technician.kpis?.revenue} /></div><div><span>Closing</span><AnimatedMetric metric={technician.kpis?.closingRate} /></div>

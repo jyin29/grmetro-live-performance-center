@@ -1,115 +1,55 @@
-# Dashboard Content Audit and KPI Strategy
+# Dashboard Content Audit and KPI Domain Strategy
 
 Date: 2026-08-11  
-Scope: presentation content using the existing dashboard payload only
+Scope: presentation-only redesign using `docs/KPI_CATALOG.md` and the existing dashboard payload
 
-## Executive assessment
+## Catalog status
 
-The dashboard framework was visually capable but content-first prioritization was weak. It repeated technician revenue and closing data across several slides, treated a collection of charts as a business story, and spent an entire rotation slot on implementation health. The owner could see numbers, but could not consistently answer **pace, performance, revenue source, recognition, and management attention** within a few seconds.
+`docs/KPI_CATALOG.md` existed in this branch and was used as the authoritative KPI specification. It was not regenerated. The catalog identifies 45 present-data KPI concepts and 24 future concepts while preserving Version 1.0's eleven approved canonical KPI concepts.
 
-The redesigned rotation retains exactly five slides and uses no new endpoint or fabricated calculation:
+## Domain grouping
 
-1. **Are we on pace?**
-2. **Who is performing?**
-3. **Where is revenue coming from?**
-4. **Who deserves recognition?**
-5. **What needs attention?**
+Every KPI eligible for the five-slide presentation has one primary home. Supporting appearances are limited to technician scorecards and podium context, where they explain a person rather than repeat a domain dashboard.
 
-## Complete audit of the previous presentation
+| Domain | Tier 1 emphasis | Tier 2 support | Tier 3 treatment | Tier 4 |
+|---|---|---|---|---|
+| Revenue | Revenue Today; revenue goal/progress | Service Revenue and Install Revenue only after approved classification | Adjusted revenue and job/opportunity averages remain detail opportunities | Not presented |
+| Sales | Closing %, approved Lead Conversion % | 10+ Opportunities, Tech Leads, Marketed Leads | Lead-source conversion and process ratios remain detail opportunities | Not presented |
+| Technicians | Overall standing, Revenue, Closing % | Billable Calls and rank movement | Individual KPI/data-quality detail supports each scorecard | Not presented |
+| Operations | Billable Service Calls, Installs, Install Average Ticket, Install Revenue when validated | Field activity and throughput | WIP, holds, cancellations, efficiency, hours, and recalls remain future detail opportunities | Not presented |
+| Recognition | Backend-qualified Overall Top 3 | Revenue and Closing % as concise winner context | Category-specific recognition remains a detail opportunity | Not presented |
 
-### Slide 1 — Revenue Overview
+Unavailable and fallback metrics are never promoted into a confirmed result. Service/install classifications, goals, and Lead Conversion remain subject to the catalog's validation constraints.
 
-**Business question:** What are today’s leading KPI values, technician revenue, overall standings, and conversion results?
+## Redesigned five-slide organization
 
-**Useful:** Revenue by technician exposed backend-prepared values without inventing totals.
+1. **Revenue** — tier-one daily revenue progress receives the largest visual region, with a supporting technician distribution chart.
+2. **Sales** — Closing Performance is the dominant result; opportunities and lead activity support it.
+3. **Technicians** — five reusable scorecards organize rank, Revenue, Closing, and field activity around each technician.
+4. **Operations** — service/install throughput and install economics share one operational view; unavailable classifications remain explicitly visible rather than estimated.
+5. **Recognition** — the dedicated second–first–third Top 3 podium remains full screen, with Revenue and Closing as concise context.
 
-**Duplicated:** Its leaderboard duplicated Technician Performance; closing duplicated Business Performance; revenue duplicated Business Performance.
+The slide deck, automatic 30-second rotation, stationary crossfade, light theme, large television typography, SVG/chart animation, missing-data behavior, and reusable visualization components remain intact. No ServiceTitan request, endpoint, API contract, KPI calculation, ranking, or business rule changed.
 
-**Weak:** Summary cards showed the leading *individual technician*, not company totals, and could be misread as business-wide results. Four competing regions did not state whether the team was on pace.
+## Removed presentation concepts
 
-**Decision:** Remove the leader-summary cards, embedded leaderboard, and conversion comparison. Use backend-provided technician revenue, goals, percent complete, remaining amounts, and ranks in one daily-pace view. Retain a smaller revenue comparison for context.
+- Sentence-style question headings.
+- A management-attention slide that duplicated technician ranking and revenue.
+- A data-health/mapping KPI count in the business rotation.
+- Revenue-source wording that implied an available service/install split.
 
-### Slide 2 — Technician Performance
+Feed freshness remains in the stationary dashboard header, where it is operational context rather than a business domain.
 
-**Business question:** How is each technician performing?
+## Remaining KPI opportunities
 
-**Useful:** It placed all technicians and backend rankings together and preserved unavailable data correctly.
+The existing payload can support additional presentation only after backend ownership and business validation are completed:
 
-**Duplicated:** Revenue, closing, and rank appeared elsewhere, but belong together here because the unit of analysis is the technician.
+- Team Revenue Today, coverage-aware team goals, and true time-of-day pace.
+- Validated service/install classification for calls, revenues, installs, and Install Average Ticket.
+- Approved Lead Conversion and weighted team closing definitions.
+- WIP, held, canceled, recall, efficiency, billable-hour, and revenue-per-hour operational views.
+- Lead-source mix and source-specific closing drill-downs.
+- Historical trends and improvement recognition after a history/storage decision.
+- Tier 4 dispatch, capacity, profitability, membership, quality, and cycle-time KPIs cataloged for future expansion.
 
-**Weak:** The topic-style title lacked urgency. Five equally dense metrics and badges weakened hierarchy; frequently unavailable install metrics consumed valuable space.
-
-**Decision:** Retain the reusable cards and frame the slide as “Who is performing?” Keep unavailable values honest, with rank, revenue, closing, and activity as its central story.
-
-### Slide 3 — Business Performance
-
-**Business question:** How do revenue and closing compare by technician?
-
-**Useful:** Both charts were individually useful.
-
-**Duplicated:** Revenue repeated Slide 1; closing repeated Slide 1 and the technician cards.
-
-**Weak:** Two unrelated questions shared one screen. “Revenue breakdown” implied a source mix even when service/install classifications were unavailable.
-
-**Decision:** Ask “Where is revenue coming from?” Use technician revenue as the confirmed answer. Show Service and Install only as provided, with a no-estimates statement. Remove closing here.
-
-### Slide 4 — Recognition & Achievements
-
-**Business question:** Who is today’s best performer and who leads selected categories?
-
-**Useful:** Recognition supports culture and technician engagement.
-
-**Duplicated:** Highest Revenue, Highest Closing, and Top Overall frequently repeated the featured technician and other slides.
-
-**Weak:** A full-screen hero recognized one person while smaller cards could recognize the same person again; it did not deliver the dedicated Top 3 concept.
-
-**Decision:** Replace the hero and duplicate badges with a dedicated second–first–third podium using backend overall ranks. Keep revenue and closing as concise context.
-
-### Slide 5 — Operations Health
-
-**Business question:** Is the dashboard software healthy?
-
-**Useful:** Refresh and cache status matter during a fault.
-
-**Duplicated:** Refresh, freshness, live state, and slide position already appeared in the stationary shell.
-
-**Weak:** A healthy system spent 20% of the rotation announcing it was healthy. Cache and rotation are implementation metrics, not HVAC operating KPIs.
-
-**Decision:** Replace it with “What needs attention?” showing the lowest backend-prepared overall ranks, revenue goal remaining, and closing. Retain feed health compactly and surface unavailable mappings rather than pretending they are results.
-
-## KPI strategy
-
-1. **Daily business outcome — Are we on pace?** Use Revenue, goal, percent complete, remaining, and rank. Show the target relationship rather than only raw dollars.
-2. **Technician productivity — Who is performing?** Use overall rank, revenue, closing, approved activity values, and rank movement. Keep one card per technician.
-3. **Revenue source — Where is revenue coming from?** Use Revenue by technician, plus Service and Install Revenue only when their backend metrics have data. Never infer a split.
-4. **Recognition — Who deserves recognition?** Use backend overall Top 3, revenue, and closing. Use a dedicated podium and no duplicate award strip.
-5. **Management exceptions — What needs attention?** Use backend bottom ranks, revenue goal remaining, closing, refresh health, and unavailable mappings. Do not invent performance thresholds.
-
-## Existing-data boundary
-
-The presentation consumes only `technicians`, `technicians[].kpis`, `technicians[].overall`, prepared slide records, and refresh metadata already returned by `GET /api/v1/dashboard`. It does not sum team revenue, create a company goal, infer time-of-day pace, calculate a score, or call another endpoint.
-
-## Future KPI opportunities — not implemented
-
-- Company revenue vs. company daily goal and time-adjusted revenue pace.
-- Revenue per truck, labor hour, and business unit.
-- Open, dispatched, completed, late, and unassigned calls.
-- Callback and warranty-call rate.
-- Labor utilization and drive-time efficiency.
-- Maintenance-agreement membership sales and renewals.
-- Accessory and indoor-air-quality sales.
-- Call-to-opportunity and opportunity-to-sale funnel efficiency.
-- Install ratio, backlog, sold-to-installed cycle time, and capacity.
-- Revenue split by call type and demand source.
-- Biggest improvement based on historical comparison.
-- Company-wide exception thresholds and operational alerts.
-
-Each requires validated source fields, business definitions, and backend-owned calculations before presentation work.
-
-## Visualization inventory
-
-**Removed:** leading-individual KPI summary strip; duplicate Slide 1 leaderboard and closing comparison; closing chart from Business Performance; single-winner hero and repetitive badges; full-slide cache, slide-number, rotation, and refresh cards.
-
-**Added:** revenue-to-goal pace lanes; validated Service/Install source list; dedicated Top 3 podium; management-attention cards; compact feed-health and mapping watch.
-
-**Reused:** stationary shell, header, slide deck, transitions, `AnimatedMetric`, `TechnicianMetric`, `RevenueChart`, technician cards, and all backend-prepared rankings, goals, normalized values, and data-quality behavior.
+These opportunities require backend-prepared values and must not be calculated or inferred in React.

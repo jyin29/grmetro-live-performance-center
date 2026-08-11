@@ -244,3 +244,23 @@ button { font: inherit; }
   .remote-controls__primary { grid-template-columns: 1fr; }
   .remote-controls__direction button span { max-width: 80px; }
 }
+
+/* Business-domain presentation hierarchy. */
+.operations-health { grid-template: auto minmax(0, 1fr) / repeat(2, minmax(0, 1fr)); }
+.operations-health > .attention-heading { grid-column: 1 / -1; }
+.operations-domain__panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: clamp(24px, 1.8vw, 36px); }
+.operations-domain__panel .panel__heading h3 { margin: 0; font-size: clamp(28px, 1.75vw, 36px); }
+.operations-domain__panel .comparison-chart { flex: 1; grid-template: auto minmax(0, 1fr) / 1fr; gap: clamp(18px, 1.4vw, 28px); }
+.operations-domain__panel .comparison-chart .chart-legend { flex-direction: row; }
+.operations-domain__panel .comparison-chart__rows { grid-template-columns: 1fr; gap: clamp(10px, .8vw, 16px); }
+.operations-domain__panel .comparison-row { display: grid; grid-template-columns: minmax(110px, .32fr) minmax(0, 1fr); align-items: center; gap: 14px; }
+.operations-domain__panel .comparison-row > strong { margin: 0; font-size: clamp(18px, 1.1vw, 23px); }
+.operations-domain__panel .comparison-bar { height: clamp(28px, 1.8vw, 36px); }
+.operations-domain__panel .comparison-bar b { font-size: clamp(15px, .9vw, 18px); }
+@media (max-height: 760px) {
+  .operations-health { gap: 10px; }
+  .operations-domain__panel { padding: 14px 18px; }
+  .operations-domain__panel .comparison-chart { gap: 10px; }
+  .operations-domain__panel .comparison-chart__rows { gap: 6px; }
+  .operations-domain__panel .comparison-bar { height: 24px; }
+}
