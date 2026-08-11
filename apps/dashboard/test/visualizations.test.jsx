@@ -17,16 +17,16 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
-  it("registers and renders the three indexed dashboard slides", () => {
+  it("registers and renders the four indexed dashboard slides", () => {
     const data = {
       technicians: [],
       slides: { revenue: { rows: [] }, performance: { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(dashboardSlides).toHaveLength(3);
+    expect(dashboardSlides).toHaveLength(4);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
-    expect(markup).toContain("Slide 1 of 3");
+    expect(markup).toContain("Slide 1 of 4");
     expect(markup).toContain('aria-label="Show Revenue overview"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
@@ -47,6 +47,18 @@ describe("dashboard visualizations", () => {
     expect(businessMarkup).toContain("Business Performance");
     expect(businessMarkup).toContain("Revenue by Technician");
     expect(businessMarkup).toContain("Closing Performance");
+
+    const recognitionMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
+      id: 101, name: "Sample Technician", shortName: "Sample", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
+      kpis: { revenue: { value: 12000, hasData: true, format: "currency", rank: 1 }, closingRate: { value: 72, hasData: true, format: "percentage", rank: 1 } }
+    }] }} slideIndex={3} />);
+    expect(recognitionMarkup).toContain('data-slide-id="recognition"');
+    expect(recognitionMarkup).toContain("Today’s Top Performer");
+    expect(recognitionMarkup).toContain("Sample Technician");
+    expect(recognitionMarkup).toContain("$12,000");
+    expect(recognitionMarkup).toContain("72%");
+    expect(recognitionMarkup).toContain("Overall Rank");
+    expect(recognitionMarkup).toContain("Highest Revenue");
   });
 
   it("uses the centralized 30-second rotation and wraps to Slide 1", () => {
@@ -55,7 +67,8 @@ describe("dashboard visualizations", () => {
     expect(SLIDE_TRANSITION_DURATION_MS).toBeLessThanOrEqual(500);
     expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
     expect(nextSlideIndex(1, dashboardSlides.length)).toBe(2);
-    expect(nextSlideIndex(2, dashboardSlides.length)).toBe(0);
+    expect(nextSlideIndex(2, dashboardSlides.length)).toBe(3);
+    expect(nextSlideIndex(3, dashboardSlides.length)).toBe(0);
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
