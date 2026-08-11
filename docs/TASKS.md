@@ -1827,6 +1827,12 @@ Do not place long debugging transcripts in this file.
 - Preserved automatic rotation, stationary transitions, animation, the light theme, unavailable-data semantics, and the dedicated Top 3 podium.
 - Recorded remaining validation-dependent KPI opportunities in `docs/DASHBOARD_CONTENT_AUDIT.md`.
 
+## 2026-08-11 — Management Intelligence presentation layer
+
+- Added a reusable, presentation-only insight selector using existing refresh, data-quality, goal-achievement, and rank-movement fields.
+- Added a compact stationary banner that shows at most two Critical, Warning, or Informational items without changing the five-slide rotation.
+- Documented every condition and explicitly deferred pace, benchmark, near-goal, risk, and leader-gap insights until the backend provides approved values or classifications.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

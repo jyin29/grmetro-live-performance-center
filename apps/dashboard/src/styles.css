@@ -23,6 +23,17 @@ button { font: inherit; }
 .status-badge--live { color: #087157; background: #e7f7f1; }.status-badge--warning { color: #9b5b04; background: #fff3d9; }.status-badge--neutral { color: #687681; background: #eef2f4; }
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px currentColor; opacity: .75; }
 .inline-warning { color: #8a570e; background: #fff6df; border: 1px solid #f2d99b; border-radius: 12px; padding: 12px 18px; font-weight: 650; }
+.management-attention { display: flex; align-items: stretch; gap: clamp(14px, 1vw, 20px); min-height: 82px; padding: 10px 12px; background: rgba(255,255,255,.94); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 8px 24px rgba(26,49,61,.06); }
+.management-attention__label { display: grid; place-items: center; flex: 0 0 clamp(150px, 11vw, 210px); padding: 0 15px; color: var(--teal); border-right: 1px solid var(--border); font-size: clamp(14px,.9vw,18px); font-weight: 900; letter-spacing: .08em; line-height: 1.2; text-align: center; text-transform: uppercase; }
+.management-attention__items { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.management-insight { min-width: 0; display: flex; align-items: center; gap: 13px; padding: 8px 14px; border-left: 5px solid; border-radius: 11px; animation: insight-in 350ms cubic-bezier(.22,1,.36,1) both; }
+.management-insight__symbol { flex: 0 0 31px; display: grid; place-items: center; width: 31px; height: 31px; border: 2px solid currentColor; border-radius: 50%; font-size: 18px; font-weight: 950; }
+.management-insight div { min-width: 0; display: grid; grid-template: auto auto / auto minmax(0,1fr); column-gap: 12px; align-items: baseline; }
+.management-insight p { grid-column: 1/-1; margin: 0 0 2px; font-size: clamp(11px,.68vw,14px); font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
+.management-insight strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(16px,1vw,20px); }
+.management-insight div > span { overflow: hidden; color: #53636e; font-size: clamp(13px,.78vw,16px); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.management-insight--critical { color: #9c2f2f; border-color: #bd4545; background: #fff0f0; }.management-insight--warning { color: #8a570e; border-color: #d29a35; background: #fff7e4; }.management-insight--informational { color: #086f73; border-color: var(--teal); background: #ebf7f6; }
+@keyframes insight-in { from { opacity: 0; transform: translateY(5px); } }
 .dashboard-grid { flex: 1; display: grid; grid-template: auto minmax(390px, 1fr) auto / minmax(0, 1.7fr) minmax(330px, .72fr); gap: clamp(18px, 1.4vw, 28px); }
 .summary-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(14px, 1.2vw, 24px); }
 .panel, .kpi-card { background: var(--surface); border: 1px solid rgba(223,230,234,.85); border-radius: 20px; box-shadow: var(--shadow); }

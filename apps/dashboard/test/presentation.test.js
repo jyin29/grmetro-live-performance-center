@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatMetric, freshness, rankedTechnicians, recognitionPresentation, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { formatClock, formatMetric, freshness, managementInsights, rankedTechnicians, recognitionPresentation, refreshLabel, summaryMetrics } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -33,5 +33,25 @@ describe("dashboard presentation helpers", () => {
     const presentation = recognitionPresentation(technicians);
     expect(presentation.featured.name).toBe("Beta");
     expect(presentation.recognitions.map(({ technician }) => technician.name)).toEqual(["Alpha", "Alpha", "Beta", "Beta"]);
+  });
+
+  it("prioritizes feed, rank, quality, goal, and movement insights without calculating KPIs", () => {
+    const data = {
+      refreshedAt: "2026-08-10T12:00:00Z",
+      slides: { revenue: { metrics: [{ id: "revenue", label: "Revenue" }, { id: "installRevenue", label: "Install Revenue" }] } },
+      technicians: [
+        { id: 1, name: "Alpha", shortName: "Alpha", overall: { rank: 2, qualifies: true, rankChange: -1 }, kpis: { revenue: { hasData: true, reached: true, percentComplete: 105 }, installRevenue: { hasData: false, dataQuality: "unavailable" } } },
+        { id: 2, name: "Beta", shortName: "Beta", overall: { rank: 1, qualifies: true, rankChange: 1 }, kpis: { revenue: { hasData: true, reached: false, percentComplete: 80 } } }
+      ]
+    };
+    const insights = managementInsights(data, {}, Date.parse("2026-08-10T12:11:00Z"));
+    expect(insights).toHaveLength(2);
+    expect(insights.map(({ priority }) => priority)).toEqual(["critical", "warning"]);
+    expect(insights[0].id).toBe("feed-critical");
+    expect(insights[1].title).toContain("moved down 1 place");
+
+    const informational = managementInsights({ ...data, refreshedAt: "2026-08-10T12:10:45Z", technicians: data.technicians.map((technician) => ({ ...technician, overall: { ...technician.overall, rankChange: Math.max(0, technician.overall.rankChange) }, kpis: { revenue: technician.kpis.revenue } })) }, {}, Date.parse("2026-08-10T12:11:00Z"));
+    expect(informational.map(({ priority }) => priority)).toEqual(["informational", "informational"]);
+    expect(informational.map(({ eyebrow }) => eyebrow)).toEqual(["Goal achieved", "Ranking movement"]);
   });
 });

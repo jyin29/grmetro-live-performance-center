@@ -2147,3 +2147,9 @@ Recognition
 Revenue gives Tier 1 daily revenue the strongest emphasis. Sales pairs Tier 1 Closing with Tier 2 opportunity and lead drivers. Technicians uses person-centered scorecards. Operations groups service/install throughput and install economics while preserving unavailable classifications. Recognition remains the dedicated full-screen Overall Top 3 podium in second–first–third order.
 
 Tier 3 metrics remain supporting/detail opportunities and Tier 4 metrics do not appear. Feed health remains in the stationary header rather than occupying a business slide. The presentation retains exactly five indexed slides, automatic rotation, stationary crossfades, update animations, the approved light theme, and television-readable sizing. The complete grouping and opportunity audit is recorded in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+
+## 90. Management Attention presentation layer
+
+A compact Management Attention banner sits between the stationary header and slide stage when supported insights exist. It displays no more than two prioritized insights and never becomes a sixth slide. Critical uses a restrained red tint, Warning uses amber, and Informational uses teal. Each treatment includes a text priority label and symbol so meaning does not depend on color. Typography, one-line truncation, spacing, subtle entrance motion, and the global reduced-motion override preserve ten-foot readability without crowding slide content.
+
+Insight selection is centralized in a reusable presentation helper. Slide components do not contain management-condition logic. The complete condition and field inventory is maintained in `docs/DASHBOARD_CONTENT_AUDIT.md`.

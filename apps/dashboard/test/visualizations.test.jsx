@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { KpiComparisonChart } from "../src/components/KpiComparisonChart";
+import { ManagementAttention } from "../src/components/ManagementAttention";
 import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
 import { SlideDeck } from "../src/components/SlideDeck";
@@ -18,6 +19,16 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
+  it("renders prioritized management attention with consistent priority treatments", () => {
+    const markup = renderToStaticMarkup(<ManagementAttention insights={[
+      { id: "feed", priority: "critical", eyebrow: "Feed health", title: "Updates interrupted", detail: "Showing cached data." },
+      { id: "rank", priority: "informational", eyebrow: "Ranking movement", title: "Sample climbed 1 place", detail: "Now ranked #2." }
+    ]} />);
+    expect(markup).toContain('aria-label="Management attention"');
+    expect(markup).toContain("management-insight--critical");
+    expect(markup).toContain("management-insight--informational");
+  });
+
   it("registers and renders the five indexed dashboard slides", () => {
     const data = {
       technicians: [],
