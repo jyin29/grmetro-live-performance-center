@@ -116,6 +116,25 @@ button { font: inherit; }
 .kpi-card.is-updated, .performance-card.is-updated { background-color: #f5fbfa; border-color: rgba(8,127,131,.35); box-shadow: var(--shadow), 0 0 0 3px rgba(8,127,131,.08); }
 .ranking-chart li.is-updated { background-color: #f7fbf9; box-shadow: inset 3px 0 rgba(8,127,131,.35); }
 
+.business-performance { width: 100%; min-height: 0; display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 1.55fr) minmax(430px, .75fr); gap: clamp(18px, 1.25vw, 24px); }
+.business-performance__heading { grid-column: 1 / -1; display: flex; align-items: end; justify-content: space-between; padding: 0 clamp(8px, .7vw, 14px); }
+.business-performance__heading p { margin: 0 0 5px; color: var(--teal); font-size: clamp(14px, .85vw, 17px); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.business-performance__heading h2 { margin: 0; font-size: clamp(38px, 2.55vw, 52px); letter-spacing: -.04em; }
+.business-performance__heading > span { color: var(--muted); font-size: clamp(18px, 1.1vw, 22px); font-weight: 700; }
+.business-performance__revenue, .business-performance__conversion { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: clamp(28px, 2vw, 40px); animation: card-in 400ms 80ms cubic-bezier(.22,1,.36,1) both; }
+.business-performance .panel__heading h3 { margin: 0; font-size: clamp(30px, 1.9vw, 38px); }
+.business-performance__revenue .chart-wrap { flex: 1; min-height: 0; }
+.business-performance__revenue .revenue-chart { height: calc(100% - 46px); max-height: none; }
+.business-performance__conversion { animation-delay: 140ms; }
+.business-performance__conversion .comparison-chart { flex: 1; grid-template: auto minmax(0, 1fr) / 1fr; align-content: center; gap: clamp(28px, 2vw, 40px); }
+.business-performance__conversion .comparison-chart .chart-legend { flex-direction: row; gap: 14px 24px; }
+.business-performance__conversion .comparison-chart__rows { grid-template-columns: 1fr; gap: clamp(17px, 1.25vw, 24px); }
+.business-performance__conversion .comparison-row { display: grid; grid-template-columns: minmax(130px, .42fr) minmax(0, 1fr); align-items: center; gap: 18px; }
+.business-performance__conversion .comparison-row > strong { margin: 0; font-size: clamp(21px, 1.3vw, 26px); }
+.business-performance__conversion .comparison-row__metrics { gap: 11px; }
+.business-performance__conversion .comparison-bar { height: clamp(34px, 2.25vw, 44px); }
+.business-performance__conversion .comparison-bar b { inset: 0 10px; font-size: clamp(17px, 1vw, 20px); }
+
 @keyframes slide-content-in { from { opacity: 0; } }
 @keyframes crossfade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes crossfade-out { from { opacity: 1; } to { opacity: 0; } }
@@ -125,4 +144,5 @@ button { font: inherit; }
 @keyframes leaderboard-in { from { opacity: 0; transform: translateY(8px); } }
 @media (min-width: 2500px) { body { font-size: 1.35rem; }.app-shell { max-width: 3600px; margin: auto; }.dashboard-grid { min-height: 1450px; } }
 @media (max-height: 760px) { .app-shell { padding: 14px 24px; gap: 10px; }.header { min-height: 70px; }.header__logo { height: 48px; }.kpi-card { min-height: 96px; padding: 13px 18px; }.dashboard-grid { grid-template-rows: auto minmax(285px, 1fr) auto; }.main-content,.leaderboard { padding: 15px 20px; }.comparison-panel { padding: 13px 20px; }.ranking-chart li { min-height: 48px; }.revenue-chart { max-height: 270px; }.footer { min-height: 20px; }.slide-indicator { bottom: 3px; }.technician-performance { gap: 10px; }.technician-performance__heading h2 { font-size: 30px; }.technician-performance__grid { grid-template-columns: repeat(3, minmax(0,1fr)); }.performance-card { padding: 15px 18px; }.performance-card__header { padding-bottom: 10px; }.performance-card__avatar { width: 44px; }.performance-card__metrics { gap: 8px 18px; padding: 10px 0; }.technician-metric strong { font-size: 24px; }.performance-card__status { padding-top: 8px; } }
+@media (max-height: 760px) { .business-performance { gap: 10px; grid-template-columns: minmax(0,1.5fr) minmax(360px,.8fr); }.business-performance__heading h2 { font-size: 32px; }.business-performance__revenue,.business-performance__conversion { padding: 16px 20px; }.business-performance .panel__heading h3 { font-size: 25px; }.business-performance__conversion .comparison-chart { gap: 16px; }.business-performance__conversion .comparison-chart__rows { gap: 10px; }.business-performance__conversion .comparison-bar { height: 28px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
