@@ -340,6 +340,8 @@ Startup acquisition order:
 
 The startup acquisition flow is noninteractive. If acquisition fails or times out, the backend returns a retryable `SERVICE_TITAN_CSRF_ERROR`, preserves the previous dashboard cache, and retries on the next scheduled refresh without a tight retry loop.
 
+The response observer and active page lookup are two paths into the same acquisition promise. If the observer sees a usable token while a `page.evaluate()` call is still pending, it resolves the acquisition immediately; token acquisition must not remain blocked on the older browser evaluation. Timeout diagnostics identify whether the provider was in passive lookup or the metadata request, but never include the token, headers, browser URL, or response data.
+
 Refresh the cached token after:
 
 - Browser reconnection

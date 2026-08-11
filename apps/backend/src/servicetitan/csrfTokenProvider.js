@@ -30,7 +30,9 @@ class CsrfTokenProvider {
     this.token = null;
     this.acquisitionPromise = null;
     this.acquisitionTimer = null;
+    this.acquisitionResolve = null;
     this.acquisitionReject = null;
+    this.acquisitionStage = null;
     this.stopped = false;
     this.responseHandler = (response) => this.observeResponse(response);
     this.unsubscribe = browserManager.subscribe?.((event) => {
@@ -73,6 +75,7 @@ class CsrfTokenProvider {
     if (typeof token !== "string" || !token) return;
     this.token = token;
     this.logger.info("CSRF token acquired");
+    this.acquisitionResolve?.(token);
   }
 
   clear(reason = "explicit CSRF rejection") {
@@ -124,19 +127,36 @@ class CsrfTokenProvider {
     if (!this.page) return Promise.reject(csrfError());
     const page = this.page;
     this.acquisitionPromise = new Promise((resolve, reject) => {
+      this.acquisitionResolve = resolve;
       this.acquisitionReject = reject;
-      this.acquisitionTimer = this.setTimeoutFn(() => reject(csrfError()), timeoutMilliseconds);
+      this.acquisitionStage = "passive-lookup";
+      this.acquisitionTimer = this.setTimeoutFn(() => {
+        this.logger.warn("CSRF token acquisition timed out", {
+          code: ERROR_CODES.CSRF,
+          stage: this.acquisitionStage,
+          waitingFor: "browser-evaluation-or-token-observer"
+        });
+        reject(csrfError());
+      }, timeoutMilliseconds);
       Promise.resolve()
         .then(() => this.passiveLookup(page))
-        .then((token) => token || this.safeAcquisitionRequest(page))
+        .then((token) => {
+          if (token) return token;
+          this.acquisitionStage = "metadata-request";
+          return this.safeAcquisitionRequest(page);
+        })
         .then((token) => token ? resolve(token) : reject(csrfError()), reject);
     }).catch((error) => {
-      this.logger.warn("CSRF token acquisition timed out", { code: error?.code || ERROR_CODES.CSRF });
+      if (error?.code !== ERROR_CODES.CSRF) {
+        this.logger.warn("CSRF token acquisition failed", { code: error?.code || ERROR_CODES.CSRF, stage: this.acquisitionStage });
+      }
       throw error instanceof ServiceTitanError ? error : csrfError();
     }).finally(() => {
       if (this.acquisitionTimer) this.clearTimeoutFn(this.acquisitionTimer);
       this.acquisitionTimer = null;
+      this.acquisitionResolve = null;
       this.acquisitionReject = null;
+      this.acquisitionStage = null;
       this.acquisitionPromise = null;
     });
     return this.acquisitionPromise;
@@ -158,7 +178,9 @@ class CsrfTokenProvider {
     if (this.acquisitionTimer) this.clearTimeoutFn(this.acquisitionTimer);
     this.acquisitionTimer = null;
     this.acquisitionReject?.(csrfError());
+    this.acquisitionResolve = null;
     this.acquisitionReject = null;
+    this.acquisitionStage = null;
     this.acquisitionPromise = null;
   }
 }
