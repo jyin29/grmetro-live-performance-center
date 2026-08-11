@@ -878,6 +878,7 @@ feat: derive validated service and installation KPIs
 - [x] Add a dedicated responsive Technician Performance dashboard as Slide 2 in the indexed deck.
 - [x] Add a TV-first Business Performance dashboard as Slide 3 using existing revenue and conversion visualizations.
 - [x] Add a recognition-focused Slide 4 with one dominant backend-ranked top performer and secondary backend-prepared achievement categories.
+- [x] Add a presentation-only Operations Health Slide 5 using existing refresh, cache, technician, error, and rotation state.
 - [x] Add presentation-only 30-second automatic rotation across every registered slide, with a 400 ms crossfade, pause during loading/refresh/error states, and a subtle accessible position indicator.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
 
@@ -900,6 +901,8 @@ Progress note (2026-08-11): Continued Phase 11 presentation polish by changing t
 Progress note (2026-08-11): Added Slide 3, a TV-first Business Performance view designed for rapid comprehension at room distance. It pairs the existing overlaid Revenue by Technician SVG with the existing backend-normalized Lead Conversion and Closing comparison in two large, low-density panels. The slide reuses only cached dashboard fields, shared animation, accessibility, responsive, and reduced-motion behavior; Slide 1 and Slide 2 remain unchanged. Display routing, WebSockets, remote control, shared-epoch rotation, and all business calculations remain deferred.
 
 Progress note (2026-08-11): Added Slide 4, Recognition & Achievements, as a presentation-only celebration view. The backend-qualified overall rank-one technician dominates the slide with Revenue, Closing %, and Overall Rank, while secondary cards recognize only leaders and rank movement already present in the cached dashboard payload. The slide reuses shared metric formatting, number animation, ranking presentation, rotation, keyboard navigation, responsive scaling, and reduced-motion behavior. Operations Health, WebSockets, synchronized displays, remote control, AI summaries, and all backend/business logic remain unchanged and deferred.
+
+Progress note (2026-08-11): Completed the five-slide Phase 11 presentation with Slide 5, Operations Health. A large three-second-read status hero and six TV-scale cards reuse only the existing cached payload, refresh/error state, technician count, active slide registry, and local rotation state. The five-entry indicator and existing 30-second wraparound rotation now cover Slides 1–5. No endpoint, API request, backend, ServiceTitan, refresh-provider, KPI, or business logic changed. Stakeholder review at 720p, 1080p, and 4K remains outstanding; display routing, WebSockets, synchronized displays, remote control, and AI summaries remain deferred.
 
 Recommended commit:
 
