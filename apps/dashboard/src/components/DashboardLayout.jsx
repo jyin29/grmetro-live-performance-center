@@ -5,7 +5,7 @@ import { summaryMetrics } from "../lib/presentation";
 
 export function DashboardLayout({ data, error, refreshing }) {
   return <div className="app-shell">
-    <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
+    <Header refreshedAt={data.lastSuccessfulRefreshAt ?? data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
     {error && <div className="inline-warning">Live updates are temporarily interrupted. Showing the last successful update.</div>}
     <main className="dashboard-grid">
       <section className="summary-grid" aria-label="KPI summary">{summaryMetrics(data).map((item) => <KpiCard key={item.id} item={item} />)}</section>

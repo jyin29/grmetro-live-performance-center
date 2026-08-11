@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMetric, freshness, rankedTechnicians, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { clockParts, formatMetric, freshness, rankedTechnicians, refreshLabel, refreshTime, summaryMetrics } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -10,8 +10,23 @@ describe("dashboard presentation helpers", () => {
   it("formats backend-prepared formats and freshness states", () => {
     expect(formatMetric({ value: 64.25, hasData: true, format: "percentage" })).toBe("64.3%");
     const now = Date.parse("2026-08-10T12:05:00Z");
-    expect(refreshLabel("2026-08-10T12:01:00Z", now)).toBe("Updated 4 min ago");
+    expect(refreshLabel("2026-08-10T12:01:00Z", now)).toBe("4 minutes ago");
     expect(freshness("2026-08-10T12:01:00Z", now)).toBe("stale");
+  });
+
+  it("formats exact and relative refresh times independently", () => {
+    const now = Date.parse("2026-08-10T12:05:00Z");
+    expect(refreshLabel("2026-08-10T12:04:48Z", now)).toBe("12 seconds ago");
+    expect(refreshLabel("2026-08-10T12:04:58Z", now)).toBe("Just now");
+    expect(refreshTime("2026-08-10T12:04:48Z")).toMatch(/12:04:48/);
+    expect(clockParts(now)).toMatchObject({ weekday: "Monday", date: "August 10, 2026" });
+  });
+
+  it("uses the approved freshness thresholds", () => {
+    const now = Date.parse("2026-08-10T12:05:00Z");
+    expect(freshness("2026-08-10T12:03:01Z", now)).toBe("live");
+    expect(freshness("2026-08-10T12:03:00Z", now)).toBe("stale");
+    expect(freshness("2026-08-10T12:00:00Z", now)).toBe("offline");
   });
 
   it("uses backend ranks without recalculating business scores", () => {

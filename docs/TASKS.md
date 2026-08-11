@@ -864,12 +864,23 @@ feat: derive validated service and installation KPIs
 
 ## Remaining Dashboard Foundation Work
 
-- [ ] Complete dependency installation and run the dashboard test/build commands in a network-enabled environment.
+- [x] Add an independent once-per-second local clock with weekday, date, time, and seconds.
+- [x] Show exact and relative last-successful-refresh times from backend timestamps.
+- [x] Add Live, Refreshing, Stale (two minutes), and Offline (five minutes) header states.
+- [x] Verify the installed dashboard dependencies with the repository test and production build commands.
 - [ ] Perform stakeholder visual review at 1280×720, 1920×1080, and 3840×2160 after the Vite application can run.
 - [ ] Replace the chart-region foundation placeholder only when the chart implementation task begins.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
 
 Progress note (2026-08-10): Began Phase 11 with a production dashboard foundation that consumes the stable cached dashboard REST payload without modifying backend logic, ServiceTitan integration, refresh providers, or job derivation. The shell renders backend-prepared KPI records and overall ranks, keeps missing values distinct from zero, and retains visible data across background request failures. Future chart, TV rotation, WebSocket, AI, and remote-control regions remain placeholders only. Dependency installation is externally blocked by npm registry HTTP 403 and must be completed before visual approval.
+
+Progress note (2026-08-11): Improved the production header with an independent
+browser-local clock that updates every second, an exact and relative Last Refresh
+section driven by existing backend timestamps, and the approved green/yellow/orange/red
+freshness states at two- and five-minute thresholds. No backend refresh behavior changed.
+The complete repository test suite and production dashboard bundle now pass with the
+installed dependencies. Automated screenshot capture remains environment-blocked because
+no browser executable is installed and the browser CDN returns HTTP 403.
 
 Recommended commit:
 

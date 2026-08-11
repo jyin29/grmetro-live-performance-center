@@ -502,8 +502,10 @@ Easing: smooth spring or cubic-bezier
 Contents:
 
 ```text
-Current time
-Updated X sec ago ●
+Weekday and date
+Current local time with seconds
+Last Refresh exact time and relative age
+Freshness status ●
 ```
 
 Recommended alignment:
@@ -518,11 +520,18 @@ Update status shall appear beneath or beside it depending on available width.
 
 The live dot shall:
 
-- Be green when connected and fresh
-- Turn amber when stale or reconnecting
-- Turn red only for a sustained serious failure
+- Be green and read `Live` while the last successful refresh is less than two minutes old
+- Be yellow and read `Refreshing` while a dashboard REST request is active
+- Turn orange and read `Stale` when the last successful refresh is at least two minutes old
+- Turn red and read `Offline` when the last successful refresh is at least five minutes old or unavailable
 - Pulse briefly after successful refresh
 - Avoid continuous distracting pulsing
+
+The browser-owned clock updates every second and remains independent from both the
+dashboard REST polling interval and the backend refresh timestamp. The Last Refresh
+section uses `lastSuccessfulRefreshAt` when available, falls back to `refreshedAt`, and
+shows both the exact local time (including seconds) and relative age such as `Just now`,
+`12 seconds ago`, or `2 minutes ago`.
 
 ---
 

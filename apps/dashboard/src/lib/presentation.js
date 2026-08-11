@@ -6,19 +6,39 @@ export function formatMetric(metric) {
 }
 
 export function refreshLabel(timestamp, now = Date.now()) {
-  const elapsed = Math.max(0, now - new Date(timestamp).getTime());
-  if (!Number.isFinite(elapsed)) return "Update time unavailable";
+  const refreshedAt = new Date(timestamp).getTime();
+  if (!timestamp || !Number.isFinite(refreshedAt)) return "Waiting for data";
+  const elapsed = Math.max(0, now - refreshedAt);
+  const seconds = Math.floor(elapsed / 1_000);
   const minutes = Math.floor(elapsed / 60_000);
-  if (minutes < 1) return "Updated just now";
-  if (minutes === 1) return "Updated 1 min ago";
-  return `Updated ${minutes} min ago`;
+  if (seconds < 5) return "Just now";
+  if (minutes < 1) return `${seconds} seconds ago`;
+  if (minutes === 1) return "1 minute ago";
+  return `${minutes} minutes ago`;
 }
 
 export function freshness(timestamp, now = Date.now()) {
-  const minutes = (now - new Date(timestamp).getTime()) / 60_000;
-  if (!Number.isFinite(minutes) || minutes >= 10) return "critical";
-  if (minutes >= 3) return "stale";
+  const refreshedAt = new Date(timestamp).getTime();
+  if (!timestamp || !Number.isFinite(refreshedAt)) return "offline";
+  const minutes = Math.max(0, now - refreshedAt) / 60_000;
+  if (minutes >= 5) return "offline";
+  if (minutes >= 2) return "stale";
   return "live";
+}
+
+export function refreshTime(timestamp) {
+  const date = new Date(timestamp);
+  if (!timestamp || !Number.isFinite(date.getTime())) return "Not available";
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(date);
+}
+
+export function clockParts(now = Date.now()) {
+  const date = new Date(now);
+  return {
+    weekday: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date),
+    date: new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(date),
+    time: new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(date)
+  };
 }
 
 export function rankedTechnicians(technicians = []) {
