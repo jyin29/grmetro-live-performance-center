@@ -6,12 +6,21 @@ export function formatMetric(metric) {
 }
 
 export function refreshLabel(timestamp, now = Date.now()) {
+  if (!timestamp) return "Waiting for live data";
   const elapsed = Math.max(0, now - new Date(timestamp).getTime());
   if (!Number.isFinite(elapsed)) return "Update time unavailable";
   const minutes = Math.floor(elapsed / 60_000);
   if (minutes < 1) return "Updated just now";
   if (minutes === 1) return "Updated 1 min ago";
   return `Updated ${minutes} min ago`;
+}
+
+export function formatClock(now = Date.now()) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(now);
 }
 
 export function freshness(timestamp, now = Date.now()) {

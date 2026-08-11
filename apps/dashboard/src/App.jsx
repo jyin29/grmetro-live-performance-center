@@ -9,15 +9,24 @@ export default function App() {
   const { data, error, loading, refreshing, retry } = useDashboard();
 
   if (loading) {
-    return <div className="app-shell"><Header refreshedAt={new Date().toISOString()} refreshing /><LoadingView /></div>;
+    return <div className="app-shell">
+      <Header refreshing />
+      <LoadingView />
+    </div>;
   }
 
   if (error && !data) {
-    return <div className="app-shell"><Header refreshedAt={new Date().toISOString()} hasError /><ErrorView message={error.message} onRetry={() => retry()} /></div>;
+    return <div className="app-shell">
+      <Header hasError />
+      <ErrorView message={error.message} onRetry={retry} />
+    </div>;
   }
 
   if (!data?.technicians?.length) {
-    return <div className="app-shell"><Header refreshedAt={data?.refreshedAt ?? new Date().toISOString()} /><EmptyState /></div>;
+    return <div className="app-shell">
+      <Header refreshedAt={data?.refreshedAt} />
+      <EmptyState />
+    </div>;
   }
 
   return <DashboardLayout data={data} error={error} refreshing={refreshing} />;
