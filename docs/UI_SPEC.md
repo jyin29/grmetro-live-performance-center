@@ -2129,3 +2129,21 @@ It shall consolidate:
 - Data mapping warnings
 - Drilldown research tasks
 - Troubleshooting
+
+---
+
+# 89. KPI business-domain presentation redesign
+
+The presentation is organized by five concise business domains rather than sentence-style questions:
+
+```text
+Revenue
+Sales
+Technicians
+Operations
+Recognition
+```
+
+Revenue gives Tier 1 daily revenue the strongest emphasis. Sales pairs Tier 1 Closing with Tier 2 opportunity and lead drivers. Technicians uses person-centered scorecards. Operations groups service/install throughput and install economics while preserving unavailable classifications. Recognition remains the dedicated full-screen Overall Top 3 podium in second–first–third order.
+
+Tier 3 metrics remain supporting/detail opportunities and Tier 4 metrics do not appear. Feed health remains in the stationary header rather than occupying a business slide. The presentation retains exactly five indexed slides, automatic rotation, stationary crossfades, update animations, the approved light theme, and television-readable sizing. The complete grouping and opportunity audit is recorded in `docs/DASHBOARD_CONTENT_AUDIT.md`.

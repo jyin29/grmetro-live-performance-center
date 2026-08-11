@@ -46,7 +46,7 @@ test("presentation controller keeps navigation and running state independent", a
 
 test("one shared registry owns every rendered and controlled presentation slide", async () => {
   const slides = await registeredSlides();
-  assert.deepEqual(slides.map(([, id]) => id), ["daily-pace", "team-performance", "revenue-sources", "top-three", "management-attention"]);
+  assert.deepEqual(slides.map(([, id]) => id), ["revenue", "sales", "technicians", "operations", "recognition"]);
   assert.ok(slides.every((match) => match[3].endsWith("Slide")));
 
   const [deck, controller] = await Promise.all([

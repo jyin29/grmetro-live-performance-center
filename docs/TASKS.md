@@ -1819,6 +1819,14 @@ Do not place long debugging transcripts in this file.
 - Removed duplicated charts and implementation-health cards without adding endpoints or frontend business calculations.
 - Preserved unresolved mappings as unavailable and documented future HVAC KPI opportunities separately.
 
+## 2026-08-11 — KPI business-domain dashboard redesign
+
+- Confirmed that `docs/KPI_CATALOG.md` already existed and used it as the authoritative presentation inventory.
+- Reorganized the five existing views into Revenue, Sales, Technicians, Operations, and Recognition without changing backend data, calculations, API endpoints, or ServiceTitan integration.
+- Applied the catalog's tier hierarchy: Tier 1 dominates, Tier 2 supports, Tier 3 remains selective/detail-only, and Tier 4 is excluded.
+- Preserved automatic rotation, stationary transitions, animation, the light theme, unavailable-data semantics, and the dedicated Top 3 podium.
+- Recorded remaining validation-dependent KPI opportunities in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:
