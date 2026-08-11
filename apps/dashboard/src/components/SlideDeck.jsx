@@ -1,7 +1,9 @@
 import { RevenueOverviewSlide } from "./slides/RevenueOverviewSlide";
+import { TechnicianPerformanceSlide } from "./slides/TechnicianPerformanceSlide";
 
 export const dashboardSlides = [
   { id: "revenue-overview", label: "Revenue overview", Component: RevenueOverviewSlide },
+  { id: "technician-performance", label: "Technician performance", Component: TechnicianPerformanceSlide },
 ];
 
 export function SlideDeck({ data, slideIndex = 0 }) {

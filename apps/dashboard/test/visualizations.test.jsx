@@ -16,15 +16,25 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
-  it("registers and renders exactly one indexed dashboard slide", () => {
+  it("registers and renders the two indexed dashboard slides", () => {
     const data = {
       technicians: [],
       slides: { revenue: { rows: [] }, performance: { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(dashboardSlides).toHaveLength(1);
+    expect(dashboardSlides).toHaveLength(2);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
+
+    const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
+      id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
+      kpis: { revenue: row.metrics[0], closingRate: { ...row.metrics[0], format: "percentage" }, billableServiceCalls: row.metrics[0], installRevenue: row.metrics[1], installAverageTicket: row.metrics[1] }
+    }] }} slideIndex={1} />);
+    expect(performanceMarkup).toContain('data-slide-id="technician-performance"');
+    expect(performanceMarkup).toContain("Technician Performance");
+    expect(performanceMarkup).toContain("Install Revenue");
+    expect(performanceMarkup).toContain("Data status");
+    expect(performanceMarkup).toContain("No data");
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
