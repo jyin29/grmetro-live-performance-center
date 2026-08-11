@@ -1786,6 +1786,10 @@ Status:
 
 # 30. Codex Progress Notes
 
+## 2026-08-11 — KPI engine planning audit
+
+Added `docs/KPI_CATALOG.md` as a documentation-only trace of ServiceTitan responses through normalization, derivation, refresh, cache, and the dashboard API. The audit records 58 business source fields (59 including the technician join key), every field family emitted to the dashboard, 45 KPI concepts supported by present data, and 24 important missing HVAC KPI concepts. It separates technically available inputs from approved business mappings and leaves goals, Lead Conversion, and service/install classifications explicitly unresolved. The document proposes an incremental backend-owned KPI registry/calculator architecture and maps only approved concepts to the existing five-slide sequence. No runtime, endpoint, ServiceTitan request, business-logic, or frontend behavior changed.
+
 Codex shall add brief dated notes here when important blockers or decisions occur.
 
 Template:
