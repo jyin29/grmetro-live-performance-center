@@ -1,4 +1,4 @@
-import { formatMetric } from "../lib/presentation";
+import { AnimatedMetric } from "./AnimatedMetric";
 
 export function KpiComparisonChart({ slide }) {
   if (!slide?.rows?.length) return <p className="chart-empty">Performance data is not available yet.</p>;
@@ -13,11 +13,10 @@ export function KpiComparisonChart({ slide }) {
         <div className="comparison-row__metrics">
           {row.metrics.map((metric) => <div className="comparison-bar" key={`${row.technicianId}-${metric.id}`}>
             <span style={{ width: `${Math.max(0, Math.min(100, Number(metric.normalizedRatio) * 100 || 0))}%`, backgroundColor: slide.metrics.find(({ id }) => id === metric.id)?.color }} />
-            <b>{formatMetric(metric)}</b>
+            <b><AnimatedMetric metric={metric} /></b>
           </div>)}
         </div>
       </div>)}
     </div>
   </div>;
 }
-

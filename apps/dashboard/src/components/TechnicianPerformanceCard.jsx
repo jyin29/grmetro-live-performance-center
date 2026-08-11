@@ -1,5 +1,7 @@
 import { StatusBadge } from "./StatusBadge";
 import { TechnicianMetric } from "./TechnicianMetric";
+import { AnimatedMetric } from "./AnimatedMetric";
+import { useChangeHighlight } from "../hooks/useChangeHighlight";
 
 const metrics = [
   ["revenue", "Revenue"],
@@ -19,8 +21,10 @@ export function TechnicianPerformanceCard({ technician }) {
   const qualifies = technician.overall?.qualifies;
   const movement = rankMovement(technician.overall?.rankChange);
   const qualities = [...new Set(metrics.map(([id]) => technician.kpis?.[id]?.dataQuality ?? "unavailable"))];
+  const changeSignature = `${technician.overall?.rank}:${metrics.map(([id]) => `${technician.kpis?.[id]?.hasData}:${technician.kpis?.[id]?.value}`).join("|")}`;
+  const highlighted = useChangeHighlight(changeSignature);
 
-  return <article className="performance-card">
+  return <article className={`performance-card${highlighted ? " is-updated" : ""}`}>
     <header className="performance-card__header">
       <span className="performance-card__avatar" aria-hidden="true">{technician.initials}</span>
       <div className="performance-card__identity">
@@ -28,7 +32,7 @@ export function TechnicianPerformanceCard({ technician }) {
         <span>{qualifies ? "Overall team standing" : "Awaiting qualifying data"}</span>
       </div>
       <div className="performance-card__ranking">
-        <strong>{qualifies ? `#${technician.overall.rank}` : "—"}</strong>
+        <strong>{qualifies ? <>#<AnimatedMetric metric={{ value: technician.overall.rank, hasData: true, format: "integer" }} /></> : "—"}</strong>
         <span className={`performance-card__movement performance-card__movement--${movement.tone}`} aria-label={movement.label}>{movement.symbol}{movement.tone !== "steady" && Math.abs(technician.overall.rankChange)}</span>
       </div>
     </header>

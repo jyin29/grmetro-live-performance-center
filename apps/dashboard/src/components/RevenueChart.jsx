@@ -1,4 +1,5 @@
 import { formatMetric } from "../lib/presentation";
+import { AnimatedMetric } from "./AnimatedMetric";
 
 const VIEWBOX_WIDTH = 760;
 const LABEL_WIDTH = 126;
@@ -24,7 +25,7 @@ export function RevenueChart({ slide }) {
           <text className="chart-name" x="0" y={y + 8}>{row.shortName || row.name}</text>
           <rect className="chart-track" x={LABEL_WIDTH} y={y - 9} width={PLOT_WIDTH} height="26" rx="13" />
           {row.metrics.map((metric, metricIndex) => <rect key={`${row.technicianId}-${metric.id}`} x={LABEL_WIDTH} y={y - 8 + metricIndex * 5} width={barWidth(metric.normalizedRatio)} height={16 - metricIndex * 3} rx="7" fill={slide.metrics.find(({ id }) => id === metric.id)?.color} opacity={metricIndex === 0 ? .72 : .82} />)}
-          <text className="chart-value" x={VIEWBOX_WIDTH - 2} y={y + 8} textAnchor="end">{formatMetric(row.metrics[0])}</text>
+          <foreignObject className="chart-value-object" x={VIEWBOX_WIDTH - 122} y={y - 12} width="120" height="32"><AnimatedMetric className="chart-value" metric={row.metrics[0]} /></foreignObject>
         </g>;
       })}
       <line className="chart-axis" x1={LABEL_WIDTH} y1={slide.rows.length * 74 + 8} x2={LABEL_WIDTH + PLOT_WIDTH} y2={slide.rows.length * 74 + 8} />
@@ -33,4 +34,3 @@ export function RevenueChart({ slide }) {
     </svg>
   </div>;
 }
-
