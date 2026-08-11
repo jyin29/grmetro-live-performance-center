@@ -951,6 +951,8 @@ feat: implement validated lead conversion KPI mapping
 
 Progress note (2026-08-11): Began Phase 12 with a local presentation-controller boundary shared by the dashboard and the new `/remote` page. The controller owns active-slide navigation, automatic rotation, and the user pause state; the existing five slide components remain presentation-only and unchanged. The phone-focused remote reports current state and exposes accessible direct controls. A future transport adapter can drive the same controller contract when WebSockets, display identities, backend state, and synchronization are implemented.
 
+Progress note (2026-08-11): Fixed the Phase 12 presentation registration boundary after tracing the deck, controller, indicator, navigation, and timer. Slide metadata and render components now live in one shared five-entry registry; the controller and deck both derive their count, labels, navigation, rendering, and wraparound from that registry. Regression coverage verifies all registered components, `Slide 1 of 5` through `Slide 5 of 5`, the 30-second interval, and the complete `1 → 2 → 3 → 4 → 5 → 1` sequence without a duplicated count constant.
+
 Remaining Phase 12 work: add the realtime layer, backend-authoritative per-TV state, display validation and routing, synchronized rotation, reconnect/revision handling, remote override selection and expiration, and multi-display verification.
 
 ---

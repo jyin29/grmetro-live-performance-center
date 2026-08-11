@@ -1,21 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { PRESENTATION_SLIDES, SLIDE_TRANSITION_DURATION_MS } from "../config/slideRotation";
-import { RevenueOverviewSlide } from "./slides/RevenueOverviewSlide";
-import { TechnicianPerformanceSlide } from "./slides/TechnicianPerformanceSlide";
-import { BusinessPerformanceSlide } from "./slides/BusinessPerformanceSlide";
-import { RecognitionSlide } from "./slides/RecognitionSlide";
-import { OperationsHealthSlide } from "./slides/OperationsHealthSlide";
-
-export const dashboardSlides = [
-  RevenueOverviewSlide,
-  TechnicianPerformanceSlide,
-  BusinessPerformanceSlide,
-  RecognitionSlide,
-  OperationsHealthSlide,
-].map((Component, index) => ({ ...PRESENTATION_SLIDES[index], Component }));
+import { PRESENTATION_SLIDES } from "../config/slideRegistry";
+import { SLIDE_TRANSITION_DURATION_MS } from "../config/slideRotation";
 
 export function SlideDeck({ data, slideIndex = 0, onSelectSlide, presentationState = {} }) {
-  const slide = dashboardSlides[slideIndex];
+  const slide = PRESENTATION_SLIDES[slideIndex];
   const previousIndexRef = useRef(slideIndex);
   const [outgoingIndex, setOutgoingIndex] = useState(null);
 
@@ -33,7 +21,7 @@ export function SlideDeck({ data, slideIndex = 0, onSelectSlide, presentationSta
   }
 
   const Slide = slide.Component;
-  const OutgoingSlide = outgoingIndex === null ? null : dashboardSlides[outgoingIndex]?.Component;
+  const OutgoingSlide = outgoingIndex === null ? null : PRESENTATION_SLIDES[outgoingIndex]?.Component;
 
   return <div className="slide-stage">
     <div className="slide-deck slide-deck--active" data-slide-id={slide.id} aria-label={slide.label}>
@@ -43,9 +31,9 @@ export function SlideDeck({ data, slideIndex = 0, onSelectSlide, presentationSta
       <OutgoingSlide data={data} presentationState={presentationState} />
     </div>}
     <nav className="slide-indicator" aria-label="Dashboard slides">
-      <span>Slide {slideIndex + 1} of {dashboardSlides.length}</span>
+      <span>Slide {slideIndex + 1} of {PRESENTATION_SLIDES.length}</span>
       <div>
-        {dashboardSlides.map((registeredSlide, index) => <button
+        {PRESENTATION_SLIDES.map((registeredSlide, index) => <button
           key={registeredSlide.id}
           type="button"
           className={index === slideIndex ? "is-active" : ""}

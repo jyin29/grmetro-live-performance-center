@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { KpiComparisonChart } from "../src/components/KpiComparisonChart";
 import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
-import { dashboardSlides, SlideDeck } from "../src/components/SlideDeck";
+import { SlideDeck } from "../src/components/SlideDeck";
+import { PRESENTATION_SLIDES } from "../src/config/slideRegistry";
 import { nextSlideIndex, SLIDE_ROTATION_INTERVAL_MS, SLIDE_TRANSITION_DURATION_MS } from "../src/config/slideRotation";
 
 const row = {
@@ -23,7 +24,8 @@ describe("dashboard visualizations", () => {
       slides: { revenue: { rows: [] }, performance: { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(dashboardSlides).toHaveLength(5);
+    expect(PRESENTATION_SLIDES).toHaveLength(5);
+    expect(PRESENTATION_SLIDES.every(({ Component }) => typeof Component === "function")).toBe(true);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
     expect(markup).toContain("Slide 1 of 5");
@@ -34,6 +36,7 @@ describe("dashboard visualizations", () => {
       kpis: { revenue: row.metrics[0], closingRate: { ...row.metrics[0], format: "percentage" }, billableServiceCalls: row.metrics[0], installRevenue: row.metrics[1], installAverageTicket: row.metrics[1] }
     }] }} slideIndex={1} />);
     expect(performanceMarkup).toContain('data-slide-id="technician-performance"');
+    expect(performanceMarkup).toContain("Slide 2 of 5");
     expect(performanceMarkup).toContain("Technician Performance");
     expect(performanceMarkup).toContain("Install Revenue");
     expect(performanceMarkup).toContain("Data status");
@@ -44,6 +47,7 @@ describe("dashboard visualizations", () => {
       performance: { metrics: [], rows: [] }
     } }} slideIndex={2} />);
     expect(businessMarkup).toContain('data-slide-id="business-performance"');
+    expect(businessMarkup).toContain("Slide 3 of 5");
     expect(businessMarkup).toContain("Business Performance");
     expect(businessMarkup).toContain("Revenue by Technician");
     expect(businessMarkup).toContain("Closing Performance");
@@ -53,6 +57,7 @@ describe("dashboard visualizations", () => {
       kpis: { revenue: { value: 12000, hasData: true, format: "currency", rank: 1 }, closingRate: { value: 72, hasData: true, format: "percentage", rank: 1 } }
     }] }} slideIndex={3} />);
     expect(recognitionMarkup).toContain('data-slide-id="recognition"');
+    expect(recognitionMarkup).toContain("Slide 4 of 5");
     expect(recognitionMarkup).toContain("Today’s Top Performer");
     expect(recognitionMarkup).toContain("Sample Technician");
     expect(recognitionMarkup).toContain("$12,000");
@@ -70,11 +75,12 @@ describe("dashboard visualizations", () => {
     expect(SLIDE_ROTATION_INTERVAL_MS).toBe(30_000);
     expect(SLIDE_TRANSITION_DURATION_MS).toBeGreaterThanOrEqual(300);
     expect(SLIDE_TRANSITION_DURATION_MS).toBeLessThanOrEqual(500);
-    expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
-    expect(nextSlideIndex(1, dashboardSlides.length)).toBe(2);
-    expect(nextSlideIndex(2, dashboardSlides.length)).toBe(3);
-    expect(nextSlideIndex(3, dashboardSlides.length)).toBe(4);
-    expect(nextSlideIndex(4, dashboardSlides.length)).toBe(0);
+    const sequence = Array.from({ length: PRESENTATION_SLIDES.length + 1 }, (_, step) => {
+      let index = 0;
+      for (let advance = 0; advance < step; advance += 1) index = nextSlideIndex(index, PRESENTATION_SLIDES.length);
+      return index + 1;
+    });
+    expect(sequence).toEqual([1, 2, 3, 4, 5, 1]);
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
