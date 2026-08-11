@@ -26,18 +26,18 @@ describe("dashboard visualizations", () => {
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
     expect(PRESENTATION_SLIDES).toHaveLength(5);
     expect(PRESENTATION_SLIDES.every(({ Component }) => typeof Component === "function")).toBe(true);
-    expect(markup).toContain('data-slide-id="revenue-overview"');
-    expect(markup).toContain("Today’s performance");
+    expect(markup).toContain('data-slide-id="daily-pace"');
+    expect(markup).toContain("Are we on pace?");
     expect(markup).toContain("Slide 1 of 5");
-    expect(markup).toContain('aria-label="Show Revenue overview"');
+    expect(markup).toContain('aria-label="Show Are we on pace?"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
       id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
       kpis: { revenue: row.metrics[0], closingRate: { ...row.metrics[0], format: "percentage" }, billableServiceCalls: row.metrics[0], installRevenue: row.metrics[1], installAverageTicket: row.metrics[1] }
     }] }} slideIndex={1} />);
-    expect(performanceMarkup).toContain('data-slide-id="technician-performance"');
+    expect(performanceMarkup).toContain('data-slide-id="team-performance"');
     expect(performanceMarkup).toContain("Slide 2 of 5");
-    expect(performanceMarkup).toContain("Technician Performance");
+    expect(performanceMarkup).toContain("Who is performing?");
     expect(performanceMarkup).toContain("Install Revenue");
     expect(performanceMarkup).toContain("Data status");
     expect(performanceMarkup).toContain("No data");
@@ -46,28 +46,27 @@ describe("dashboard visualizations", () => {
       revenue: { axis: { maximum: 0, format: "currency" }, metrics: [], rows: [] },
       performance: { metrics: [], rows: [] }
     } }} slideIndex={2} />);
-    expect(businessMarkup).toContain('data-slide-id="business-performance"');
+    expect(businessMarkup).toContain('data-slide-id="revenue-sources"');
     expect(businessMarkup).toContain("Slide 3 of 5");
-    expect(businessMarkup).toContain("Business Performance");
+    expect(businessMarkup).toContain("Where is revenue coming from?");
     expect(businessMarkup).toContain("Revenue by Technician");
-    expect(businessMarkup).toContain("Closing Performance");
+    expect(businessMarkup).toContain("Service &amp; Install");
 
     const recognitionMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
       id: 101, name: "Sample Technician", shortName: "Sample", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
       kpis: { revenue: { value: 12000, hasData: true, format: "currency", rank: 1 }, closingRate: { value: 72, hasData: true, format: "percentage", rank: 1 } }
     }] }} slideIndex={3} />);
-    expect(recognitionMarkup).toContain('data-slide-id="recognition"');
+    expect(recognitionMarkup).toContain('data-slide-id="top-three"');
     expect(recognitionMarkup).toContain("Slide 4 of 5");
-    expect(recognitionMarkup).toContain("Today’s Top Performer");
+    expect(recognitionMarkup).toContain("Who deserves recognition?");
     expect(recognitionMarkup).toContain("Sample Technician");
     expect(recognitionMarkup).toContain("$12,000");
     expect(recognitionMarkup).toContain("72%");
-    expect(recognitionMarkup).toContain("Overall Rank");
-    expect(recognitionMarkup).toContain("Highest Revenue");
+    expect(recognitionMarkup).toContain("Overall Top 3");
 
     const healthMarkup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={4} presentationState={{}} />);
-    expect(healthMarkup).toContain('data-slide-id="operations-health"');
-    expect(healthMarkup).toContain("Operations Health");
+    expect(healthMarkup).toContain('data-slide-id="management-attention"');
+    expect(healthMarkup).toContain("What needs attention?");
     expect(healthMarkup).toContain("Slide 5 of 5");
   });
 

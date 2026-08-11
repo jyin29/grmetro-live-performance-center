@@ -1,33 +1,23 @@
 import { AnimatedMetric } from "../AnimatedMetric";
-import { RecognitionCard } from "../RecognitionCard";
-import { recognitionPresentation } from "../../lib/presentation";
+import { rankedTechnicians } from "../../lib/presentation";
 
 export function RecognitionSlide({ data }) {
-  const { featured, recognitions } = recognitionPresentation(data.technicians);
+  const podium = rankedTechnicians(data.technicians).filter((technician) => technician.overall?.qualifies).slice(0, 3);
+  const featured = podium[0];
 
   if (!featured) {
     return <main className="recognition-slide recognition-slide--empty dashboard-slide" aria-labelledby="recognition-title">
-      <p>Today’s recognition</p>
-      <h2 id="recognition-title">Top performer coming soon</h2>
+      <p>Who deserves recognition?</p>
+      <h2 id="recognition-title">Top 3 coming soon</h2>
       <span>Waiting for a backend-prepared overall ranking.</span>
     </main>;
   }
 
   return <main className="recognition-slide dashboard-slide" aria-labelledby="recognition-title">
-    <section className="recognition-hero">
-      <p className="recognition-hero__eyebrow" id="recognition-title"><span aria-hidden="true">🏆</span> Today’s Top Performer</p>
-      <div className="recognition-hero__identity">
-        <span className="recognition-hero__avatar" aria-hidden="true">{featured.initials}</span>
-        <h2>{featured.name}</h2>
-      </div>
-      <div className="recognition-hero__metrics" aria-label={`${featured.name} featured metrics`}>
-        <div><span>Revenue</span><AnimatedMetric metric={featured.kpis?.revenue} /></div>
-        <div><span>Closing</span><AnimatedMetric metric={featured.kpis?.closingRate} /></div>
-        <div className="recognition-hero__rank"><span>Overall Rank</span><strong>#<AnimatedMetric metric={{ value: featured.overall.rank, hasData: true, format: "integer" }} /></strong></div>
-      </div>
-    </section>
-    {recognitions.length > 0 && <section className="recognition-list" aria-label="Additional recognition">
-      {recognitions.map((recognition) => <RecognitionCard key={recognition.id} recognition={recognition} />)}
-    </section>}
+    <header className="top-three-heading"><p>Today’s business question</p><h2 id="recognition-title">Who deserves recognition?</h2><span>Overall Top 3</span></header>
+    <section className="podium" aria-label="Top three technicians">{[podium[1], podium[0], podium[2]].filter(Boolean).map((technician) => <article className={`podium-card podium-card--${technician.overall.rank}`} key={technician.id}>
+      <span className="podium-card__place">#{technician.overall.rank}</span><span className="recognition-hero__avatar">{technician.initials}</span><h3>{technician.name}</h3>
+      <div><span>Revenue</span><AnimatedMetric metric={technician.kpis?.revenue} /></div><div><span>Closing</span><AnimatedMetric metric={technician.kpis?.closingRate} /></div>
+    </article>)}</section>
   </main>;
 }
