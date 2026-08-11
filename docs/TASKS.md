@@ -877,6 +877,7 @@ feat: derive validated service and installation KPIs
 - [x] Replace the chart-region foundation placeholder with the requested Revenue, KPI comparison, and technician ranking visualizations.
 - [x] Add a dedicated responsive Technician Performance dashboard as Slide 2 in the indexed deck.
 - [x] Add a TV-first Business Performance dashboard as Slide 3 using existing revenue and conversion visualizations.
+- [x] Add a recognition-focused Slide 4 with one dominant backend-ranked top performer and secondary backend-prepared achievement categories.
 - [x] Add presentation-only 30-second automatic rotation across every registered slide, with a 400 ms crossfade, pause during loading/refresh/error states, and a subtle accessible position indicator.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
 
@@ -897,6 +898,8 @@ Progress note (2026-08-11): Completed the first production automatic slide exper
 Progress note (2026-08-11): Continued Phase 11 presentation polish by changing the local automatic rotation interval from 15 to 30 seconds while preserving the 400 ms crossfade. Fresh cached REST payloads now interpolate changed KPI, revenue, comparison, technician, and rank values over 650 ms with a non-overshooting ease-out; chart geometry transitions in place, and changed KPI cards, technician cards, and ranking rows receive a subtle one-second refresh highlight. Reduced-motion preferences make updates immediate. The successful refresh timestamp continues to reset the header to `Updated 0 sec ago` and count each second. No backend, API, refresh-provider, ServiceTitan, KPI, or business logic changed.
 
 Progress note (2026-08-11): Added Slide 3, a TV-first Business Performance view designed for rapid comprehension at room distance. It pairs the existing overlaid Revenue by Technician SVG with the existing backend-normalized Lead Conversion and Closing comparison in two large, low-density panels. The slide reuses only cached dashboard fields, shared animation, accessibility, responsive, and reduced-motion behavior; Slide 1 and Slide 2 remain unchanged. Display routing, WebSockets, remote control, shared-epoch rotation, and all business calculations remain deferred.
+
+Progress note (2026-08-11): Added Slide 4, Recognition & Achievements, as a presentation-only celebration view. The backend-qualified overall rank-one technician dominates the slide with Revenue, Closing %, and Overall Rank, while secondary cards recognize only leaders and rank movement already present in the cached dashboard payload. The slide reuses shared metric formatting, number animation, ranking presentation, rotation, keyboard navigation, responsive scaling, and reduced-motion behavior. Operations Health, WebSockets, synchronized displays, remote control, AI summaries, and all backend/business logic remain unchanged and deferred.
 
 Recommended commit:
 

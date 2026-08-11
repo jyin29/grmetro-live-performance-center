@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatMetric, freshness, rankedTechnicians, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { formatClock, formatMetric, freshness, rankedTechnicians, recognitionPresentation, refreshLabel, summaryMetrics } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -23,5 +23,15 @@ describe("dashboard presentation helpers", () => {
     expect(rankedTechnicians(technicians).map(({ id }) => id)).toEqual([2, 1]);
     const metric = { value: 10, hasData: true, rank: 1, format: "integer" };
     expect(summaryMetrics({ technicians: [{ shortName: "Alpha", kpis: { revenue: metric } }] })[0]).toMatchObject({ technician: "Alpha", metric });
+  });
+
+  it("builds recognition from backend-prepared ranks and rank movement", () => {
+    const technicians = [
+      { id: 1, name: "Alpha", shortName: "Alpha", overall: { rank: 2, qualifies: true, rankChange: 2 }, kpis: { revenue: { hasData: true, rank: 1 }, closingRate: { hasData: true, rank: 2 } } },
+      { id: 2, name: "Beta", shortName: "Beta", overall: { rank: 1, qualifies: true, rankChange: 1 }, kpis: { revenue: { hasData: true, rank: 2 }, closingRate: { hasData: true, rank: 1 } } }
+    ];
+    const presentation = recognitionPresentation(technicians);
+    expect(presentation.featured.name).toBe("Beta");
+    expect(presentation.recognitions.map(({ technician }) => technician.name)).toEqual(["Alpha", "Alpha", "Beta", "Beta"]);
   });
 });

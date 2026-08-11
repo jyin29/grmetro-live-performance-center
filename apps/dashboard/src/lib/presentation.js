@@ -49,3 +49,23 @@ export function summaryMetrics(data) {
     return { id, label, metric: ranked?.[0]?.kpis[id] ?? null, technician: ranked?.[0]?.shortName ?? "Awaiting data" };
   });
 }
+
+export function recognitionPresentation(technicians = []) {
+  const ranked = rankedTechnicians(technicians);
+  const featured = ranked.find((technician) => technician.overall?.qualifies && technician.overall?.rank === 1) ?? null;
+  const metricLeader = (id) => technicians.find((technician) => (
+    technician.kpis?.[id]?.hasData && technician.kpis[id].rank === 1
+  ));
+  const biggestImprovement = [...technicians]
+    .filter((technician) => technician.overall?.qualifies && technician.overall?.rankChange > 0)
+    .sort((left, right) => right.overall.rankChange - left.overall.rankChange || left.overall.rank - right.overall.rank)[0];
+
+  const recognitions = [
+    { id: "revenue", symbol: "★", label: "Highest Revenue", technician: metricLeader("revenue") },
+    { id: "rank-improvement", symbol: "↑", label: "Biggest Rank Improvement", technician: biggestImprovement },
+    { id: "closing", symbol: "◎", label: "Highest Closing %", technician: metricLeader("closingRate") },
+    { id: "overall", symbol: "◆", label: "Top Overall Ranking", technician: featured }
+  ].filter(({ technician }) => technician);
+
+  return { featured, recognitions };
+}
