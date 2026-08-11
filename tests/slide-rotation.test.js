@@ -1,10 +1,16 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { readFile } = require("node:fs/promises");
+const path = require("node:path");
+
+async function registeredSlides() {
+  const source = await readFile(path.join(__dirname, "../apps/dashboard/src/config/slideRegistry.jsx"), "utf8");
+  return [...source.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", Component: ([^ }]+) \}/g)];
+}
 
 test("dashboard rotation uses one 30-second configuration and wraps to Slide 1", async () => {
   const {
     nextSlideIndex,
-    PRESENTATION_SLIDES,
     SLIDE_ROTATION_INTERVAL_MS,
     SLIDE_TRANSITION_DURATION_MS,
   } = await import("../apps/dashboard/src/config/slideRotation.js");
@@ -16,13 +22,13 @@ test("dashboard rotation uses one 30-second configuration and wraps to Slide 1",
   assert.equal(nextSlideIndex(1, 2), 0);
   assert.equal(nextSlideIndex(0, 0), 0);
   assert.equal(nextSlideIndex(4, 5), 0);
-  assert.deepEqual(PRESENTATION_SLIDES.map(({ id }) => id), ["revenue-overview", "technician-performance", "business-performance", "recognition", "operations-health"]);
 });
 
 test("presentation controller keeps navigation and running state independent", async () => {
   const { createPresentationState, PRESENTATION_ACTIONS, presentationControllerReducer } = await import("../apps/dashboard/src/controller/presentationControllerState.js");
-  const reduce = (state, type, detail = {}) => presentationControllerReducer(state, { type, slideCount: 5, ...detail });
-  let state = createPresentationState(5);
+  const slideCount = (await registeredSlides()).length;
+  const reduce = (state, type, detail = {}) => presentationControllerReducer(state, { type, slideCount, ...detail });
+  let state = createPresentationState(slideCount);
 
   state = reduce(state, PRESENTATION_ACTIONS.PAUSE);
   assert.deepEqual(state, { activeSlideIndex: 0, isRunning: false });
@@ -31,11 +37,25 @@ test("presentation controller keeps navigation and running state independent", a
   state = reduce(state, PRESENTATION_ACTIONS.PREVIOUS);
   assert.equal(state.activeSlideIndex, 0);
   state = reduce(state, PRESENTATION_ACTIONS.PREVIOUS);
-  assert.equal(state.activeSlideIndex, 4);
+  assert.equal(state.activeSlideIndex, slideCount - 1);
   state = reduce(state, PRESENTATION_ACTIONS.SELECT, { index: 2 });
   assert.equal(state.activeSlideIndex, 2);
   state = reduce(state, PRESENTATION_ACTIONS.RESUME);
   assert.equal(state.isRunning, true);
+});
+
+test("one shared registry owns every rendered and controlled presentation slide", async () => {
+  const slides = await registeredSlides();
+  assert.deepEqual(slides.map(([, id]) => id), ["revenue-overview", "technician-performance", "business-performance", "recognition", "operations-health"]);
+  assert.ok(slides.every((match) => match[3].endsWith("Slide")));
+
+  const [deck, controller] = await Promise.all([
+    readFile(path.join(__dirname, "../apps/dashboard/src/components/SlideDeck.jsx"), "utf8"),
+    readFile(path.join(__dirname, "../apps/dashboard/src/controller/PresentationController.jsx"), "utf8"),
+  ]);
+  assert.match(deck, /PRESENTATION_SLIDES\.length/);
+  assert.match(deck, /PRESENTATION_SLIDES\.map/);
+  assert.match(controller, /slideCount = PRESENTATION_SLIDES\.length/);
 });
 
 test("operations health presentation uses only existing dashboard and presentation state", async () => {

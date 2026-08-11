@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
-import { PRESENTATION_SLIDES, SLIDE_ROTATION_INTERVAL_MS } from "../config/slideRotation";
+import { PRESENTATION_SLIDES } from "../config/slideRegistry";
+import { SLIDE_ROTATION_INTERVAL_MS } from "../config/slideRotation";
 import { createPresentationState, PRESENTATION_ACTIONS, presentationControllerReducer } from "./presentationControllerState";
 
 const PresentationControllerContext = createContext(null);
