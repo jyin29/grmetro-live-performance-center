@@ -17,16 +17,16 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
-  it("registers and renders the four indexed dashboard slides", () => {
+  it("registers and renders the five indexed dashboard slides", () => {
     const data = {
       technicians: [],
       slides: { revenue: { rows: [] }, performance: { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(dashboardSlides).toHaveLength(4);
+    expect(dashboardSlides).toHaveLength(5);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
-    expect(markup).toContain("Slide 1 of 4");
+    expect(markup).toContain("Slide 1 of 5");
     expect(markup).toContain('aria-label="Show Revenue overview"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
@@ -59,6 +59,11 @@ describe("dashboard visualizations", () => {
     expect(recognitionMarkup).toContain("72%");
     expect(recognitionMarkup).toContain("Overall Rank");
     expect(recognitionMarkup).toContain("Highest Revenue");
+
+    const healthMarkup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={4} presentationState={{}} />);
+    expect(healthMarkup).toContain('data-slide-id="operations-health"');
+    expect(healthMarkup).toContain("Operations Health");
+    expect(healthMarkup).toContain("Slide 5 of 5");
   });
 
   it("uses the centralized 30-second rotation and wraps to Slide 1", () => {
@@ -68,7 +73,8 @@ describe("dashboard visualizations", () => {
     expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
     expect(nextSlideIndex(1, dashboardSlides.length)).toBe(2);
     expect(nextSlideIndex(2, dashboardSlides.length)).toBe(3);
-    expect(nextSlideIndex(3, dashboardSlides.length)).toBe(0);
+    expect(nextSlideIndex(3, dashboardSlides.length)).toBe(4);
+    expect(nextSlideIndex(4, dashboardSlides.length)).toBe(0);
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
