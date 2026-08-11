@@ -873,6 +873,8 @@ Progress note (2026-08-10): Began Phase 11 with a production dashboard foundatio
 
 Progress note (2026-08-10): Rebuilt the dashboard delivery directly in this repository and replaced the reserved chart placeholder with production visualization components. The dashboard now renders an overlaid SVG Revenue chart, a Lead Conversion/Closing KPI comparison, and a five-technician overall ranking chart using only backend-prepared values, normalized ratios, and ranks. Loading, no-data, initial error, retry, and cached-data warning states remain intact. Focused component tests cover accessible chart output and zero-versus-no-data presentation; synchronized slide rotation, remote state, and the complete Phase 14 metric-slide engine remain separate work.
 
+Progress note (2026-08-11): Wired the existing Phase 11 dashboard hierarchy back into the Vite entry point, replacing the temporary `Dashboard works` placeholder. `App.jsx` now selects the existing loading, initial-error, empty, and populated dashboard views through `useDashboard`; the entry point loads the existing production stylesheet. No dashboard components or backend behavior were recreated or changed.
+
 Recommended commit:
 
 ```text
