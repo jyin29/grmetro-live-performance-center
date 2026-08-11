@@ -939,7 +939,23 @@ feat: implement validated lead conversion KPI mapping
 
 ---
 
-# 14. Phase 12 — WebSocket Realtime Layer
+# 14. Phase 12A — Local Presentation Remote
+
+- [x] Extract active slide, local rotation timer, and paused/running state into a presentation controller outside the visual slide components.
+- [x] Make the dashboard deck consume presentation-controller state and commands.
+- [x] Add a mobile-friendly light-theme `/remote` route.
+- [x] Show the current slide and automatic-rotation status.
+- [x] Add touch-friendly Pause, Resume, Next, Previous, and direct Slide 1–5 controls.
+- [x] Preserve keyboard focus visibility, responsive phone layout, and reduced-motion behavior.
+- [x] Keep Phase 12A frontend-local with no WebSockets, backend endpoints, shared synchronization, or multiple-display behavior.
+
+Progress note (2026-08-11): Began Phase 12 with a local presentation-controller boundary shared by the dashboard and the new `/remote` page. The controller owns active-slide navigation, automatic rotation, and the user pause state; the existing five slide components remain presentation-only and unchanged. The phone-focused remote reports current state and exposes accessible direct controls. A future transport adapter can drive the same controller contract when WebSockets, display identities, backend state, and synchronization are implemented.
+
+Remaining Phase 12 work: add the realtime layer, backend-authoritative per-TV state, display validation and routing, synchronized rotation, reconnect/revision handling, remote override selection and expiration, and multi-display verification.
+
+---
+
+# 14B. Phase 12 — WebSocket Realtime Layer
 
 ## Server
 

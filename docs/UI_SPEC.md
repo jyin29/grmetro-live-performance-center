@@ -2093,6 +2093,12 @@ Initial loading preserves the complete shell with skeleton regions. A failed ini
 
 The final Phase 11 polish pass presents live state, local time, last-refresh clock time, and refresh age as separate large header groups for rapid room-distance scanning. All five presentation slides share the same outer rhythm, card treatment, heading hierarchy, chart padding, label alignment, and restrained animation timing. The stationary 400 ms crossfade fades the outgoing content before revealing the incoming content, while the accessible slide-position control transitions its active marker smoothly. Reduced-motion mode retains immediate, clear state changes.
 
+## Phase 12A Local Presentation Remote
+
+The first remote-control increment adds a mobile-friendly `/remote` route to the dashboard application. A presentation controller owns the active slide index and the user's paused/running choice independently from the five visual slide components. It also owns the local 30-second rotation timer and exposes pause, resume, next, previous, and direct-selection commands.
+
+The remote shows the current slide number and label, clearly identifies whether automatic rotation is running, and provides large keyboard-accessible touch controls for all five registered slides. Phase 12A state is intentionally local to the current browser runtime. WebSockets, backend commands, shared synchronization, display identity, multiple-display routing, and remote override expiration remain deferred.
+
 ---
 
 # End of UI_SPEC.md

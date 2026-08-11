@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SLIDE_TRANSITION_DURATION_MS } from "../config/slideRotation";
+import { PRESENTATION_SLIDES, SLIDE_TRANSITION_DURATION_MS } from "../config/slideRotation";
 import { RevenueOverviewSlide } from "./slides/RevenueOverviewSlide";
 import { TechnicianPerformanceSlide } from "./slides/TechnicianPerformanceSlide";
 import { BusinessPerformanceSlide } from "./slides/BusinessPerformanceSlide";
@@ -7,12 +7,12 @@ import { RecognitionSlide } from "./slides/RecognitionSlide";
 import { OperationsHealthSlide } from "./slides/OperationsHealthSlide";
 
 export const dashboardSlides = [
-  { id: "revenue-overview", label: "Revenue overview", Component: RevenueOverviewSlide },
-  { id: "technician-performance", label: "Technician performance", Component: TechnicianPerformanceSlide },
-  { id: "business-performance", label: "Business performance", Component: BusinessPerformanceSlide },
-  { id: "recognition", label: "Recognition and achievements", Component: RecognitionSlide },
-  { id: "operations-health", label: "Operations health", Component: OperationsHealthSlide },
-];
+  RevenueOverviewSlide,
+  TechnicianPerformanceSlide,
+  BusinessPerformanceSlide,
+  RecognitionSlide,
+  OperationsHealthSlide,
+].map((Component, index) => ({ ...PRESENTATION_SLIDES[index], Component }));
 
 export function SlideDeck({ data, slideIndex = 0, onSelectSlide, presentationState = {} }) {
   const slide = dashboardSlides[slideIndex];

@@ -1,29 +1,24 @@
-import { useEffect, useState } from "react";
-import { SLIDE_ROTATION_INTERVAL_MS, nextSlideIndex } from "../config/slideRotation";
+import { useEffect } from "react";
+import { usePresentationController } from "../controller/PresentationController";
 import { Header } from "./Header";
-import { dashboardSlides, SlideDeck } from "./SlideDeck";
+import { SlideDeck } from "./SlideDeck";
 
 export function DashboardLayout({ data, error, refreshing }) {
-  const [slideIndex, setSlideIndex] = useState(0);
-  const rotationPaused = refreshing || Boolean(error);
+  const presentation = usePresentationController();
+  const rotationPaused = !presentation.isRunning || refreshing || Boolean(error);
 
   useEffect(() => {
-    if (rotationPaused || dashboardSlides.length < 2) return undefined;
-
-    const interval = window.setInterval(() => {
-      setSlideIndex((currentIndex) => nextSlideIndex(currentIndex, dashboardSlides.length));
-    }, SLIDE_ROTATION_INTERVAL_MS);
-
-    return () => window.clearInterval(interval);
-  }, [rotationPaused]);
+    presentation.setRuntimePaused(refreshing || Boolean(error));
+    return () => presentation.setRuntimePaused(false);
+  }, [error, presentation.setRuntimePaused, refreshing]);
 
   return <div className="app-shell">
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
     {error && <div className="inline-warning">Live updates are temporarily interrupted. Showing the last successful update.</div>}
     <SlideDeck
       data={data}
-      slideIndex={slideIndex}
-      onSelectSlide={setSlideIndex}
+      slideIndex={presentation.activeSlideIndex}
+      onSelectSlide={presentation.selectSlide}
       presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }}
     />
     <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>Production dashboard · REST connected</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>

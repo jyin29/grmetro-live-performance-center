@@ -3,9 +3,10 @@ import { EmptyState } from "./components/EmptyState";
 import { ErrorView } from "./components/ErrorView";
 import { Header } from "./components/Header";
 import { LoadingView } from "./components/LoadingView";
+import { RemoteControlPage } from "./components/RemoteControlPage";
 import { useDashboard } from "./hooks/useDashboard";
 
-export default function App() {
+function DashboardPage() {
   const { data, error, loading, refreshing, retry } = useDashboard();
 
   if (loading) {
@@ -30,4 +31,8 @@ export default function App() {
   }
 
   return <DashboardLayout data={data} error={error} refreshing={refreshing} />;
+}
+
+export default function App() {
+  return window.location.pathname.replace(/\/+$/, "") === "/remote" ? <RemoteControlPage /> : <DashboardPage />;
 }
