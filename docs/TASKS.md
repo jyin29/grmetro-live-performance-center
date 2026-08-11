@@ -1808,6 +1808,13 @@ Do not place long debugging transcripts in this file.
 
 ---
 
+## 2026-08-11 — Business-question dashboard redesign
+
+- Audited all five presentation slides and documented the KPI strategy in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+- Reframed the presentation around pace, performance, revenue source, Top 3 recognition, and management attention.
+- Removed duplicated charts and implementation-health cards without adding endpoints or frontend business calculations.
+- Preserved unresolved mappings as unavailable and documented future HVAC KPI opportunities separately.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

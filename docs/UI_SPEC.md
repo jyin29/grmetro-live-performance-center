@@ -2101,6 +2101,12 @@ The remote shows the current slide number and label, clearly identifies whether 
 
 ---
 
+## 88. Business-question presentation redesign
+
+The five presentation views are framed around immediate owner questions: daily pace, technician performance, revenue source, recognition, and management attention. The redesign removes duplicated leader summaries, repeated closing charts, repetitive recognition badges, and a standalone system-health slide. A compact health signal remains in the attention view, while the stationary header continues to communicate refresh state.
+
+The presentation uses only existing backend-prepared KPI values, goals, percent complete, remaining values, ranks, normalized chart values, and refresh metadata. It does not create team totals, time-of-day pace, alert thresholds, or a new business score in React. Service/install values remain visibly unavailable until their backend classifications are approved. The full audit is recorded in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+
 # End of UI_SPEC.md
 
 The next companion document is:

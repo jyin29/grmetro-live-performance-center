@@ -5,9 +5,9 @@ import { RevenueOverviewSlide } from "../components/slides/RevenueOverviewSlide"
 import { TechnicianPerformanceSlide } from "../components/slides/TechnicianPerformanceSlide";
 
 export const PRESENTATION_SLIDES = Object.freeze([
-  { id: "revenue-overview", label: "Revenue overview", Component: RevenueOverviewSlide },
-  { id: "technician-performance", label: "Technician performance", Component: TechnicianPerformanceSlide },
-  { id: "business-performance", label: "Business performance", Component: BusinessPerformanceSlide },
-  { id: "recognition", label: "Recognition and achievements", Component: RecognitionSlide },
-  { id: "operations-health", label: "Operations health", Component: OperationsHealthSlide },
+  { id: "daily-pace", label: "Are we on pace?", Component: RevenueOverviewSlide },
+  { id: "team-performance", label: "Who is performing?", Component: TechnicianPerformanceSlide },
+  { id: "revenue-sources", label: "Where is revenue coming from?", Component: BusinessPerformanceSlide },
+  { id: "top-three", label: "Who deserves recognition?", Component: RecognitionSlide },
+  { id: "management-attention", label: "What needs attention?", Component: OperationsHealthSlide },
 ]);
