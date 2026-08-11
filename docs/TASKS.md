@@ -885,6 +885,8 @@ Progress note (2026-08-11): Consolidated the current repository's Phase 11 front
 
 Progress note (2026-08-11): Optimized the production foundation for 65–85 inch room displays with selectively larger typography, more card padding, wider section spacing, and roomier chart and leaderboard treatments while preserving the light GRmetro theme. Added a reusable registry-backed slide deck controlled by a simple index; the existing dashboard is Slide 1 and remains the only rendered slide. Added restrained 200–500 ms card, value, chart, and leaderboard entrance motion with reduced-motion support. Automatic rotation, keyboard controls, WebSockets, TV routing, and remote state remain explicitly deferred. Stakeholder review at 720p, 1080p, and 4K is still outstanding.
 
+Progress note (2026-08-11): Completed a focused Phase 11 presentation-polish pass after auditing the rendered 1080p dashboard. The existing TV scaling and entrance-motion rules were retained and strengthened with immediately visible operations-center typography, proportionally larger card padding and section gutters, a taller usable chart region, and 250–450 ms ease-out entrances without scaling or flashy effects. Refresh freshness now advances every second with seconds included, including minute-and-second labels, while preserving the established live, stale, and critical color thresholds. No backend, API, business logic, rotation, WebSocket, remote-control, or later-slide behavior changed. Stakeholder approval and the remaining multi-resolution visual review are still outstanding.
+
 Recommended commit:
 
 ```text

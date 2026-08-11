@@ -9,10 +9,10 @@ export function refreshLabel(timestamp, now = Date.now()) {
   if (!timestamp) return "Waiting for live data";
   const elapsed = Math.max(0, now - new Date(timestamp).getTime());
   if (!Number.isFinite(elapsed)) return "Update time unavailable";
+  const seconds = Math.floor(elapsed / 1_000);
   const minutes = Math.floor(elapsed / 60_000);
-  if (minutes < 1) return "Updated just now";
-  if (minutes === 1) return "Updated 1 min ago";
-  return `Updated ${minutes} min ago`;
+  if (minutes < 1) return `Updated ${seconds} sec ago`;
+  return `Updated ${minutes} min ${String(seconds % 60).padStart(2, "0")} sec ago`;
 }
 
 export function formatClock(now = Date.now()) {

@@ -10,7 +10,9 @@ describe("dashboard presentation helpers", () => {
   it("formats backend-prepared formats and freshness states", () => {
     expect(formatMetric({ value: 64.25, hasData: true, format: "percentage" })).toBe("64.3%");
     const now = Date.parse("2026-08-10T12:05:00Z");
-    expect(refreshLabel("2026-08-10T12:01:00Z", now)).toBe("Updated 4 min ago");
+    expect(refreshLabel("2026-08-10T12:04:42Z", now)).toBe("Updated 18 sec ago");
+    expect(refreshLabel("2026-08-10T12:03:57Z", now)).toBe("Updated 1 min 03 sec ago");
+    expect(refreshLabel("2026-08-10T12:01:00Z", now)).toBe("Updated 4 min 00 sec ago");
     expect(freshness("2026-08-10T12:01:00Z", now)).toBe("stale");
     expect(refreshLabel(null, now)).toBe("Waiting for live data");
     expect(formatClock(now)).toMatch(/\d{1,2}:05:00\s[AP]M/);
