@@ -2091,6 +2091,8 @@ Fresh REST payloads animate changed numeric KPI, revenue, technician, and rankin
 
 Initial loading preserves the complete shell with skeleton regions. A failed initial request shows a branded friendly error and retry action. A background request failure preserves the last successful payload and adds a nonblocking warning.
 
+The final Phase 11 polish pass presents live state, local time, last-refresh clock time, and refresh age as separate large header groups for rapid room-distance scanning. All five presentation slides share the same outer rhythm, card treatment, heading hierarchy, chart padding, label alignment, and restrained animation timing. The stationary 400 ms crossfade fades the outgoing content before revealing the incoming content, while the accessible slide-position control transitions its active marker smoothly. Reduced-motion mode retains immediate, clear state changes.
+
 ---
 
 # End of UI_SPEC.md
