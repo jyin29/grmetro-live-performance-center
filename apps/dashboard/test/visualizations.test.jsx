@@ -4,6 +4,7 @@ import { KpiComparisonChart } from "../src/components/KpiComparisonChart";
 import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
 import { dashboardSlides, SlideDeck } from "../src/components/SlideDeck";
+import { nextSlideIndex, SLIDE_ROTATION_INTERVAL_MS, SLIDE_TRANSITION_DURATION_MS } from "../src/config/slideRotation";
 
 const row = {
   technicianId: 101,
@@ -25,6 +26,8 @@ describe("dashboard visualizations", () => {
     expect(dashboardSlides).toHaveLength(2);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
+    expect(markup).toContain("Slide 1 of 2");
+    expect(markup).toContain('aria-label="Show Revenue overview"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
       id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 },
@@ -35,6 +38,14 @@ describe("dashboard visualizations", () => {
     expect(performanceMarkup).toContain("Install Revenue");
     expect(performanceMarkup).toContain("Data status");
     expect(performanceMarkup).toContain("No data");
+  });
+
+  it("uses the centralized 15-second rotation and wraps to Slide 1", () => {
+    expect(SLIDE_ROTATION_INTERVAL_MS).toBe(15_000);
+    expect(SLIDE_TRANSITION_DURATION_MS).toBeGreaterThanOrEqual(300);
+    expect(SLIDE_TRANSITION_DURATION_MS).toBeLessThanOrEqual(500);
+    expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
+    expect(nextSlideIndex(1, dashboardSlides.length)).toBe(0);
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
