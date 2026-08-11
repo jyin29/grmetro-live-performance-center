@@ -30,6 +30,58 @@ export function freshness(timestamp, now = Date.now()) {
   return "live";
 }
 
+const INSIGHT_PRIORITY = Object.freeze({ critical: 0, warning: 1, informational: 2 });
+
+function metricLabelIndex(data) {
+  return Object.values(data?.slides || {}).reduce((labels, slide) => {
+    for (const metric of slide?.metrics || []) labels.set(metric.id, metric.label);
+    return labels;
+  }, new Map());
+}
+
+// This presentation helper uses prepared fields only: no KPI aggregation,
+// averaging, scoring, or pace calculation belongs in the dashboard.
+export function managementInsights(data, presentationState = {}, now = Date.now(), limit = 2) {
+  const insights = [];
+  const add = (insight) => insights.push(insight);
+  const freshnessState = freshness(data?.refreshedAt, now);
+
+  if (presentationState.hasError) {
+    add({ id: "feed-interrupted", priority: "critical", eyebrow: "Feed health", title: "Live updates interrupted", detail: "Showing the last successful dashboard update." });
+  } else if (freshnessState === "critical") {
+    add({ id: "feed-critical", priority: "critical", eyebrow: "Feed health", title: "Live data needs attention", detail: data?.refreshedAt ? "The last successful update is more than 10 minutes old." : "No successful dashboard update is available." });
+  } else if (freshnessState === "stale") {
+    add({ id: "feed-stale", priority: "warning", eyebrow: "Feed health", title: "Dashboard data is delayed", detail: "The last successful update is more than 3 minutes old." });
+  }
+
+  const ranked = rankedTechnicians(data?.technicians);
+  const falling = ranked.filter(({ overall }) => overall?.qualifies && overall.rankChange < 0)
+    .sort((left, right) => left.overall.rankChange - right.overall.rankChange || left.overall.rank - right.overall.rank)[0];
+  if (falling) add({ id: `rank-falling-${falling.id}`, priority: "warning", eyebrow: "Ranking movement", title: `${falling.shortName || falling.name} moved down ${Math.abs(falling.overall.rankChange)} ${Math.abs(falling.overall.rankChange) === 1 ? "place" : "places"}`, detail: `Now ranked #${falling.overall.rank} overall.` });
+
+  const labels = metricLabelIndex(data);
+  const qualityIds = new Set();
+  for (const technician of data?.technicians || []) {
+    for (const [id, metric] of Object.entries(technician.kpis || {})) {
+      if (metric?.dataQuality === "fallback" || metric?.dataQuality === "unavailable") qualityIds.add(id);
+    }
+  }
+  if (qualityIds.size) {
+    const qualityLabels = [...qualityIds].map((id) => labels.get(id) || id).slice(0, 2);
+    const remaining = qualityIds.size - qualityLabels.length;
+    add({ id: "data-quality", priority: "warning", eyebrow: "Data quality", title: `${qualityLabels.join(" and ")} ${qualityLabels.length === 1 ? "needs" : "need"} review`, detail: `${remaining > 0 ? `Plus ${remaining} more. ` : ""}Fallback or unavailable values are not treated as confirmed results.` });
+  }
+
+  const reached = ranked.find((technician) => technician.kpis?.revenue?.hasData && technician.kpis.revenue.reached);
+  if (reached) add({ id: `goal-${reached.id}`, priority: "informational", eyebrow: "Goal achieved", title: `${reached.shortName || reached.name} reached the Revenue goal`, detail: `${Math.round(reached.kpis.revenue.percentComplete)}% of the backend-configured goal.` });
+
+  const climbing = ranked.filter(({ overall }) => overall?.qualifies && overall.rankChange > 0)
+    .sort((left, right) => right.overall.rankChange - left.overall.rankChange || left.overall.rank - right.overall.rank)[0];
+  if (climbing) add({ id: `rank-climbing-${climbing.id}`, priority: "informational", eyebrow: "Ranking movement", title: `${climbing.shortName || climbing.name} climbed ${climbing.overall.rankChange} ${climbing.overall.rankChange === 1 ? "place" : "places"}`, detail: `Now ranked #${climbing.overall.rank} overall.` });
+
+  return insights.sort((left, right) => INSIGHT_PRIORITY[left.priority] - INSIGHT_PRIORITY[right.priority]).slice(0, limit);
+}
+
 export function operationsHealthPresentation(data, presentationState = {}, now = Date.now()) {
   const refreshTime = data?.refreshedAt ? new Date(data.refreshedAt) : null;
   const hasRefreshTime = refreshTime && Number.isFinite(refreshTime.getTime());

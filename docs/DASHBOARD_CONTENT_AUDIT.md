@@ -40,6 +40,22 @@ The slide deck, automatic 30-second rotation, stationary crossfade, light theme,
 
 Feed freshness remains in the stationary dashboard header, where it is operational context rather than a business domain.
 
+## Management Intelligence layer
+
+A compact, stationary Management Attention banner now supplements the five domain slides. It is not a slide, does not change the rotation, and shows at most two items. Items are ordered Critical, Warning, then Informational; ties retain the deterministic condition order below. The presentation helper consumes only fields already prepared by the backend.
+
+| Insight | Trigger | Priority | Existing backend fields used |
+|---|---|---|---|
+| Live updates interrupted | The dashboard request reports an error while cached data remains visible | Critical | Existing frontend request state and cached dashboard payload |
+| Live data needs attention | `refreshedAt` is missing/invalid or at least 10 minutes old | Critical | `refreshedAt`; established UI freshness threshold |
+| Dashboard data is delayed | `refreshedAt` is at least 3 but less than 10 minutes old | Warning | `refreshedAt`; established UI freshness threshold |
+| Overall rank moved down | A backend-qualified technician has negative `overall.rankChange`; the largest fall is shown | Warning | `overall.qualifies`, `overall.rankChange`, `overall.rank`, technician display name |
+| KPI data needs review | At least one KPI is `fallback` or `unavailable`; at most two metric labels are named | Warning | `kpis.*.dataQuality`, slide metric `id` and `label` |
+| Revenue goal achieved | A technician's Revenue metric has `hasData: true` and backend `reached: true`; the highest-ranked matching technician is shown | Informational | `kpis.revenue.hasData`, `reached`, `percentComplete`, backend overall order |
+| Overall rank climbed | A backend-qualified technician has positive `overall.rankChange`; the largest climb is shown | Informational | `overall.qualifies`, `overall.rankChange`, `overall.rank`, technician display name |
+
+No team totals, averages, pace, gap, score, or KPI values are calculated in React. “Below goal pace,” “above goal pace,” “goal nearly achieved,” “goal at risk,” comparison with a team average, and the gap between first and second are deliberately not implemented because the current payload does not provide those backend-prepared conclusions or approved thresholds.
+
 ## Remaining KPI opportunities
 
 The existing payload can support additional presentation only after backend ownership and business validation are completed:
@@ -50,6 +66,7 @@ The existing payload can support additional presentation only after backend owne
 - WIP, held, canceled, recall, efficiency, billable-hour, and revenue-per-hour operational views.
 - Lead-source mix and source-specific closing drill-downs.
 - Historical trends and improvement recognition after a history/storage decision.
+- Backend-prepared pace/risk classifications, near-goal events, team benchmarks, and leader-gap insights after business thresholds and aggregation rules are approved.
 - Tier 4 dispatch, capacity, profitability, membership, quality, and cycle-time KPIs cataloged for future expansion.
 
 These opportunities require backend-prepared values and must not be calculated or inferred in React.

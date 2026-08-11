@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { usePresentationController } from "../controller/PresentationController";
 import { Header } from "./Header";
+import { ManagementAttention } from "./ManagementAttention";
 import { SlideDeck } from "./SlideDeck";
+import { managementInsights } from "../lib/presentation";
 
 export function DashboardLayout({ data, error, refreshing }) {
   const presentation = usePresentationController();
@@ -14,7 +16,7 @@ export function DashboardLayout({ data, error, refreshing }) {
 
   return <div className="app-shell">
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
-    {error && <div className="inline-warning">Live updates are temporarily interrupted. Showing the last successful update.</div>}
+    <ManagementAttention insights={managementInsights(data, { hasError: Boolean(error), refreshing })} />
     <SlideDeck
       data={data}
       slideIndex={presentation.activeSlideIndex}
