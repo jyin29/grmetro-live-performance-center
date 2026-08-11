@@ -771,6 +771,15 @@ Corrective note (2026-08-04): The backend syntax build no longer depends on the 
 recursively on Windows, macOS, and Linux, with automated coverage for invalid files, nested and
 space-containing paths, and missing directories. Phase 9 business behavior is unchanged.
 
+Corrective note (2026-08-11): Phase 10/11 runtime investigation traced dashboard refresh through
+the scheduler, live provider, request executor, and CSRF provider. The startup-acquisition refactor
+had stopped resolving the shared acquisition promise from the response observer, so an observed
+valid token could remain blocked behind a pending Playwright `page.evaluate()` until the outer CSRF
+timer expired. Observer acquisition now resolves that promise immediately, and safe stage-only
+timeout diagnostics distinguish passive lookup from the metadata request without exposing browser
+or authentication data. Frontend consolidation, refresh-provider derivations, and dependency
+updates did not change the CSRF acquisition implementation.
+
 Recommended commits:
 
 ```text
