@@ -17,16 +17,16 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
-  it("registers and renders the two indexed dashboard slides", () => {
+  it("registers and renders the three indexed dashboard slides", () => {
     const data = {
       technicians: [],
       slides: { revenue: { rows: [] }, performance: { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(dashboardSlides).toHaveLength(2);
+    expect(dashboardSlides).toHaveLength(3);
     expect(markup).toContain('data-slide-id="revenue-overview"');
     expect(markup).toContain("Today’s performance");
-    expect(markup).toContain("Slide 1 of 2");
+    expect(markup).toContain("Slide 1 of 3");
     expect(markup).toContain('aria-label="Show Revenue overview"');
 
     const performanceMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, technicians: [{
@@ -38,6 +38,15 @@ describe("dashboard visualizations", () => {
     expect(performanceMarkup).toContain("Install Revenue");
     expect(performanceMarkup).toContain("Data status");
     expect(performanceMarkup).toContain("No data");
+
+    const businessMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, slides: {
+      revenue: { axis: { maximum: 0, format: "currency" }, metrics: [], rows: [] },
+      performance: { metrics: [], rows: [] }
+    } }} slideIndex={2} />);
+    expect(businessMarkup).toContain('data-slide-id="business-performance"');
+    expect(businessMarkup).toContain("Business Performance");
+    expect(businessMarkup).toContain("Revenue by Technician");
+    expect(businessMarkup).toContain("Closing Performance");
   });
 
   it("uses the centralized 30-second rotation and wraps to Slide 1", () => {
@@ -45,7 +54,8 @@ describe("dashboard visualizations", () => {
     expect(SLIDE_TRANSITION_DURATION_MS).toBeGreaterThanOrEqual(300);
     expect(SLIDE_TRANSITION_DURATION_MS).toBeLessThanOrEqual(500);
     expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
-    expect(nextSlideIndex(1, dashboardSlides.length)).toBe(0);
+    expect(nextSlideIndex(1, dashboardSlides.length)).toBe(2);
+    expect(nextSlideIndex(2, dashboardSlides.length)).toBe(0);
   });
 
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {

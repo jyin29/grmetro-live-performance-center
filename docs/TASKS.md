@@ -876,6 +876,7 @@ feat: derive validated service and installation KPIs
 - [ ] Perform stakeholder visual review at 1280×720, 1920×1080, and 3840×2160 after the Vite application can run.
 - [x] Replace the chart-region foundation placeholder with the requested Revenue, KPI comparison, and technician ranking visualizations.
 - [x] Add a dedicated responsive Technician Performance dashboard as Slide 2 in the indexed deck.
+- [x] Add a TV-first Business Performance dashboard as Slide 3 using existing revenue and conversion visualizations.
 - [x] Add presentation-only 30-second automatic rotation across every registered slide, with a 400 ms crossfade, pause during loading/refresh/error states, and a subtle accessible position indicator.
 - [ ] Add display URL routing, TV validation, WebSockets, synchronized rotation, and remote state only in their dedicated later tasks.
 
@@ -894,6 +895,8 @@ Progress note (2026-08-11): Added the dedicated Technician Performance dashboard
 Progress note (2026-08-11): Completed the first production automatic slide experience for the two currently registered Phase 11 dashboards. A single presentation configuration now defines the 15-second interval and 400 ms transition; the deck starts on Slide 1, advances through the full registry, wraps to Slide 1, and pauses while loading, refreshing, or showing an error. Slides crossfade without lateral or scale motion, expose a subdued keyboard-accessible position indicator, and retain reduced-motion behavior. The existing TV-readability sizing was audited and retained, with the indicator sized for legibility without competing with dashboard content. This is local presentation rotation only; shared-epoch synchronization, display routing, WebSockets, remote control, and later slides remain deferred.
 
 Progress note (2026-08-11): Continued Phase 11 presentation polish by changing the local automatic rotation interval from 15 to 30 seconds while preserving the 400 ms crossfade. Fresh cached REST payloads now interpolate changed KPI, revenue, comparison, technician, and rank values over 650 ms with a non-overshooting ease-out; chart geometry transitions in place, and changed KPI cards, technician cards, and ranking rows receive a subtle one-second refresh highlight. Reduced-motion preferences make updates immediate. The successful refresh timestamp continues to reset the header to `Updated 0 sec ago` and count each second. No backend, API, refresh-provider, ServiceTitan, KPI, or business logic changed.
+
+Progress note (2026-08-11): Added Slide 3, a TV-first Business Performance view designed for rapid comprehension at room distance. It pairs the existing overlaid Revenue by Technician SVG with the existing backend-normalized Lead Conversion and Closing comparison in two large, low-density panels. The slide reuses only cached dashboard fields, shared animation, accessibility, responsive, and reduced-motion behavior; Slide 1 and Slide 2 remain unchanged. Display routing, WebSockets, remote control, shared-epoch rotation, and all business calculations remain deferred.
 
 Recommended commit:
 
