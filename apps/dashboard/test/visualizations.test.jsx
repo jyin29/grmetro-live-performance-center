@@ -40,8 +40,8 @@ describe("dashboard visualizations", () => {
     expect(performanceMarkup).toContain("No data");
   });
 
-  it("uses the centralized 15-second rotation and wraps to Slide 1", () => {
-    expect(SLIDE_ROTATION_INTERVAL_MS).toBe(15_000);
+  it("uses the centralized 30-second rotation and wraps to Slide 1", () => {
+    expect(SLIDE_ROTATION_INTERVAL_MS).toBe(30_000);
     expect(SLIDE_TRANSITION_DURATION_MS).toBeGreaterThanOrEqual(300);
     expect(SLIDE_TRANSITION_DURATION_MS).toBeLessThanOrEqual(500);
     expect(nextSlideIndex(0, dashboardSlides.length)).toBe(1);
