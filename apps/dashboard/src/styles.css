@@ -39,6 +39,48 @@ button { font: inherit; }
 .state-view { flex: 1; min-height: 460px; display: grid; place-content: center; justify-items: center; text-align: center; padding: 40px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); }.state-view__icon { display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 18px; border-radius: 50%; background: #e6f2f2; color: var(--teal); font-size: 28px; font-weight: 900; }.state-view h2 { margin: 0; font-size: clamp(26px, 2vw, 40px); }.state-view p { color: var(--muted); font-size: 17px; }.state-view button { border: 0; border-radius: 12px; padding: 13px 24px; color: #fff; background: var(--teal); font-weight: 800; cursor: pointer; }
 .skeleton { overflow: hidden; position: relative; }.skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: shimmer 1.5s infinite; }.skeleton i,.skeleton b,.skeleton span { display: block; border-radius: 8px; background: #e9eef1; height: 16px; width: 45%; }.skeleton b { height: 36px; width: 65%; }.skeleton span { width: 55%; }.skeleton--large { min-height: 420px; padding: 35px; display: flex; flex-direction: column; gap: 24px; }.skeleton--large span { width: 85%; height: 180px; }
 @keyframes shimmer { to { transform: translateX(100%); } }
+
+/* TV presentation scale and restrained entrance motion. */
+.app-shell { padding: clamp(24px, 2.25vw, 52px); gap: clamp(20px, 1.65vw, 34px); }
+.header h1 { font-size: clamp(30px, 2.35vw, 48px); }
+.header__clock { font-size: clamp(24px, 1.8vw, 36px); }
+.status-badge { padding: 10px 15px; font-size: clamp(13px, .82vw, 17px); }
+.slide-deck { flex: 1; display: flex; min-height: 0; }
+.dashboard-grid { width: 100%; grid-template-columns: minmax(0, 1.7fr) minmax(370px, .72fr); gap: clamp(22px, 1.65vw, 34px); }
+.dashboard-slide { animation: slide-content-in 420ms cubic-bezier(.22, 1, .36, 1) both; }
+.kpi-card { min-height: clamp(150px, 11vw, 208px); padding: clamp(24px, 1.9vw, 38px); animation: card-in 360ms cubic-bezier(.22, 1, .36, 1) both; }
+.kpi-card:nth-child(2) { animation-delay: 45ms; }
+.kpi-card:nth-child(3) { animation-delay: 90ms; }
+.kpi-card:nth-child(4) { animation-delay: 135ms; }
+.kpi-card p { font-size: clamp(15px, .95vw, 20px); }
+.kpi-card strong { font-size: clamp(36px, 2.75vw, 58px); animation: value-in 320ms 140ms cubic-bezier(.22, 1, .36, 1) both; }
+.kpi-card > span { font-size: clamp(14px, .95vw, 19px); }
+.main-content, .leaderboard { padding: clamp(28px, 2.3vw, 46px); animation: card-in 400ms 100ms cubic-bezier(.22, 1, .36, 1) both; }
+.comparison-panel { padding: clamp(24px, 1.9vw, 38px); animation: card-in 400ms 150ms cubic-bezier(.22, 1, .36, 1) both; }
+.panel__heading { padding-bottom: clamp(20px, 1.7vw, 32px); }
+.panel__heading h2 { font-size: clamp(28px, 1.9vw, 40px); }
+.panel__heading > span { font-size: clamp(14px, .9vw, 18px); }
+.chart-legend { gap: 12px 26px; font-size: clamp(13px, .85vw, 17px); }
+.revenue-chart { max-height: 400px; margin-top: 18px; animation: chart-in 450ms 160ms cubic-bezier(.22, 1, .36, 1) both; }
+.chart-name { font-size: 17px; }
+.chart-value { font-size: 16px; }
+.chart-tick { font-size: 13px; }
+.ranking-chart { margin-top: 18px; }
+.ranking-chart li { grid-template-columns: 44px 52px minmax(0,1fr) 38px; gap: 14px; min-height: clamp(68px, 5vw, 94px); animation: leaderboard-in 380ms cubic-bezier(.22, 1, .36, 1) both; }
+.ranking-chart li:nth-child(2) { animation-delay: 45ms; }.ranking-chart li:nth-child(3) { animation-delay: 90ms; }.ranking-chart li:nth-child(4) { animation-delay: 135ms; }.ranking-chart li:nth-child(5) { animation-delay: 180ms; }
+.ranking-chart__rank { font-size: clamp(21px, 1.45vw, 30px); }
+.ranking-chart__avatar { width: 48px; height: 48px; font-size: 17px; }
+.ranking-chart__person strong { font-size: clamp(16px, 1.05vw, 22px); }
+.comparison-row > strong { margin-bottom: 11px; font-size: clamp(15px, .92vw, 19px); }
+.comparison-bar { height: 24px; }
+.comparison-bar b { font-size: 12px; }
+.footer { min-height: 40px; font-size: clamp(13px, .88vw, 18px); }
+
+@keyframes slide-content-in { from { opacity: 0; } }
+@keyframes card-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes value-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes chart-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes leaderboard-in { from { opacity: 0; transform: translateY(6px); } }
 @media (min-width: 2500px) { body { font-size: 1.35rem; }.app-shell { max-width: 3600px; margin: auto; }.dashboard-grid { min-height: 1450px; } }
 @media (max-height: 760px) { .app-shell { padding: 14px 24px; gap: 10px; }.header { min-height: 70px; }.header__logo { height: 48px; }.kpi-card { min-height: 96px; padding: 13px 18px; }.dashboard-grid { grid-template-rows: auto minmax(285px, 1fr) auto; }.main-content,.leaderboard { padding: 15px 20px; }.comparison-panel { padding: 13px 20px; }.ranking-chart li { min-height: 48px; }.revenue-chart { max-height: 270px; }.footer { min-height: 20px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }

@@ -883,6 +883,8 @@ Progress note (2026-08-10): Rebuilt the dashboard delivery directly in this repo
 
 Progress note (2026-08-11): Consolidated the current repository's Phase 11 frontend into one runnable production foundation. The production entry point now loads the shared responsive stylesheet, the branded header shows a live clock and continuously updated freshness age, and loading/error states no longer imply a successful refresh. Existing REST hook, cached-data behavior, state views, cards, and visualization components are reused without adding business calculations. Dependency-backed production build verification now passes. Stakeholder visual review remains; display routing, WebSockets, synchronized rotation, and remote control remain later-phase work.
 
+Progress note (2026-08-11): Optimized the production foundation for 65–85 inch room displays with selectively larger typography, more card padding, wider section spacing, and roomier chart and leaderboard treatments while preserving the light GRmetro theme. Added a reusable registry-backed slide deck controlled by a simple index; the existing dashboard is Slide 1 and remains the only rendered slide. Added restrained 200–500 ms card, value, chart, and leaderboard entrance motion with reduced-motion support. Automatic rotation, keyboard controls, WebSockets, TV routing, and remote state remain explicitly deferred. Stakeholder review at 720p, 1080p, and 4K is still outstanding.
+
 Recommended commit:
 
 ```text

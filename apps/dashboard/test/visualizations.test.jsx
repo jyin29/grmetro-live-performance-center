@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { KpiComparisonChart } from "../src/components/KpiComparisonChart";
 import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
+import { dashboardSlides, SlideDeck } from "../src/components/SlideDeck";
 
 const row = {
   technicianId: 101,
@@ -15,6 +16,17 @@ const row = {
 };
 
 describe("dashboard visualizations", () => {
+  it("registers and renders exactly one indexed dashboard slide", () => {
+    const data = {
+      technicians: [],
+      slides: { revenue: { rows: [] }, performance: { rows: [] } },
+    };
+    const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
+    expect(dashboardSlides).toHaveLength(1);
+    expect(markup).toContain('data-slide-id="revenue-overview"');
+    expect(markup).toContain("Today’s performance");
+  });
+
   it("renders accessible overlaid revenue bars without turning missing data into zero", () => {
     const slide = { axis: { maximum: 15000, format: "currency" }, metrics: [
       { id: "revenue", label: "Revenue", color: "#D4AF37" },
@@ -40,4 +52,3 @@ describe("dashboard visualizations", () => {
     expect(ranking).toContain("↑1");
   });
 });
-
