@@ -30,6 +30,68 @@ export function freshness(timestamp, now = Date.now()) {
   return "live";
 }
 
+export function operationsHealthPresentation(data, presentationState = {}, now = Date.now()) {
+  const refreshTime = data?.refreshedAt ? new Date(data.refreshedAt) : null;
+  const hasRefreshTime = refreshTime && Number.isFinite(refreshTime.getTime());
+  const freshnessState = hasRefreshTime ? freshness(data.refreshedAt, now) : "critical";
+  const hasError = Boolean(presentationState.hasError);
+  const isHealthy = !hasError && freshnessState === "live";
+
+  return {
+    overall: {
+      label: isHealthy ? "Dashboard Healthy" : hasError ? "Updates Interrupted" : "Data Needs Attention",
+      detail: isHealthy ? "Live data is current and the presentation is running." : hasError
+        ? "Showing the last successful dashboard update."
+        : data?.refreshedAt ? "The latest dashboard data is older than expected." : "Waiting for the first successful update.",
+      tone: isHealthy ? "healthy" : "warning"
+    },
+    cards: [
+      {
+        id: "refresh",
+        label: "Last Successful Refresh",
+        value: hasRefreshTime ? refreshLabel(data.refreshedAt, now).replace(/^Updated /, "") : "Unavailable",
+        detail: hasRefreshTime ? new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(refreshTime) : "No successful refresh yet",
+        tone: freshnessState === "live" ? "healthy" : "warning"
+      },
+      {
+        id: "refresh-state",
+        label: "Refresh State",
+        value: presentationState.refreshing ? "Refreshing" : hasError ? "Interrupted" : "Ready",
+        detail: presentationState.refreshing ? "Updating cached dashboard data" : hasError ? "Last update remains visible" : "Waiting for the next refresh",
+        tone: hasError ? "warning" : "healthy"
+      },
+      {
+        id: "cache",
+        label: "Cache Status",
+        value: data ? "Available" : "Unavailable",
+        detail: data ? "Dashboard data is ready" : "No dashboard payload available",
+        tone: data ? "healthy" : "warning"
+      },
+      {
+        id: "technicians",
+        label: "Technicians",
+        value: Array.isArray(data?.technicians) ? String(data.technicians.length) : "Unavailable",
+        detail: Array.isArray(data?.technicians) ? "Included in this dashboard" : "Technician count unavailable",
+        tone: Array.isArray(data?.technicians) ? "healthy" : "neutral"
+      },
+      {
+        id: "slide",
+        label: "Current Slide",
+        value: "Operations Health",
+        detail: "Slide 5 of 5",
+        tone: "neutral"
+      },
+      {
+        id: "rotation",
+        label: "Rotation Status",
+        value: presentationState.rotationPaused ? "Paused" : "Running",
+        detail: presentationState.rotationPaused ? "Resumes when updates recover" : "30-second presentation rotation",
+        tone: presentationState.rotationPaused ? "warning" : "healthy"
+      }
+    ]
+  };
+}
+
 export function rankedTechnicians(technicians = []) {
   return [...technicians].sort((left, right) => {
     const leftRank = left.overall?.rank ?? Number.POSITIVE_INFINITY;

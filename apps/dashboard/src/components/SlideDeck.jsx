@@ -4,15 +4,17 @@ import { RevenueOverviewSlide } from "./slides/RevenueOverviewSlide";
 import { TechnicianPerformanceSlide } from "./slides/TechnicianPerformanceSlide";
 import { BusinessPerformanceSlide } from "./slides/BusinessPerformanceSlide";
 import { RecognitionSlide } from "./slides/RecognitionSlide";
+import { OperationsHealthSlide } from "./slides/OperationsHealthSlide";
 
 export const dashboardSlides = [
   { id: "revenue-overview", label: "Revenue overview", Component: RevenueOverviewSlide },
   { id: "technician-performance", label: "Technician performance", Component: TechnicianPerformanceSlide },
   { id: "business-performance", label: "Business performance", Component: BusinessPerformanceSlide },
   { id: "recognition", label: "Recognition and achievements", Component: RecognitionSlide },
+  { id: "operations-health", label: "Operations health", Component: OperationsHealthSlide },
 ];
 
-export function SlideDeck({ data, slideIndex = 0, onSelectSlide }) {
+export function SlideDeck({ data, slideIndex = 0, onSelectSlide, presentationState = {} }) {
   const slide = dashboardSlides[slideIndex];
   const previousIndexRef = useRef(slideIndex);
   const [outgoingIndex, setOutgoingIndex] = useState(null);
@@ -35,10 +37,10 @@ export function SlideDeck({ data, slideIndex = 0, onSelectSlide }) {
 
   return <div className="slide-stage">
     <div className="slide-deck slide-deck--active" data-slide-id={slide.id} aria-label={slide.label}>
-      <Slide data={data} />
+      <Slide data={data} presentationState={presentationState} />
     </div>
     {OutgoingSlide && <div className="slide-deck slide-deck--outgoing" aria-hidden="true">
-      <OutgoingSlide data={data} />
+      <OutgoingSlide data={data} presentationState={presentationState} />
     </div>}
     <nav className="slide-indicator" aria-label="Dashboard slides">
       <span>Slide {slideIndex + 1} of {dashboardSlides.length}</span>
