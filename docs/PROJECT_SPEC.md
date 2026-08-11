@@ -13266,6 +13266,12 @@ feat: add technician and KPI remote display views
 
 # 443. Phase 12 — Mobile QR Remote
 
+## Phase 12A — Local Presentation Control Foundation
+
+The first Phase 12 increment introduces a frontend presentation controller and a `/remote` route. The controller separates active-slide navigation and local paused/running rotation state from the slide components. The dashboard and remote consume the same controller contract, which is designed so a later synchronized state adapter can replace local dispatch without changing presentation slides.
+
+Phase 12A provides pause, resume, next, previous, direct Slide 1–5 selection, current-slide status, and automatic-rotation status. State is local to one browser runtime. This increment does not add WebSockets, backend endpoints, shared synchronization, or multiple-display behavior.
+
 ## Deliverables
 
 Implement:
