@@ -14173,3 +14173,27 @@ Dashboard history is maintained as a bounded, in-memory sequence of immutable, t
 The snapshot store is isolated behind an append/read interface so later persistence, time-window selection, aggregation, trends, exports, management insights, and AI summaries can reuse the snapshot schema without changing ServiceTitan integration or dashboard calculations. The complete contract and lifecycle are defined in `docs/HISTORICAL_METRICS.md`.
 
 The existing dashboard response also adds `historicalTrends`. The reusable backend engine consumes ordered snapshots through adjacent comparison-engine results and analyzes existing KPI values, KPI ranks, goal progress, and overall rank. It requires configurable minimum history, suppresses inconsistent one-refresh movement, and reports trends, momentum, consistency, streak counts, and explicit unknown states without a new endpoint or business calculation.
+
+---
+
+# 477. Phase 15 Local Display Command Architecture
+
+The dashboard presentation controller is divided into three frontend-only responsibilities:
+
+```text
+Remote Controller → Presentation Command Bus → Display Manager
+```
+
+The command bus accepts transport-neutral command objects containing a command type, target `displayId`, and optional payload. Its supported commands are Next Slide, Previous Slide, Go To Slide, Pause Rotation, Resume Rotation, and Restart Rotation Timer. The remote controller dispatches these commands and does not mutate presentation state directly.
+
+The in-memory Display Manager owns one isolated state record and rotation timer for each configured local display. A record contains its current slide, running or paused state, timer revision, and presentation profile. Commands validate the target and update only that display. Previous and next navigation wrap across the existing five-entry slide registry. `/display/:displayId` selects the matching local display record, while `/remote` can change its target without changing state or issuing a command.
+
+This phase is intentionally local to one browser JavaScript runtime. It adds no WebSocket, backend endpoint, persistence, cross-tab messaging, or network synchronization. Consequently, a `/remote` page controls only display routes rendered in that same runtime; separately opened browser tabs and physical displays do not yet share state.
+
+Future synchronization shall adapt transport messages into the same command object contract and dispatch them through the command bus:
+
+```text
+Remote Controller → WebSocket transport → Presentation Command Bus → Display Manager
+```
+
+The command bus handler and Display Manager subscription boundary are the synchronization hook points. A future transport may serialize command objects, route them by `displayId`, hydrate authoritative display snapshots, and publish manager changes without rewriting remote control actions or presentation slides.
