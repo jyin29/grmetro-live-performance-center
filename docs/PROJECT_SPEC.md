@@ -14398,3 +14398,10 @@ page reload.
 Phase 22 does not modify ServiceTitan integration, KPI calculations, the Business Rules Engine, Historical
 Engine, Trend Engine, Event Engine, presentation synchronization, Administration platform behavior, or the
 five-slide television dashboard.
+
+## 2026-08-12 — Approved membership KPI extension
+
+The latest explicit presentation decision adds `Memberships Sold` as a twelfth KPI concept because the direct
+`MembershipsSold` field already exists in the approved native ServiceTitan Technicians datasource. This
+specific decision supersedes the earlier eleven-KPI cardinality while preserving exactly five live slides.
+No other membership metric is approved without a validated native response field and business definition.

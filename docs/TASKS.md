@@ -2045,3 +2045,16 @@ AGENTS.md
 ```
 
 It shall provide concise, binding instructions that Codex reads before making repository changes.
+
+## 2026-08-12 — 1080p presentation polish and membership audit
+
+- [x] Bound every television slide to the stationary 1920×1080 presentation envelope.
+- [x] Compress header, attention strip, panel padding, chart gaps, technician cards, podium, and footer.
+- [x] Combine related sales-pipeline, field-throughput, and install-economics metrics.
+- [x] Audit the ServiceTitan request, response, normalization, payload, mock, and presentation pipeline for membership data.
+- [x] Expose the existing direct `MembershipsSold` field without inventing values or calculations.
+- [x] Document unavailable membership concepts and the exact existing request contract.
+
+No endpoint or request was added: `MembershipsSold` was already in the centralized Technicians datasource
+field list. Membership Revenue, Maintenance Agreements, Agreement Sales, and Recurring Service Agreements
+remain unavailable because no validated response fields were found.

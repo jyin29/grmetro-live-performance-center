@@ -14,7 +14,7 @@ const { evaluateBusinessRules } = require("../rules/businessRulesEngine");
 
 const GROUPS = Object.freeze({
   revenue: ["revenue", "serviceRevenue", "installRevenue"],
-  activity: ["billableServiceCalls", "opportunities", "techLeads", "marketedLeads", "installs"],
+  activity: ["billableServiceCalls", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "installs"],
   performance: ["leadConversionRate", "closingRate"],
   "average-ticket": ["installAverageTicket", "installRevenue", "installs"]
 });

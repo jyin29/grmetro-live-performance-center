@@ -14,7 +14,8 @@ const preferredMetrics = [
   ["installAverageTicket", "Average Ticket"],
   ["opportunities", "Opportunities"],
   ["techLeads", "Tech Leads"],
-  ["marketedLeads", "Marketed Leads"]
+  ["marketedLeads", "Marketed Leads"],
+  ["membershipsSold", "Memberships"]
 ];
 
 function rankMovement(change) {

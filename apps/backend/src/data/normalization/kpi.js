@@ -10,6 +10,7 @@ const CONFIRMED_DIRECT_FIELDS = Object.freeze({
   opportunities: Object.freeze({ field: "Opportunity" }),
   techLeads: Object.freeze({ field: "TechLeadJobs" }),
   marketedLeads: Object.freeze({ field: "MarketingLeadJobs" }),
+  membershipsSold: Object.freeze({ field: "MembershipsSold" }),
   closingRate: Object.freeze({ field: "CloseRate", convert: ratioToPercentage })
 });
 

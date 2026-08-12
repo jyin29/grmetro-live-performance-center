@@ -2169,3 +2169,11 @@ Tier 3 metrics remain supporting/detail opportunities and Tier 4 metrics do not 
 A compact Management Attention banner sits between the stationary header and slide stage when supported insights exist. It displays no more than two prioritized insights and never becomes a sixth slide. Critical uses a restrained red tint, Warning uses amber, and Informational uses teal. Each treatment includes a text priority label and symbol so meaning does not depend on color. Typography, one-line truncation, spacing, subtle entrance motion, and the global reduced-motion override preserve ten-foot readability without crowding slide content.
 
 Insight selection is centralized in a reusable presentation helper. Slide components do not contain management-condition logic. The complete condition and field inventory is maintained in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+
+## 2026-08-12 — 1920×1080 presentation polish
+
+The television shell is height-bounded and overflow-hidden at 1920×1080. Header, management attention,
+slide stage, indicator, and footer must remain inside one viewport. Sales combines Opportunities, Tech Leads,
+Marketed Leads, and Memberships Sold in one compact pipeline panel. Operations combines Calls,
+Opportunities, Memberships Sold, and Installs in one throughput panel and keeps install economics together.
+KPI values remain visually dominant while headings, legends, annotations, padding, and gaps are reduced.

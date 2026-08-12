@@ -10,14 +10,14 @@ const FIXED_TIME = "2026-01-15T15:00:00.000Z";
 const MOCK_GOALS = Object.freeze({
   revenue: 10000, billableServiceCalls: 20, serviceRevenue: 7000, opportunities: 10,
   leadConversionRate: 65, techLeads: 5, marketedLeads: 8, closingRate: 60,
-  installs: 2, installAverageTicket: 8500, installRevenue: 17000
+  installs: 2, installAverageTicket: 8500, installRevenue: 17000, membershipsSold: 3
 });
 const BASE_VALUES = [
-  [9200, 18, 6100, 11, 62, 4, 7, 58, 1, 8200, 8200],
-  [10800, 22, 7400, 14, 68, 6, 9, 64, 2, 8800, 17600],
-  [7600, 15, 5200, 9, 55, 3, 5, 51, 1, 7900, 7900],
-  [8400, 17, 5700, 10, 59, 5, 6, 56, 2, 8100, 16200],
-  [6900, 13, 4800, 8, 50, 2, 4, 47, 1, 7600, 7600]
+  [9200, 18, 6100, 11, 62, 4, 7, 2, 58, 1, 8200, 8200],
+  [10800, 22, 7400, 14, 68, 6, 9, 4, 64, 2, 8800, 17600],
+  [7600, 15, 5200, 9, 55, 3, 5, 1, 51, 1, 7900, 7900],
+  [8400, 17, 5700, 10, 59, 5, 6, 3, 56, 2, 8100, 16200],
+  [6900, 13, 4800, 8, 50, 2, 4, 0, 47, 1, 7600, 7600]
 ];
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -27,7 +27,7 @@ function scenarioValues(name) {
   if (name === "zero-values") return values.map(() => KPI_IDS.map(() => 0));
   if (name === "missing-data") { values[1][4] = null; values[3][2] = null; return values; }
   if (name === "no-installs") {
-    return values.map((row) => row.map((value, index) => [8, 9, 10].includes(index) ? (index === 9 ? null : 0) : value));
+    return values.map((row) => row.map((value, index) => [9, 10, 11].includes(index) ? (index === 10 ? null : 0) : value));
   }
   if (name === "ranking-changes") { values[4][0] = 11500; return values; }
   if (name === "new-leader") { values[2][0] = 12500; values[2][7] = 72; return values; }
@@ -76,7 +76,7 @@ function makeMetric(kpiId, value) {
 
 const SLIDE_KPIS = {
   revenue: ["revenue", "serviceRevenue", "installRevenue"],
-  activity: ["billableServiceCalls", "opportunities", "techLeads", "marketedLeads", "installs"],
+  activity: ["billableServiceCalls", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "installs"],
   performance: ["leadConversionRate", "closingRate"],
   "average-ticket": ["installAverageTicket", "installRevenue", "installs"]
 };

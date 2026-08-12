@@ -16,7 +16,7 @@ test("approved shared configuration has the required fixed cardinality and order
   assert.deepEqual(technicians.map(({ id }) => id), [134926818, 3841, 3853, 133469538, 127491426]);
   assert.deepEqual(Object.keys(kpis), [
     "revenue", "billableServiceCalls", "serviceRevenue", "opportunities", "leadConversionRate",
-    "techLeads", "marketedLeads", "closingRate", "installs", "installAverageTicket", "installRevenue"
+    "techLeads", "marketedLeads", "membershipsSold", "closingRate", "installs", "installAverageTicket", "installRevenue"
   ]);
   assert.deepEqual(slides.map(({ id, durationSeconds }) => [id, durationSeconds]), [
     ["revenue", 15], ["activity", 15], ["performance", 15],
@@ -69,7 +69,7 @@ test("television configuration validation detects missing, duplicate, and non-UR
 
 test("KPI configuration validation detects count and stable-ID mismatches", () => {
   assert.deepEqual(validation.validateKpiConfiguration(), []);
-  assert.equal(validation.validateKpiConfiguration({ revenue: kpis.revenue }).some((error) => /eleven/.test(error)), true);
+  assert.equal(validation.validateKpiConfiguration({ revenue: kpis.revenue }).some((error) => /twelve/.test(error)), true);
   const mismatched = { ...kpis, revenue: { ...kpis.revenue, id: "wrong" } };
   assert.equal(validation.validateKpiConfiguration(mismatched).some((error) => /stable ID/.test(error)), true);
 });

@@ -56,7 +56,7 @@ function validateTelevisionConfiguration(configuration = televisions) {
 function validateKpiConfiguration(configuration = kpis) {
   const entries = configuration && typeof configuration === "object" ? Object.entries(configuration) : [];
   const errors = [];
-  if (entries.length !== 11) errors.push("Exactly eleven KPIs must be configured.");
+  if (entries.length !== 12) errors.push("Exactly twelve KPIs must be configured.");
   if (entries.some(([key, value]) => !value || value.id !== key)) errors.push("Each KPI key must match its stable ID.");
   return errors;
 }
