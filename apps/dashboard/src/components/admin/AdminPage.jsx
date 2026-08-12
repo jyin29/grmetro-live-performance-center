@@ -1,0 +1,60 @@
+import { useEffect, useState } from "react";
+import { fetchAdminState } from "../../api/adminApi";
+import { PRESENTATION_SLIDES } from "../../config/slideRegistry";
+import { RUNTIME_SETTINGS } from "../../config/runtimeSettings";
+import { AdminSection, DefinitionGrid, StatusPill, describeAction, describeCondition, formatDuration } from "./AdminComponents";
+import logoUrl from "../../../../../assets/branding/grmetro-logo.png";
+
+export function AdminContent({ data, runtimeSettings = RUNTIME_SETTINGS }) {
+  return <main className="admin-main">
+    <AdminSection id="displays" title="Display Management" description="Registered screens and authoritative presentation state.">
+      <div className="admin-display-grid">{data.displays.map((display) => <article className="admin-card" key={display.displayId}>
+        <div className="admin-card__heading"><div><p className="admin-id">{display.displayId}</p><h3>{display.displayName}</h3></div><StatusPill value={display.connectedClients.total ? "Connected" : "Idle"} /></div>
+        <DefinitionGrid items={[
+          { label: "Profile", value: display.presentationProfile }, { label: "Current slide", value: display.currentSlide?.label },
+          { label: "Rotation", value: display.isRunning ? "Running" : "Paused" }, { label: "Next rotation", value: display.nextRotationAt ? new Date(display.nextRotationAt).toLocaleTimeString() : "Paused" },
+          { label: "Display clients", value: display.connectedClients.displays }, { label: "Remote clients", value: display.connectedClients.remotes },
+        ]} />
+      </article>)}</div>
+    </AdminSection>
+
+    <AdminSection id="rules" title="Business Rules" description="Configured conditions and presentation actions. Editing is not available yet.">
+      <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Rule ID</th><th>Priority</th><th>Condition</th><th>Action</th><th>Status</th><th>Cooldown</th><th>Event duration</th></tr></thead>
+        <tbody>{data.businessRules.rules.map((rule) => <tr key={rule.id}><td><strong>{rule.id}</strong><small>{rule.category} · {rule.scope}</small></td><td>{rule.priority}</td><td>{describeCondition(rule.condition)}</td><td>{describeAction(rule.action)}</td><td><StatusPill value={rule.enabled === false ? "Disabled" : "Enabled"} /></td><td>{formatDuration(rule.cooldownMilliseconds ?? data.businessRules.settings.cooldownMilliseconds)}</td><td>{formatDuration(rule.eventDurationMilliseconds ?? data.businessRules.settings.eventDurationMilliseconds)}</td></tr>)}</tbody></table></div>
+    </AdminSection>
+
+    <AdminSection id="presentation" title="Presentation Settings" description="Profiles, rotation timing, slides, and kiosk behavior.">
+      <DefinitionGrid items={[{ label: "Rotation interval", value: formatDuration(data.presentation.rotationIntervalMilliseconds) },
+        { label: "Presentation profiles", value: data.presentation.profiles.join(", ") }, { label: "Available slides", value: data.presentation.slides.map(({ label }) => label).join(", ") },
+        { label: "Kiosk mode", value: runtimeSettings.kioskMode ? "Enabled" : "Disabled" }, { label: "Registered UI slides", value: PRESENTATION_SLIDES.length }]} />
+    </AdminSection>
+
+    <AdminSection id="events" title="Event Settings" description="Current overlay lifecycle and bounded queue state.">
+      <DefinitionGrid items={[{ label: "Queue size", value: data.events.queueSize }, { label: "Pending events", value: data.events.pendingEvents },
+        { label: "Cooldown", value: formatDuration(data.events.cooldownMilliseconds) }, { label: "Event duration", value: formatDuration(data.events.eventDurationMilliseconds) },
+        { label: "Overlay duration", value: formatDuration(data.events.overlayDurationMilliseconds) }, { label: "Active event", value: data.events.activeEvent?.title || "None" }]} />
+    </AdminSection>
+
+    <AdminSection id="diagnostics" title="Diagnostics" description="Safe operational indicators; no ServiceTitan response data is exposed.">
+      <DefinitionGrid items={[{ label: "Diagnostics overlay", value: runtimeSettings.diagnosticsVisible ? "Enabled" : "Disabled" },
+        { label: "Cache", value: data.diagnostics.cacheAvailable ? "Available" : "Waiting for data" }, { label: "Last successful refresh", value: data.diagnostics.lastSuccessfulRefreshAt ? new Date(data.diagnostics.lastSuccessfulRefreshAt).toLocaleString() : "Not available" },
+        { label: "Last failure", value: data.diagnostics.lastFailureCode || "None" }, { label: "Watchdog interval", value: formatDuration(runtimeSettings.watchdogIntervalMs) }]} />
+    </AdminSection>
+
+    <AdminSection id="system" title="System Information" description="Application health and connected-client totals.">
+      <DefinitionGrid items={[{ label: "Application version", value: data.system.applicationVersion }, { label: "Build version", value: data.system.buildVersion || runtimeSettings.buildVersion },
+        { label: "Uptime", value: formatDuration(data.system.uptimeSeconds * 1000) }, { label: "WebSocket", value: <StatusPill value={data.system.websocketStatus} /> },
+        { label: "Backend", value: <StatusPill value={data.system.backendStatus} /> }, { label: "Dashboard", value: <StatusPill value={data.system.dashboardStatus} /> },
+        { label: "Connected clients", value: data.system.connectedClients }, { label: "Connected displays", value: data.system.connectedDisplays }, { label: "Connected remotes", value: data.system.connectedRemotes }]} />
+    </AdminSection>
+  </main>;
+}
+
+export function AdminPage() {
+  const [state, setState] = useState({ data: null, error: null });
+  useEffect(() => { const controller = new AbortController(); fetchAdminState({ signal: controller.signal }).then((data) => setState({ data, error: null })).catch((error) => { if (error.name !== "AbortError") setState({ data: null, error }); }); return () => controller.abort(); }, []);
+  return <div className="admin-shell"><header className="admin-header"><div><img src={logoUrl} alt="GRmetro Heating and Cooling" /><span>Administration</span></div><nav aria-label="Administration sections">{[["displays", "Displays"], ["rules", "Rules"], ["presentation", "Presentation"], ["events", "Events"], ["diagnostics", "Diagnostics"], ["system", "System"]].map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}</nav></header>
+    <div className="admin-hero"><p className="admin-eyebrow">Performance Center</p><h1>Administration Platform</h1><p>Inspect configuration and live operations from one read-only workspace.</p></div>
+    {state.error ? <div className="admin-message" role="alert"><h2>Administration unavailable</h2><p>{state.error.message}</p></div> : state.data ? <AdminContent data={state.data} /> : <div className="admin-message" role="status">Loading administration…</div>}
+  </div>;
+}

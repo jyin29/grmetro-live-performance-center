@@ -19,6 +19,7 @@ const { createPresentationWebSocket } = require("./presentation/presentationWebS
 const { createEventEngine } = require("./events/eventEngine");
 
 function start() {
+  const startedAt = new Date();
   const config = loadConfig();
   const logger = createLogger({ level: config.logLevel });
   const browserManager = createBrowserManagerForConfig(config, logger);
@@ -43,14 +44,18 @@ function start() {
   const mockBrowserStatus = () => ({ connected: false, connecting: false, serviceTitanPageFound: false,
     inactiveReason: "mock-mode", lastConnectedAt: null, lastDisconnectedAt: null, reconnectAttempt: 0,
     lastErrorCode: null, lastErrorMessage: null });
+  let presentationWebSocket;
   const app = createApp({ config, logger, cache, tvManager, scheduler, applicationVersion: packageJson.version,
+    buildVersion: process.env.BUILD_VERSION || null,
     browserStatusProvider: browserManager ? () => browserManager.getStatus() : mockBrowserStatus,
-    serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }), serviceTitanClient });
+    serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }), serviceTitanClient,
+    adminRuntime: { presentationManager, eventEngine, startedAt,
+      connectionStatusProvider: () => presentationWebSocket?.getConnectionSummary() || { total: 0, displays: 0, remotes: 0 } } });
   const server = app.listen(config.port, config.host, () => logger.info("Backend application started", {
     application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv,
     host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan"
   }));
-  const presentationWebSocket = createPresentationWebSocket({ server, manager: presentationManager, commandBus: presentationCommandBus, logger });
+  presentationWebSocket = createPresentationWebSocket({ server, manager: presentationManager, commandBus: presentationCommandBus, logger });
   installGracefulShutdown({ server, logger, scheduler: { stop() { scheduler?.stop(); expirationMonitor.stop(); presentationWebSocket.close(); presentationManager.destroy(); eventEngine.destroy(); serviceTitanClient?.stop(); browserManager?.stop(); } } });
   expirationMonitor.start();
   browserManager?.start();

@@ -1,0 +1,36 @@
+export function AdminSection({ id, title, description, children }) {
+  return <section className="admin-section" id={id} aria-labelledby={`${id}-title`}>
+    <header className="admin-section__header"><div><p className="admin-eyebrow">Read-only</p><h2 id={`${id}-title`}>{title}</h2></div><p>{description}</p></header>
+    {children}
+  </section>;
+}
+
+export function StatusPill({ value }) {
+  const normalized = String(value ?? "unknown").toLowerCase();
+  const positive = ["running", "available", "connected", "live", "enabled"].includes(normalized);
+  return <span className={`admin-status admin-status--${positive ? "positive" : "neutral"}`}>{value ?? "Unknown"}</span>;
+}
+
+export function DefinitionGrid({ items }) {
+  return <dl className="admin-definition-grid">{items.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value ?? "Not available"}</dd></div>)}</dl>;
+}
+
+export function formatDuration(milliseconds) {
+  if (milliseconds == null) return "Not available";
+  if (milliseconds >= 60_000 && milliseconds % 60_000 === 0) return `${milliseconds / 60_000} min`;
+  return `${milliseconds / 1000} sec`;
+}
+
+export function describeCondition(condition) {
+  if (condition.all || condition.any) {
+    const joiner = condition.all ? " AND " : " OR ";
+    return (condition.all || condition.any).map(describeCondition).join(joiner);
+  }
+  const source = condition.source === "previous" ? "previous " : "";
+  const value = Array.isArray(condition.value) ? condition.value.join(", ") : String(condition.value);
+  return `${source}${condition.path} ${condition.operator} ${value}`;
+}
+
+export function describeAction(action) {
+  return [action.type, action.eventType || action.behavior || action.title].filter(Boolean).join(" · ");
+}

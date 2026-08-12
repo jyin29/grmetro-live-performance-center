@@ -40,6 +40,16 @@ function createPresentationWebSocket({ server, manager, commandBus, logger }) {
   return Object.freeze({
     close() { unsubscribe(); server.off("upgrade", upgrade); for (const client of sockets) client.socket.close(); sockets.clear(); wss.close(); },
     get connectionCount() { return sockets.size; },
+    getConnectionSummary() {
+      const summary = { total: sockets.size, displays: 0, remotes: 0, byDisplay: {} };
+      for (const client of sockets) {
+        summary[`${client.clientType}s`] += 1;
+        const display = summary.byDisplay[client.displayId] ||= { displays: 0, remotes: 0, total: 0 };
+        display[`${client.clientType}s`] += 1;
+        display.total += 1;
+      }
+      return summary;
+    },
   });
 }
 
