@@ -1210,7 +1210,33 @@ feat: add dedicated animated Top 3 slide
 
 ---
 
-# 18. Phase 16 — Remote Display Views
+# 18. Phase 16 — Celebration and Event Engine
+
+- [x] Add a reusable backend-owned event generator and bounded priority queue.
+- [x] Consume only existing achievement records and backend-prepared Critical insights.
+- [x] Support Critical, Celebration, and Information priorities.
+- [x] Deduplicate active and queued events and enforce a configurable cooldown.
+- [x] Configure display duration, queue capacity, and bounded deduplication memory.
+- [x] Expire events and advance the queue automatically.
+- [x] Synchronize one active event to every display and remote through the presentation platform.
+- [x] Hydrate reconnecting clients with an active event.
+- [x] Pause rotation without changing the slide and resume after the event queue clears.
+- [x] Add an accessible, reduced-motion-aware light-theme overlay with restrained entrance and exit.
+- [x] Prevent remotes from manually dismissing events while reflecting active event state.
+- [x] Test generation, ordering, deduplication, cooldown, expiration, queue bounds, synchronization,
+  reconnect hydration, automatic dismissal, and rotation pause/resume.
+
+Progress note (2026-08-12): Phase 16 is complete. The process-local Event Engine translates existing
+goal-reached, new-leader, entered-Top-3, and backend Critical-insight records into prioritized events.
+It owns one active event, a deterministic bounded queue, bounded cooldown history, and expiration.
+The Presentation Manager pauses synchronized display timers while the shared event is active and resumes
+each display on the same slide afterward. Displays render the accessible overlay; remotes report its
+state without a dismiss control. New milestones and performance thresholds remain deferred until
+authoritative backend facts exist.
+
+---
+
+# 18A. Deferred Remote Display Views
 
 ## Technician Scorecard
 

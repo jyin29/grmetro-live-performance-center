@@ -14201,3 +14201,43 @@ The **30-second rotation timer lives only in the backend Presentation Manager**.
 Clients automatically reconnect with bounded exponential backoff. A browser refresh, remote reconnect, or display reconnect receives the current snapshot as its first message and therefore needs no manual refresh. During a temporary disconnect, a dashboard keeps its last rendered slide and reports that presentation synchronization is reconnecting. After a backend restart, in-memory presentation state intentionally resets to the configured Slide 1/running defaults; reconnecting clients hydrate that new authoritative snapshot and continue with a newly backend-owned timer.
 
 For local development, start the backend and Vite dashboard in separate terminals with `npm run dev:backend` and `npm run dev:dashboard`, then open `/display/main-office` and `/remote`. Vite proxies both `/api` HTTP traffic and `/ws` WebSocket upgrades to `127.0.0.1:3000`. Use multiple browser windows or devices on the same reachable development host to verify live synchronization. Production uses the same-origin `/ws/presentation` URL.
+
+---
+
+# 478. Phase 16 Celebration and Event Engine
+
+Phase 16 adds temporary overlays, not a sixth slide. Existing business engines produce KPI, ranking,
+goal, comparison, trend, and insight facts. A separate backend Event Engine may translate only those
+prepared facts into presentation events; it must not infer a new threshold, score, KPI, milestone, or
+ServiceTitan mapping.
+
+The implemented generators consume existing `goal-reached`, `new-leader`, and `entered-top-three`
+achievement records. They produce personal-goal, new-overall-leader, and Top 3 entry events. A
+backend-prepared Critical management insight can also become a Critical event. Revenue milestones,
+team Revenue goals, Outstanding Daily Performance, Highest Closing %, and Largest Rank Improvement
+remain future opportunities until an authoritative backend record defines when each is event-worthy.
+
+## Event lifecycle and queue
+
+The process-local Event Engine owns one active event, a priority queue, bounded cooldown history, and
+automatic timers. Priorities, in deterministic order, are `critical`, `celebration`, and `information`.
+Source creation time and stable event key break ties. Repeated active, queued, or cooling-down keys are
+ignored. Display duration, cooldown, queue capacity, and deduplication-history capacity are configurable.
+Defaults are 7 seconds, 30 minutes, 20 queued events, and 100 cooldown keys. When queue capacity is
+reached, its lowest-priority tail is discarded. Expiration activates the next event automatically;
+backend restart intentionally clears all event memory.
+
+## Synchronization and presentation
+
+The Event Engine publishes its active event to the authoritative Presentation Manager. The manager
+embeds the same event and revision in every display snapshot, cancels every rotation timer while an
+event is visible, and rearms a full rotation interval when the queue finishes. It never changes the
+active slide. The existing WebSocket gateway broadcasts this state to displays and remotes; reconnecting
+clients receive an active event in their initial state. Remotes report automatic dismissal and have no
+dismiss command.
+
+The dashboard renders a centered, high-contrast, light-theme overlay above the still-visible slide.
+Restrained opacity and small vertical movement provide entrance and exit without flashes, bounces, or
+a full-screen transition. A live status announces events to screen readers, presentation controls stay
+keyboard accessible, and the global reduced-motion rule makes transitions immediate when requested.
+After expiration, the synchronized five-slide presentation continues from the same slide.

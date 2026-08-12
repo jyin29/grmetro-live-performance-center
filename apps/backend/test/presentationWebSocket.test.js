@@ -8,12 +8,13 @@ const { PRESENTATION_COMMANDS } = require("../../../shared/presentation");
 const { createPresentationManager } = require("../src/presentation/presentationManager");
 const { createPresentationCommandBus } = require("../src/presentation/presentationCommandBus");
 const { createPresentationWebSocket } = require("../src/presentation/presentationWebSocket");
+const { createEventEngine } = require("../src/events/eventEngine");
 
 function nextMessage(socket) { return new Promise((resolve) => socket.once("message", (raw) => resolve(JSON.parse(raw.toString())))); }
-async function setup() {
+async function setup({ eventEngine } = {}) {
   const server = http.createServer();
   const manager = createPresentationManager({ displays: [{ id: "main", name: "Main", presentationProfile: "standard" },
-    { id: "dispatch", name: "Dispatch", presentationProfile: "standard" }], slideCount: 5, rotationMilliseconds: 30000 });
+    { id: "dispatch", name: "Dispatch", presentationProfile: "standard" }], slideCount: 5, rotationMilliseconds: 30000, eventEngine });
   const gateway = createPresentationWebSocket({ server, manager,
     commandBus: createPresentationCommandBus({ handleCommand: manager.handleCommand }), logger: { warn() {} } });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -24,7 +25,7 @@ async function setup() {
     return { socket, initial };
   }
   async function close() { gateway.close(); manager.destroy(); await new Promise((resolve) => server.close(resolve)); }
-  return { connect, close };
+  return { connect, close, manager };
 }
 
 test("two displays and multiple remotes receive current state with targeted broadcast isolation", async () => {
@@ -44,6 +45,20 @@ test("two displays and multiple remotes receive current state with targeted broa
   assert.equal(reconnect.initial.state.activeSlideIndex, 1);
   for (const { socket } of [displayA, displayB, remoteA, remoteB, dispatch, reconnect]) socket.close();
   await environment.close();
+});
+
+test("all displays and remotes synchronize an active event and reconnect hydrates it", async () => {
+  const eventEngine = createEventEngine({ displayDurationMilliseconds: 5000, cooldownMilliseconds: 10000 });
+  const environment = await setup({ eventEngine });
+  const main = await environment.connect("main", "display"); const dispatch = await environment.connect("dispatch", "display");
+  const remote = await environment.connect("main", "remote");
+  const updates = [main, dispatch, remote].map(({ socket }) => nextMessage(socket));
+  eventEngine.enqueue([{ key: "shared", priority: "celebration", title: "Shared achievement" }]);
+  assert.deepEqual((await Promise.all(updates)).map(({ state }) => state.event.key), ["shared", "shared", "shared"]);
+  const reconnect = await environment.connect("dispatch", "display");
+  assert.equal(reconnect.initial.state.event.key, "shared");
+  for (const { socket } of [main, dispatch, remote, reconnect]) socket.close();
+  await environment.close(); eventEngine.destroy();
 });
 
 test("invalid WebSocket commands return safe errors", async () => {

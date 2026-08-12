@@ -12,7 +12,7 @@ function dateInTimeZone(value, timeZone) {
 
 class RefreshScheduler {
   constructor({ provider, cache, logger, intervalMilliseconds, timeZone,
-    clock = () => new Date(), setIntervalFn = setInterval, clearIntervalFn = clearInterval } = {}) {
+    clock = () => new Date(), setIntervalFn = setInterval, clearIntervalFn = clearInterval, onSuccessfulPayload } = {}) {
     this.provider = assertRefreshProvider(provider);
     if (!cache || !logger) throw new Error("RefreshScheduler requires a cache and logger.");
     if (!Number.isFinite(intervalMilliseconds) || intervalMilliseconds <= 0) throw new TypeError("A positive refresh interval is required.");
@@ -23,6 +23,7 @@ class RefreshScheduler {
     this.clock = clock;
     this.setIntervalFn = setIntervalFn;
     this.clearIntervalFn = clearIntervalFn;
+    this.onSuccessfulPayload = onSuccessfulPayload;
     this.timer = null;
     this.active = false;
   }
@@ -51,6 +52,7 @@ class RefreshScheduler {
       });
       const completed = this.clock();
       this.cache.storeSuccessfulPayload(payload, completed);
+      this.onSuccessfulPayload?.(this.cache.getPayload());
       const results = payload.diagnostics?.results || [];
       this.logger.info("Dashboard refresh completed", {
         trigger, date: refreshDate, successfulTechnicians: results.filter((item) => item.ok).length,
