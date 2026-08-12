@@ -29,3 +29,10 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Local ServiceTitan research output
+*-drilldown-sanitized.json
+*-drilldown-enhanced.json
+drilldown-metadata*.json
+servicetitan-research-results*.json
+research-output/
