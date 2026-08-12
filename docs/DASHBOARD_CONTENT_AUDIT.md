@@ -70,3 +70,20 @@ The existing payload can support additional presentation only after backend owne
 - Tier 4 dispatch, capacity, profitability, membership, quality, and cycle-time KPIs cataloged for future expansion.
 
 These opportunities require backend-prepared values and must not be calculated or inferred in React.
+
+## 2026-08-12 room-distance presentation audit
+
+The final presentation pass removed UI-facing tier jargon and made the prepared business results, rather than explanatory copy, consume the screen. It did not change an endpoint, calculation, ranking, or data-quality decision.
+
+| KPI | Runtime availability | Presentation home |
+|---|---|---|
+| Revenue Today / technician revenue distribution | Available in `slides.revenue.rows` | Revenue: one dense ranked row per technician, with the largest live dollar value and a proportional distribution bar |
+| Revenue Goal, Remaining, and Goal Progress | Available when the existing metric goal fields are populated | Revenue: dedicated Goal, Remaining, and Goal % columns; `No data` remains explicit when goals are not configured |
+| Closing % | Available | Sales dominant chart; Technician scorecards; Recognition podium context |
+| 10+ Opportunities, Tech Leads, Marketed Leads | Available | Sales pipeline chart; Operations activity chart; used as meaningful scorecard replacements when service/install values are unavailable |
+| Billable Service Calls, Service Revenue, Install Revenue, Number of Installs, Install Average Ticket | Present in the payload but unavailable until classification approval | Operations and applicable scorecards show values only when `hasData` is true; no estimate or zero substitution is made |
+| Overall rank, rank movement, Overall Top 3 | Available only for backend-qualified technicians | Technician scorecards and the dedicated Top 3 slide |
+| Lead Conversion % | Unavailable because no business mapping is approved | Not promoted into the presentation |
+| Team Revenue, team average Closing %, revenue pace, completed jobs, WIP, holds, cancellations, efficiency, hours, revenue/hour, lead-source mix, recalls | Not present as prepared dashboard KPI results | Not calculated in React and not presented |
+
+The Revenue slide no longer repeats the same revenue values in a second chart panel. Its single high-density table combines revenue distribution with goal accountability. Technician cards no longer reserve space for unavailable service/install metrics when confirmed opportunities or lead activity can fill that space. Sales and Operations headings are shorter, business-facing labels, and supporting copy identifies the actual measures instead of implementation tiers or placeholder status.

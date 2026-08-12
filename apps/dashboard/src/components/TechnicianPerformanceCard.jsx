@@ -6,12 +6,15 @@ import { ComparisonValue } from "./ComparisonValue";
 import { TrendIndicator } from "./TrendIndicator";
 import { technicianHistory } from "../lib/historicalPresentation";
 
-const metrics = [
+const preferredMetrics = [
   ["revenue", "Revenue"],
   ["closingRate", "Closing %"],
   ["billableServiceCalls", "Billable Calls"],
   ["installRevenue", "Install Revenue"],
-  ["installAverageTicket", "Average Ticket"]
+  ["installAverageTicket", "Average Ticket"],
+  ["opportunities", "Opportunities"],
+  ["techLeads", "Tech Leads"],
+  ["marketedLeads", "Marketed Leads"]
 ];
 
 function rankMovement(change) {
@@ -21,9 +24,11 @@ function rankMovement(change) {
 }
 
 export function TechnicianPerformanceCard({ technician, data }) {
+  const availableMetrics = preferredMetrics.filter(([id]) => technician.kpis?.[id]?.hasData);
+  const metrics = availableMetrics.slice(0, 5);
   const qualifies = technician.overall?.qualifies;
   const movement = rankMovement(technician.overall?.rankChange);
-  const qualities = [...new Set(metrics.map(([id]) => technician.kpis?.[id]?.dataQuality ?? "unavailable"))];
+  const qualities = [...new Set(metrics.map(([id]) => technician.kpis?.[id]?.dataQuality).filter(Boolean))];
   const changeSignature = `${technician.overall?.rank}:${metrics.map(([id]) => `${technician.kpis?.[id]?.hasData}:${technician.kpis?.[id]?.value}`).join("|")}`;
   const highlighted = useChangeHighlight(changeSignature);
   const history = technicianHistory(data, technician.id);
@@ -46,9 +51,9 @@ export function TechnicianPerformanceCard({ technician, data }) {
     <div className="performance-card__metrics">
       {metrics.map(([id, label]) => <TechnicianMetric key={id} label={label} metric={technician.kpis?.[id]} />)}
     </div>
-    <footer className="performance-card__status">
+    {qualities.length > 0 && <footer className="performance-card__status">
       <span>Data status</span>
       <div>{qualities.map((quality) => <StatusBadge key={quality} tone={quality === "unavailable" ? "neutral" : "live"}>{quality}</StatusBadge>)}</div>
-    </footer>
+    </footer>}
   </article>;
 }
