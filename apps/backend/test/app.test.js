@@ -67,9 +67,11 @@ test("dashboard serves the cached payload with backwards-compatible historical c
   setup.cache.storeSuccessfulPayload(payload);
   await run(setup.app, async (base) => {
     const body = (await json(base, "/api/v1/dashboard")).body;
-    assert.deepEqual({ ...body, historicalComparison: undefined }, { ...payload, historicalComparison: undefined });
+    assert.deepEqual({ ...body, historicalComparison: undefined, historicalTrends: undefined },
+      { ...payload, historicalComparison: undefined, historicalTrends: undefined });
     assert.equal(body.historicalComparison.available, false);
     assert.equal(body.historicalComparison.reason, "no-history");
+    assert.equal(body.historicalTrends.reason, "insufficient-history");
   });
   assert.equal(refreshes, 0);
 });

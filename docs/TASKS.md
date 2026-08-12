@@ -1845,6 +1845,18 @@ Do not place long debugging transcripts in this file.
 
 No ServiceTitan request, endpoint mapping, normalization, KPI calculation, slide, route, or frontend presentation behavior changed. History remains intentionally process-local and count-bounded; persistence and time-window aggregation are future work.
 
+## 2026-08-12 — Phase 13 Trend Analysis Engine
+
+- [x] Add a reusable trend engine over ordered snapshots and adjacent comparison results.
+- [x] Add configurable minimum history and consistency-based noise suppression.
+- [x] Analyze KPI values, KPI ranks, goal progress, overall ranks, momentum, consistency, and streaks.
+- [x] Preserve unknown states for insufficient, unavailable, or stale history and roster changes.
+- [x] Extend `GET /api/v1/dashboard` backwards-compatibly with `historicalTrends` and no new endpoint.
+- [x] Document the algorithm, configuration, labels, API contract, and future extensions.
+- [x] Cover increasing, decreasing, stable, noisy, missing, partial, addition, removal, and edge cases.
+
+No ServiceTitan integration, normalization, KPI calculation, endpoint mapping, slide, or layout changed. Small trend indicators remain an optional future presentation consumer.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

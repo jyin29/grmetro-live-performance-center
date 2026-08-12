@@ -2,6 +2,7 @@
 
 const { InMemorySnapshotStore } = require("../history/snapshotStore");
 const { compareDashboardSnapshots } = require("../history/comparisonEngine");
+const { analyzeDashboardTrends } = require("../history/trendEngine");
 const { deepFreeze } = require("../history/dashboardSnapshot");
 
 const CACHE_UNAVAILABLE = Object.freeze({
@@ -16,9 +17,10 @@ function iso(value) {
 }
 
 class DashboardCache {
-  constructor({ clock = () => new Date(), snapshotStore, snapshotRetentionLimit = 1440 } = {}) {
+  constructor({ clock = () => new Date(), snapshotStore, snapshotRetentionLimit = 1440, trendMinimumHistory = 4 } = {}) {
     this.clock = clock;
     this.snapshotStore = snapshotStore || new InMemorySnapshotStore({ retentionLimit: snapshotRetentionLimit });
+    this.trendMinimumHistory = trendMinimumHistory;
     this.payload = null;
     this.refreshStartedAt = null;
     this.refreshCompletedAt = null;
@@ -35,7 +37,8 @@ class DashboardCache {
     const completedAt = iso(at);
     const currentSnapshot = this.snapshotStore.append(payload, completedAt);
     const comparison = compareDashboardSnapshots(this.snapshotStore.previous(), currentSnapshot);
-    this.payload = deepFreeze({ ...currentSnapshot.dashboard, historicalComparison: comparison });
+    const trends = analyzeDashboardTrends(this.snapshotStore.list(), { minimumHistory: this.trendMinimumHistory });
+    this.payload = deepFreeze({ ...currentSnapshot.dashboard, historicalComparison: comparison, historicalTrends: trends });
     this.refreshCompletedAt = completedAt;
     this.lastSuccessfulRefreshAt = completedAt;
     this.lastFailure = null;
