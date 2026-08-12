@@ -2016,6 +2016,24 @@ All work is complete only when:
 - [x] Document the drilldown architecture, KPI grouping, and management workflow.
 
 The drilldown is a responsive, read-only operations view backed exclusively by the existing cached dashboard response. Its technician selection is local to one remote browser and cannot affect any television. Phase 21 changes no ServiceTitan integration, KPI calculation, business/history/trend/event engine, presentation synchronization, administration behavior, or five-slide TV presentation.
+
+## 2026-08-12 — Phase 22 Operations Console
+
+- [x] Redesign `/remote` as a six-tab Operations Console.
+- [x] Add Dashboard refresh timing, backend/WebSocket health, event, display, and remote status.
+- [x] Expand Technicians into a searchable team workflow backed by the existing drilldown.
+- [x] Show every registered display and keep presentation commands scoped to the selected display.
+- [x] Preserve pause, resume, restart rotation, jump-to-slide, manual refresh, and display selection.
+- [x] Group management insights, events, alerts, celebrations, and business-rule results.
+- [x] Reuse the read-only Administration platform projection.
+- [x] Combine runtime diagnostics in one responsive view.
+- [x] Add background dashboard, WebSocket, administration, and countdown updates without page refresh.
+- [x] Add tests for tabs, live updates, display controls, technician selection, management, and diagnostics.
+
+The Operations Console is an active-management surface; the five-slide television dashboard remains unchanged.
+It uses only existing dashboard, administration, management-refresh, and presentation synchronization data.
+Future opportunities include authenticated operator roles, configurable alert acknowledgement, richer connection
+quality telemetry, and administration editing after those capabilities receive separate approval.
 ---
 
 # End of TASKS.md
