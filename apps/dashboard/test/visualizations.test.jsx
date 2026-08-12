@@ -99,12 +99,19 @@ describe("dashboard visualizations", () => {
     expect(markup).toContain("Sample");
   });
 
-  it("renders backend-prepared KPI values and overall ranking", () => {
+  it("renders backend-prepared KPI values, omits empty metric lanes, and preserves overall ranking", () => {
     const comparison = renderToStaticMarkup(<KpiComparisonChart slide={{ metrics: [
       { id: "revenue", label: "Revenue", color: "#D4AF37" },
       { id: "serviceRevenue", label: "Service Revenue", color: "#0F766E" }
     ], rows: [row] }} />);
-    expect(comparison).toContain("No data");
+    expect(comparison).toContain("$12,000");
+    expect(comparison).not.toContain("Service Revenue");
+
+    const unavailable = renderToStaticMarkup(<KpiComparisonChart slide={{ metrics: [
+      { id: "serviceRevenue", label: "Service Revenue", color: "#0F766E" }
+    ], rows: [row] }} metricIds={["serviceRevenue"]} />);
+    expect(unavailable).toContain("No validated data");
+    expect(unavailable).toContain("Awaiting approved ServiceTitan mapping");
 
     const ranking = renderToStaticMarkup(<TechnicianRankingChart technicians={[
       { id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 1 } }

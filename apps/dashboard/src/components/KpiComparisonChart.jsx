@@ -6,7 +6,10 @@ import { metricHistory } from "../lib/historicalPresentation";
 export function KpiComparisonChart({ slide, data, metricIds = null }) {
   if (!slide?.rows?.length) return <p className="chart-empty">Performance data is not available yet.</p>;
 
-  const visibleMetrics = metricIds ? slide.metrics.filter(({ id }) => metricIds.includes(id)) : slide.metrics;
+  const selectedMetrics = metricIds ? slide.metrics.filter(({ id }) => metricIds.includes(id)) : slide.metrics;
+  const visibleMetrics = selectedMetrics.filter(({ id }) => slide.rows.some((row) => row.metrics.some((metric) => metric.id === id && metric.hasData)));
+
+  if (!visibleMetrics.length) return <div className="chart-empty chart-empty--compact"><strong>No validated data</strong><span>Awaiting approved ServiceTitan mapping</span></div>;
 
   return <div className="comparison-chart" aria-label="KPI comparison chart">
     <div className="chart-legend">
