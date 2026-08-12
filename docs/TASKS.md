@@ -1932,6 +1932,21 @@ Phase 17 changes dashboard operations only. Production still requires final-devi
 eight-hour stability run (preferably 24 hours), OS process supervision, final hardware confirmation, and
 the existing live business-mapping approvals.
 
+## 2026-08-12 — Phase 18 Configurable Business Rules Engine
+
+- [x] Add shared, customer-adjustable Business Rule, Condition, Priority, and Action configuration.
+- [x] Add a stateless backend evaluator for technician- and KPI-scoped prepared fields.
+- [x] Configure existing celebrations, milestones, data-quality alerts, and event-overlay behavior.
+- [x] Move event duration, overlay duration, cooldown, queue bound, and attention limit into configuration.
+- [x] Emit rule-derived events and management insights through the existing dashboard payload.
+- [x] Cover condition composition, previous-value transitions, unsupported operators, and configured actions.
+- [x] Document lifecycle, supported operators, safety boundaries, and future customer customization.
+
+This phase adds no editor, persistence, hot reload, KPI calculation, or new KPI. It does not change
+ServiceTitan integration, snapshots, comparisons, trends, or WebSocket synchronization. The earlier
+QR-code work remains documented under its original roadmap heading; this explicitly requested Phase 18
+business-rules increment is recorded here as the latest product decision.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

@@ -14240,6 +14240,7 @@ The dashboard renders a centered, high-contrast, light-theme overlay above the s
 Restrained opacity and small vertical movement provide entrance and exit without flashes, bounces, or
 a full-screen transition. A live status announces events to screen readers, presentation controls stay
 keyboard accessible, and the global reduced-motion rule makes transitions immediate when requested.
+
 After expiration, the synchronized five-slide presentation continues from the same slide.
 
 # 479. Phase 17 — Unattended Display Production Hardening
@@ -14270,3 +14271,17 @@ Production should use a same-origin build, stable private-network backend addres
 disabled device sleep, Task Scheduler restart-on-failure for backend and browser, and a build version tied to
 the deployed commit. Validate wake, offline/online, backend restart, browser restart, eight-hour memory
 stability, and every intended display device. The client watchdog complements operating-system supervision.
+
+# 480. Phase 18 — Configurable Business Rules Engine
+
+Phase 18 introduces a dependency-free backend rules layer made of a stable Business Rule, declarative
+Condition, Priority, and Action. Rules consume only existing prepared backend KPI and ranking fields.
+They may emit celebrations, alerts, milestones, and declarative dashboard-behavior actions, but may not
+calculate or reinterpret a KPI. Customer-adjustable rules and event settings live in shared configuration;
+no configuration editor, persistence, or runtime hot reload is included.
+
+Rules are evaluated after the existing goal, ranking, and overall-score processing and before dashboard
+serialization. Current and previous prepared records support transition conditions without accessing the
+snapshot, comparison, or trend engines. ServiceTitan integration, KPI calculations, snapshots,
+comparisons, trends, and WebSocket synchronization remain unchanged. The complete architecture and
+extension constraints are documented in `docs/BUSINESS_RULES.md`.
