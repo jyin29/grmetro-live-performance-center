@@ -36,6 +36,11 @@ module.exports = {
     format: "integer", unit: "leads", higherIsBetter: true, supportsGoal: true,
     color: "#A78BFA", sourceNote: "ServiceTitan scorecard field; exact source mapping must be validated."
   },
+  membershipsSold: {
+    id: "membershipsSold", label: "Memberships Sold", shortLabel: "Memberships", dataType: "count",
+    format: "integer", unit: "memberships", higherIsBetter: true, supportsGoal: false,
+    color: "#0E7490", sourceNote: "Direct ServiceTitan Technicians datasource MembershipsSold field."
+  },
   closingRate: {
     id: "closingRate", label: "Closing %", shortLabel: "Closing", dataType: "percentage",
     format: "percentage", unit: "percent", higherIsBetter: true, supportsGoal: true,

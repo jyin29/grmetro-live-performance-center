@@ -322,6 +322,30 @@ button { font: inherit; }
 .operations-domain__panel .comparison-row > strong { margin: 0; font-size: clamp(18px, 1.1vw, 23px); }
 .operations-domain__panel .comparison-bar { height: clamp(28px, 1.8vw, 36px); }
 .operations-domain__panel .comparison-bar b { font-size: clamp(15px, .9vw, 18px); }
+
+/* 1080p presentation envelope: stationary shell, dense related-metric groups, and dominant values. */
+@media (min-width: 1600px) and (max-height: 1080px) {
+  .app-shell { padding: 20px 26px; gap: 14px; }
+  .header { min-height: 84px; }
+  .header__logo { height: 58px; }
+  .management-attention { min-height: 68px; }
+  .slide-stage, .slide-deck, .dashboard-slide { min-height: 0; overflow: hidden; }
+  .question-slide__heading h2,.top-three-heading h2,.attention-heading h2 { font-size: 46px; }
+  .business-performance,.technician-performance { gap: 14px; }
+  .business-performance__revenue,.business-performance__conversion,.operations-domain__panel { padding: 20px 24px; }
+  .business-performance .panel__heading h3,.operations-domain__panel .panel__heading h3 { font-size: 27px; }
+  .business-performance__conversion .comparison-chart,.operations-domain__panel .comparison-chart { gap: 12px; padding-top: 10px; }
+  .business-performance__conversion .comparison-chart__rows,.operations-domain__panel .comparison-chart__rows { gap: 8px; }
+  .business-performance__conversion .comparison-row__metrics,.operations-domain__panel .comparison-row__metrics { gap: 5px; }
+  .business-performance__conversion .comparison-bar,.operations-domain__panel .comparison-bar { height: 24px; }
+  .performance-card { padding: 17px 20px; }
+  .performance-card__header { padding-bottom: 11px; }
+  .performance-card__metrics { gap: 12px 22px; padding: 14px 0; }
+  .technician-metric strong { font-size: clamp(32px,2vw,41px); }
+  .podium-card { padding: 22px 28px; }
+  .podium-card h3 { margin: 8px 0 14px; }
+  .footer { min-height: 22px; }
+}
 @media (max-height: 760px) {
   .revenue-table-heading { grid-template-columns: minmax(300px, 1fr) minmax(460px, 1.15fr); }
   .pace-row { grid-template-columns: 40px minmax(105px,.45fr) minmax(130px,.75fr) minmax(120px,.6fr) minmax(105px,.5fr) minmax(110px,.52fr) 68px; }

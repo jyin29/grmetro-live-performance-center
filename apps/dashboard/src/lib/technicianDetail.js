@@ -1,7 +1,7 @@
 const KPI_GROUPS = Object.freeze([
   { id: "revenue", label: "Revenue", kpis: ["revenue", "serviceRevenue"] },
   { id: "sales", label: "Sales", kpis: ["closingRate", "leadConversionRate", "opportunities", "installRevenue", "installs", "installAverageTicket"] },
-  { id: "operations", label: "Operations", kpis: ["billableServiceCalls", "techLeads", "marketedLeads"] }
+  { id: "operations", label: "Operations", kpis: ["billableServiceCalls", "techLeads", "marketedLeads", "membershipsSold"] }
 ]);
 
 const KPI_LABELS = Object.freeze({
@@ -9,7 +9,7 @@ const KPI_LABELS = Object.freeze({
   leadConversionRate: "Lead Conversion %", opportunities: "10+ Opportunities",
   installRevenue: "Install Revenue", installs: "Install Count",
   installAverageTicket: "Install Average Ticket", billableServiceCalls: "Billable Calls",
-  techLeads: "Tech Leads", marketedLeads: "Marketed Leads"
+  techLeads: "Tech Leads", marketedLeads: "Marketed Leads", membershipsSold: "Memberships Sold"
 });
 
 export function resolveSelectedTechnician(technicians = [], selectedId = null) {

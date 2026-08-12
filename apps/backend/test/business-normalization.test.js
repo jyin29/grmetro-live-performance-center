@@ -9,12 +9,13 @@ const { calculateGoal, resolveGoal, applyGoals } = require("../src/data/goalEngi
 
 test("normalizer allow-lists confirmed fields, configured identity, and converts ratios once", () => {
   const raw = { TechnicianId: "134926818", CompletedRevenue: 848, Opportunity: 12, TechLeadJobs: 0,
-    MarketingLeadJobs: 3, CloseRate: 0.43, phoneNumber: "private", email: "private@example.test", CompletedJobs: 99, TotalSales: 999 };
+    MarketingLeadJobs: 3, MembershipsSold: 2, CloseRate: 0.43, phoneNumber: "private", email: "private@example.test", CompletedJobs: 99, TotalSales: 999 };
   const before = structuredClone(raw);
   const record = normalizeServiceTitanTechnician(raw);
   assert.deepEqual(raw, before);
   assert.deepEqual({ id: record.id, name: record.name, shortName: record.shortName, initials: record.initials }, technicians[0]);
   assert.deepEqual([record.kpis.revenue.value, record.kpis.opportunities.value, record.kpis.techLeads.value], [848, 12, 0]);
+  assert.deepEqual([record.kpis.membershipsSold.value, record.kpis.membershipsSold.dataQuality], [2, "confirmed"]);
   assert.deepEqual([record.kpis.closingRate.value, record.kpis.closingRate.hasData, record.kpis.closingRate.dataQuality], [43, true, "confirmed"]);
   assert.equal(JSON.stringify(record).includes("phone"), false);
   assert.equal(JSON.stringify(record).includes("CompletedRevenue"), false);

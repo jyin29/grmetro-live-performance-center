@@ -2177,3 +2177,11 @@ docs/TASKS.md
 ```
 
 It shall convert the approved implementation phases into a concise, checkable task list for Codex.
+
+## 2026-08-12 Membership pipeline audit
+
+`MembershipsSold` is already returned by the existing Technicians scorecard datasource request. It is now
+normalized as the direct integer KPI `membershipsSold` and included in the prepared Activity slide payload.
+`MembershipOpportunities` and `MembershipConversionRate` remain raw-only pending approved business use and
+scale validation. No Membership Revenue, Maintenance Agreement, Agreement Sales, or Recurring Service
+Agreement response field was found. See `docs/MEMBERSHIP_AUDIT.md` for the complete trace.

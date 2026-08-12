@@ -11,8 +11,8 @@ export function BusinessPerformanceSlide({ data }) {
       <KpiComparisonChart slide={data.slides.performance} data={data} />
     </section>
     <section className="panel business-performance__conversion" aria-labelledby="business-conversion-title">
-      <div className="panel__heading"><div><p>Pipeline drivers</p><h3 id="business-conversion-title">Opportunities &amp; Leads</h3></div><span>10+ opportunities · tech leads · marketed leads</span></div>
-      <KpiComparisonChart slide={data.slides.activity} data={data} />
+      <div className="panel__heading"><div><p>Pipeline drivers</p><h3 id="business-conversion-title">Opportunities, Leads &amp; Memberships</h3></div><span>Related sales activity in one view</span></div>
+      <KpiComparisonChart slide={data.slides.activity} data={data} metricIds={["opportunities", "techLeads", "marketedLeads", "membershipsSold"]} />
     </section>
   </main>;
 }
