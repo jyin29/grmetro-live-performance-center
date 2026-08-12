@@ -10,7 +10,7 @@ export function TechnicianPerformanceSlide({ data }) {
       <span>Overall rank · Revenue · Closing · Field activity</span>
     </div>
     <section className="technician-performance__grid" aria-label="Technician performance cards">
-      {data.technicians.map((technician) => <TechnicianPerformanceCard key={technician.id} technician={technician} />)}
+      {data.technicians.map((technician) => <TechnicianPerformanceCard key={technician.id} technician={technician} data={data} />)}
     </section>
   </main>;
 }

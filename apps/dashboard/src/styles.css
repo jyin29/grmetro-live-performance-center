@@ -275,3 +275,19 @@ button { font: inherit; }
   .operations-domain__panel .comparison-chart__rows { gap: 6px; }
   .operations-domain__panel .comparison-bar { height: 24px; }
 }
+
+/* Phase 14 historical context. Compact annotations remain secondary to live values. */
+.comparison-value { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: clamp(12px, .76vw, 15px); font-weight: 850; white-space: nowrap; }
+.comparison-value--positive { color: #08766f; }.comparison-value--negative { color: #9a5f16; }
+.trend-indicator { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: clamp(11px, .7vw, 14px); font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.trend-indicator small { margin-left: 5px; color: var(--muted); font-size: .9em; font-weight: 700; }
+.trend-indicator--positive { color: #08766f; }.trend-indicator--negative { color: #9a5f16; }.trend-indicator--unknown { color: #7b8790; }
+.trend-badge { display: inline-flex; padding: 3px 7px; border-radius: 99px; background: #f1f5f5; }
+.comparison-metric { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.comparison-metric__context { display: flex; align-items: center; gap: 6px; }
+.pace-row__value > .comparison-value { margin-left: 8px; vertical-align: middle; }
+.pace-row > b .trend-indicator { display: flex; justify-content: flex-end; margin-top: 3px; }
+.performance-card__ranking > .comparison-value,.performance-card__ranking > .trend-indicator { justify-content: flex-end; }
+.sparkline { width: 100px; height: 30px; overflow: visible; }
+.sparkline polyline { fill: none; stroke: var(--teal); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-height: 760px) { .trend-indicator small,.comparison-metric__context .trend-badge { display: none; } }
