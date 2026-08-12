@@ -5,6 +5,7 @@ const test = require("node:test");
 const { createDashboardSnapshot } = require("../src/history/dashboardSnapshot");
 const { InMemorySnapshotStore } = require("../src/history/snapshotStore");
 const { compareDashboardSnapshots, compareNumber } = require("../src/history/comparisonEngine");
+const { analyzeDashboardTrends } = require("../src/history/trendEngine");
 const { DashboardCache } = require("../src/cache/dashboardCache");
 
 function technician({ id = 1, value = 100, rank = 2, percentComplete = 50, overallRank = 2,
@@ -84,4 +85,80 @@ test("cache adds comparisons without snapshots for failed refresh attempts", () 
   cache.markRefreshFailed({ code: "REFRESH_FAILED" }, "2026-08-12T12:02:00Z");
   assert.equal(cache.snapshotStore.size(), 2);
   assert.equal(cache.getPayload().historicalComparison.currentSnapshotId, "snapshot-00000002");
+});
+
+function trendSnapshots(rows) {
+  const store = new InMemorySnapshotStore();
+  rows.forEach((technicians, index) => store.append(payload(technicians),
+    `2026-08-12T12:${String(index).padStart(2, "0")}:00Z`));
+  return store.list();
+}
+
+test("trend engine identifies consistent KPI increases, decreases, stable values, and ranking improvement", () => {
+  const increasing = analyzeDashboardTrends(trendSnapshots([100, 110, 120, 130].map((value, index) =>
+    [technician({ value, rank: 4 - index, percentComplete: value / 2, overallRank: 4 - index })])));
+  const revenue = increasing.technicians["1"].kpis.revenue;
+  assert.equal(revenue.value.trend, "increasing");
+  assert.equal(revenue.value.consecutiveIncreases, 3);
+  assert.equal(revenue.goalProgress.trend, "improving");
+  assert.equal(revenue.ranking.trend, "improving");
+  assert.equal(increasing.technicians["1"].overallRanking.trend, "improving");
+
+  const decreasing = analyzeDashboardTrends(trendSnapshots([130, 120, 110, 100].map((value) =>
+    [technician({ value })])));
+  assert.equal(decreasing.technicians["1"].kpis.revenue.value.trend, "decreasing");
+  assert.equal(decreasing.technicians["1"].kpis.revenue.value.consecutiveDecreases, 3);
+
+  const stable = analyzeDashboardTrends(trendSnapshots([100, 100, 100, 100].map((value) =>
+    [technician({ value })])));
+  assert.equal(stable.technicians["1"].kpis.revenue.value.trend, "stable");
+  assert.equal(stable.technicians["1"].kpis.revenue.value.momentum, "stable");
+});
+
+test("trend engine requires configurable history and avoids noisy one-refresh reactions", () => {
+  const short = analyzeDashboardTrends(trendSnapshots([[technician()], [technician({ value: 110 })]]));
+  assert.equal(short.available, false);
+  assert.equal(short.reason, "insufficient-history");
+  assert.equal(short.technicians["1"].kpis.revenue.value.trend, "unknown");
+
+  const noisy = analyzeDashboardTrends(trendSnapshots([100, 104, 99, 103, 100].map((value) =>
+    [technician({ value })])));
+  assert.equal(noisy.technicians["1"].kpis.revenue.value.trend, "stable");
+  assert.equal(noisy.technicians["1"].kpis.revenue.value.momentum, "mixed");
+  assert.throws(() => analyzeDashboardTrends([], { minimumHistory: 2 }), TypeError);
+  assert.throws(() => analyzeDashboardTrends([], { minimumConsistency: 0.5 }), TypeError);
+});
+
+test("trend engine handles unavailable values, partial refreshes, additions, removals, and empty history", () => {
+  const unavailable = analyzeDashboardTrends(trendSnapshots([
+    [technician()], [technician({ value: 110 })],
+    [technician({ hasData: false, dataQuality: "unavailable" })], [technician({ value: 130 })]
+  ]));
+  assert.equal(unavailable.technicians["1"].kpis.revenue.value.trend, "unknown");
+  assert.equal(unavailable.technicians["1"].kpis.revenue.value.reason, "incomplete-history");
+
+  const partial = analyzeDashboardTrends(trendSnapshots([
+    [technician()], [technician({ value: 110 })], [technician({ value: 120, stale: true })], [technician({ value: 130 })]
+  ]));
+  assert.equal(partial.technicians["1"].kpis.revenue.value.reason, "incomplete-history");
+
+  const changingRoster = analyzeDashboardTrends(trendSnapshots([
+    [technician({ id: 1 })], [technician({ id: 1 }), technician({ id: 2 })],
+    [technician({ id: 2, value: 110 })], [technician({ id: 2, value: 120 })]
+  ]));
+  assert.deepEqual(changingRoster.removedTechnicianIds, ["1"]);
+  assert.equal(changingRoster.technicians["2"].available, false);
+  assert.equal(changingRoster.technicians["2"].reason, "insufficient-technician-history");
+
+  const empty = analyzeDashboardTrends([]);
+  assert.equal(empty.reason, "no-history");
+  assert.equal(empty.currentSnapshotId, null);
+});
+
+test("dashboard cache exposes trends without recursively storing derived history", () => {
+  const cache = new DashboardCache({ trendMinimumHistory: 3 });
+  [100, 110, 120].forEach((value, index) => cache.storeSuccessfulPayload(payload([technician({ value })]),
+    `2026-08-12T12:0${index}:00Z`));
+  assert.equal(cache.getPayload().historicalTrends.technicians["1"].kpis.revenue.value.trend, "increasing");
+  assert.equal(cache.snapshotStore.latest().dashboard.historicalTrends, undefined);
 });

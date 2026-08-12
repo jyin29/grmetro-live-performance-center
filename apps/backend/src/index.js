@@ -19,7 +19,8 @@ function start() {
   const browserManager = createBrowserManagerForConfig(config, logger);
   const serviceTitanClient = browserManager ? createServiceTitanClient({ config, browserManager, logger }) : null;
   const provider = createRefreshProvider({ config, browserManager, executor: serviceTitanClient?.executor, logger });
-  const cache = new DashboardCache({ snapshotRetentionLimit: config.snapshotRetentionLimit });
+  const cache = new DashboardCache({ snapshotRetentionLimit: config.snapshotRetentionLimit,
+    trendMinimumHistory: config.trendMinimumHistory });
   const tvManager = new TvManager({
     overrideMilliseconds: config.remoteOverrideSeconds * 1000,
     returnTransitionMilliseconds: config.returnTransitionMilliseconds

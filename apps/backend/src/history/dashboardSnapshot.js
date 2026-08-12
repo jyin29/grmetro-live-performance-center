@@ -26,6 +26,7 @@ function createDashboardSnapshot(payload, { id, capturedAt } = {}) {
   const timestamp = validTimestamp(capturedAt, "Snapshot capturedAt");
   const dashboard = clone(payload);
   delete dashboard.historicalComparison;
+  delete dashboard.historicalTrends;
   return deepFreeze({
     schemaVersion: 1,
     id,

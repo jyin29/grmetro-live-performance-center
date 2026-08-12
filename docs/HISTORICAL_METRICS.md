@@ -17,6 +17,7 @@ ServiceTitan native JSON
 → immutable dashboard snapshot
 → bounded snapshot store
 → historical comparison engine
+→ trend analysis engine
 → existing dashboard API
 ```
 
@@ -37,7 +38,7 @@ Snapshots are deep-cloned and recursively frozen. This prevents later mutation o
 }
 ```
 
-`historicalComparison` is removed before snapshot storage so comparisons never recursively contain older comparisons. Sequence IDs are process-local and reset on restart; timestamps are the durable temporal identity for a future persistence adapter.
+`historicalComparison` and `historicalTrends` are removed before snapshot storage so derived history never recursively contains older results. Sequence IDs are process-local and reset on restart; timestamps are the durable temporal identity for a future persistence adapter.
 
 ## Retention strategy
 
@@ -105,18 +106,58 @@ The existing response retains every prior field and adds one top-level field:
 
 The first snapshot returns `available: false` with reason `no-history`. Existing clients that ignore unknown fields continue working. No frontend change is required.
 
+## Trend analysis engine
+
+The reusable trend engine consumes the snapshot store's ordered immutable records and obtains every adjacent movement through the comparison engine. It never reads ServiceTitan fields or recalculates a KPI. For each current technician it analyzes existing KPI values, KPI ranks, goal progress, and overall rank independently.
+
+The default minimum is four snapshots (three adjacent comparisons), configured with `TREND_MINIMUM_HISTORY`; the accepted range is 3–1,440. A direction is reported only when at least 75 percent of adjacent movements agree and the net comparison delta agrees. Mixed short-term movement is therefore `stable` rather than reacting to one refresh. Output also includes presentation-neutral momentum, consistency, net change, and current consecutive increase/decrease counts.
+
+Supported labels are:
+
+- KPI values: `increasing`, `decreasing`, `stable`, or `unknown`.
+- KPI rank, overall rank, and goal progress: `improving`, `declining`, `stable`, or `unknown`.
+- Momentum: `increasing`, `decreasing`, `stable`, `mixed`, or `unknown`, based on up to the latest three deltas.
+
+Unavailable KPIs, stale partial-refresh technicians, or another unusable point produce `unknown` with `incomplete-history`; missing history produces `insufficient-history`. A new technician gets an independent history window and remains unknown until it reaches the minimum. Removed technicians are excluded from current trend maps and listed in `removedTechnicianIds`. Valid zeroes remain observations.
+
+The existing dashboard response retains all prior fields and also adds:
+
+```javascript
+{
+  historicalTrends: {
+    available,
+    reason,
+    minimumHistory,
+    snapshotCount,
+    firstSnapshotId,
+    currentSnapshotId,
+    removedTechnicianIds,
+    technicians: {
+      "134926818": {
+        available,
+        reason,
+        overallRanking: { trend, momentum, consistency, consecutiveIncreases, consecutiveDecreases },
+        kpis: { revenue: { value, ranking, goalProgress } }
+      }
+    }
+  }
+}
+```
+
+No endpoint was added. Future small indicators may map increasing/improving to `▲ Trending Up`, decreasing/declining to `▼ Trending Down`, and stable to `→ Stable`; symbol and copy selection remain presentation responsibilities.
+
 ## Future persistence and extension strategy
 
 `InMemorySnapshotStore` provides a narrow append/latest/previous/list contract. A future store can implement the same boundary with batched disk or database persistence while keeping snapshot creation and comparisons unchanged. Persistence should store schema-versioned snapshots, index `capturedAt`, apply an explicit retention policy, encrypt or access-restrict operational data, and migrate records rather than mutating historical documents.
 
-Hourly, daily, and weekly trends can select or aggregate immutable snapshots by timestamp. Sparklines and historical exports can read snapshot series. Management insights and AI summaries can consume comparison/trend results without gaining access to raw ServiceTitan responses. Longer-period comparisons should be added as selection/aggregation policies around the snapshot store, not as changes to snapshot format.
+Hourly, daily, and weekly policies can select or aggregate immutable snapshots by timestamp before invoking the trend engine. Sparklines and exports can read snapshot series. Management insights and AI summaries can consume trend results without raw ServiceTitan responses. Future extensions may add configurable consistency thresholds, elapsed-time windows, approved KPI-specific tolerances, persistence, seasonality, and acceleration; these belong in selection or analysis policies, not snapshot format or React.
 
 ## Limitations
 
 - History resets when the backend restarts.
 - Retention is count-based rather than elapsed-time-based.
-- Comparisons currently use the immediately previous successful snapshot.
-- No historical endpoint, trend aggregation, export, or frontend indicator is included.
+- Comparisons use the immediately previous successful snapshot; trends use retained ordered snapshots and adjacent comparisons.
+- No historical endpoint, elapsed-time aggregation, export, or frontend indicator is included.
 - Snapshot IDs are local to one process lifetime.
 - A fully failed refresh does not create a time point; cache staleness remains represented by existing cache metadata.
 - Stale technicians in a partial refresh are deliberately excluded from movement comparisons.
