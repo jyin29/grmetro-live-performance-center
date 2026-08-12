@@ -16,6 +16,7 @@ const { PRESENTATION_DISPLAYS, PRESENTATION_SLIDE_COUNT, PRESENTATION_ROTATION_M
 const { createPresentationManager } = require("./presentation/presentationManager");
 const { createPresentationCommandBus } = require("./presentation/presentationCommandBus");
 const { createPresentationWebSocket } = require("./presentation/presentationWebSocket");
+const { createEventEngine } = require("./events/eventEngine");
 
 function start() {
   const config = loadConfig();
@@ -30,13 +31,14 @@ function start() {
     returnTransitionMilliseconds: config.returnTransitionMilliseconds
   });
   const expirationMonitor = new ExpirationMonitor({ tvManager });
+  const eventEngine = createEventEngine();
   const presentationManager = createPresentationManager({ displays: PRESENTATION_DISPLAYS,
-    slideCount: PRESENTATION_SLIDE_COUNT, rotationMilliseconds: PRESENTATION_ROTATION_MILLISECONDS });
+    slideCount: PRESENTATION_SLIDE_COUNT, rotationMilliseconds: PRESENTATION_ROTATION_MILLISECONDS, eventEngine });
   const presentationCommandBus = createPresentationCommandBus({ handleCommand: presentationManager.handleCommand });
   const scheduler = provider ? new RefreshScheduler({
     provider, cache, logger,
     intervalMilliseconds: config.refreshIntervalSeconds * 1000,
-    timeZone: config.timeZone
+    timeZone: config.timeZone, onSuccessfulPayload: (payload) => eventEngine.process(payload)
   }) : null;
   const mockBrowserStatus = () => ({ connected: false, connecting: false, serviceTitanPageFound: false,
     inactiveReason: "mock-mode", lastConnectedAt: null, lastDisconnectedAt: null, reconnectAttempt: 0,
@@ -49,12 +51,12 @@ function start() {
     host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan"
   }));
   const presentationWebSocket = createPresentationWebSocket({ server, manager: presentationManager, commandBus: presentationCommandBus, logger });
-  installGracefulShutdown({ server, logger, scheduler: { stop() { scheduler?.stop(); expirationMonitor.stop(); presentationWebSocket.close(); presentationManager.destroy(); serviceTitanClient?.stop(); browserManager?.stop(); } } });
+  installGracefulShutdown({ server, logger, scheduler: { stop() { scheduler?.stop(); expirationMonitor.stop(); presentationWebSocket.close(); presentationManager.destroy(); eventEngine.destroy(); serviceTitanClient?.stop(); browserManager?.stop(); } } });
   expirationMonitor.start();
   browserManager?.start();
   scheduler.start();
   return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient,
-    presentationManager, presentationWebSocket };
+    presentationManager, presentationWebSocket, eventEngine };
 }
 
 if (require.main === module) start();

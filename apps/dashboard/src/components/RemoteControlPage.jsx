@@ -29,6 +29,7 @@ export function RemoteControlPage() {
         <i aria-hidden="true" /> Automatic rotation is {controller.isRunning ? "running" : "paused"}
       </div>
       <small>{controller.connectionState === "connected" ? "Connected live" : "Reconnecting…"}</small>
+      {controller.event && <div className="remote-event-state" role="status"><b>Event showing</b><span>{controller.event.title}</span><small>Dismisses automatically</small></div>}
     </section>
 
     <section className="remote-controls" aria-labelledby="rotation-controls-title">

@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { ManagementAttention } from "./ManagementAttention";
 import { SlideDeck } from "./SlideDeck";
 import { managementInsights } from "../lib/presentation";
+import { EventOverlay } from "./EventOverlay";
 
 export function DashboardLayout({ data, displayId, error, refreshing }) {
   const presentation = usePresentationController(displayId);
@@ -17,6 +18,7 @@ export function DashboardLayout({ data, displayId, error, refreshing }) {
       onSelectSlide={presentation.selectSlide}
       presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }}
     />
+    <EventOverlay event={presentation.event} />
     <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>Presentation · {presentation.connectionState === "connected" ? "synchronized" : "reconnecting"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
   </div>;
 }

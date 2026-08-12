@@ -9,13 +9,15 @@ function normalizeIndex(index, count) {
 }
 
 function createPresentationManager({ displays, slideCount, rotationMilliseconds, clock = () => new Date(),
-  setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout } = {}) {
+  setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout, eventEngine } = {}) {
   const states = new Map();
   const timers = new Map();
   const listeners = new Set();
 
   function timestamp() { return clock().toISOString(); }
-  function publicState(state) { return Object.freeze({ ...state }); }
+  let eventState = eventEngine?.getState?.() || { activeEvent: null, queueLength: 0, revision: 0 };
+  function publicState(state) { return Object.freeze({ ...state, event: eventState.activeEvent, eventQueueLength: eventState.queueLength,
+    eventRevision: eventState.revision, rotationPausedForEvent: Boolean(eventState.activeEvent) }); }
   for (const display of displays) states.set(display.id, {
     displayId: display.id, displayName: display.name, activeSlideIndex: 0, isRunning: true,
     rotationStartedAt: timestamp(), nextRotationAt: null, presentationProfile: display.presentationProfile,
@@ -41,8 +43,8 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
     cancelTimer(displayId);
     if (incrementRevision) state.timerRevision += 1;
     state.rotationStartedAt = timestamp();
-    state.nextRotationAt = state.isRunning ? new Date(clock().getTime() + rotationMilliseconds).toISOString() : null;
-    if (state.isRunning) timers.set(displayId, setTimeoutFn(() => advance(displayId), rotationMilliseconds));
+    state.nextRotationAt = state.isRunning && !eventState.activeEvent ? new Date(clock().getTime() + rotationMilliseconds).toISOString() : null;
+    if (state.isRunning && !eventState.activeEvent) timers.set(displayId, setTimeoutFn(() => advance(displayId), rotationMilliseconds));
   }
   function update(displayId, changes, restartTimer = true) {
     const state = requireDisplay(displayId);
@@ -71,13 +73,22 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
       default: throw new RangeError("Invalid presentation command.");
     }
   }
+  const unsubscribeEvent = eventEngine?.subscribe?.((nextEventState) => {
+    const wasVisible = Boolean(eventState.activeEvent); eventState = nextEventState;
+    for (const { id } of displays) {
+      const state = requireDisplay(id); state.lastUpdated = timestamp();
+      cancelTimer(id);
+      if (wasVisible && !eventState.activeEvent) armTimer(id, true);
+      emit(id);
+    }
+  }) || (() => {});
   for (const { id } of displays) armTimer(id, false);
   return Object.freeze({
     getDisplayState,
     getDisplayStates: () => displays.map(({ id }) => getDisplayState(id)),
     handleCommand,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    destroy() { for (const id of states.keys()) cancelTimer(id); listeners.clear(); },
+    destroy() { unsubscribeEvent(); for (const id of states.keys()) cancelTimer(id); listeners.clear(); },
   });
 }
 
