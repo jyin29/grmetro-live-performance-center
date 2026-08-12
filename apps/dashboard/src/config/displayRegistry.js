@@ -1,10 +1,6 @@
-export const PRESENTATION_DISPLAYS = Object.freeze([
-  { id: "main-office", name: "Main Office", presentationProfile: "standard" },
-  { id: "dispatch", name: "Dispatch", presentationProfile: "standard" },
-  { id: "lobby", name: "Lobby", presentationProfile: "public" },
-  { id: "warehouse", name: "Warehouse", presentationProfile: "standard" },
-  { id: "training", name: "Training", presentationProfile: "training" },
-]);
+import presentationConfig from "../../../../shared/presentation.json" with { type: "json" };
+
+export const PRESENTATION_DISPLAYS = Object.freeze(presentationConfig.displays);
 
 export const DEFAULT_DISPLAY_ID = PRESENTATION_DISPLAYS[0].id;
 

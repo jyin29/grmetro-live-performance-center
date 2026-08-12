@@ -5,7 +5,7 @@ import { usePresentationController } from "../controller/PresentationController"
 
 export function RemoteControlPage() {
   const [selectedDisplayId, setSelectedDisplayId] = useState(DEFAULT_DISPLAY_ID);
-  const controller = usePresentationController(selectedDisplayId);
+  const controller = usePresentationController(selectedDisplayId, "remote");
   return <main className="remote-page">
     <header className="remote-header">
       <img src={logoUrl} alt="GRmetro Heating & Cooling" />
@@ -28,6 +28,7 @@ export function RemoteControlPage() {
       <div className={`remote-status__mode ${controller.isRunning ? "is-running" : "is-paused"}`}>
         <i aria-hidden="true" /> Automatic rotation is {controller.isRunning ? "running" : "paused"}
       </div>
+      <small>{controller.connectionState === "connected" ? "Connected live" : "Reconnecting…"}</small>
     </section>
 
     <section className="remote-controls" aria-labelledby="rotation-controls-title">
@@ -53,6 +54,6 @@ export function RemoteControlPage() {
         onClick={() => controller.selectSlide(index)}
       ><span>Slide {index + 1}</span><small>{slide.label}</small></button>)}</div>
     </nav>
-    <p className="remote-note">Commands are local to this browser. No display state is sent over the network.</p>
+    <p className="remote-note">Commands are synchronized through the backend and sent only to the selected display.</p>
   </main>;
 }
