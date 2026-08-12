@@ -1947,6 +1947,21 @@ ServiceTitan integration, snapshots, comparisons, trends, or WebSocket synchroni
 QR-code work remains documented under its original roadmap heading; this explicitly requested Phase 18
 business-rules increment is recorded here as the latest product decision.
 
+## 2026-08-12 — Phase 19 Read-Only Administration Platform
+
+- [x] Add a separate `/admin` application route with reusable administration sections and primitives.
+- [x] Project existing display, synchronization, client, slide, and rotation state through a safe read-only API.
+- [x] Render configured business-rule IDs, priorities, conditions, actions, status, cooldowns, and durations.
+- [x] Render presentation profiles, five available slides, rotation interval, kiosk, event, queue, and diagnostics settings.
+- [x] Render application/build versions, uptime, backend/dashboard/WebSocket health, and connected-client totals.
+- [x] Preserve the light theme, responsive layout, semantic structure, focus support, and reduced-motion behavior.
+- [x] Cover administration routing plus display, rule, diagnostics, and configuration projections/rendering.
+
+Phase 19 is intentionally read-only. Remaining administration work includes authentication and authorization,
+validated editing, persistence, configuration revisions, preview and approval flows, audit history, safe runtime
+apply/rollback, and role-specific access. These capabilities require a later approved phase. ServiceTitan,
+KPI, snapshot, comparison, trend, synchronization, Event Engine, and Business Rules Engine behavior is unchanged.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

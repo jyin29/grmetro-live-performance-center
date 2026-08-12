@@ -14285,3 +14285,39 @@ serialization. Current and previous prepared records support transition conditio
 snapshot, comparison, or trend engines. ServiceTitan integration, KPI calculations, snapshots,
 comparisons, trends, and WebSocket synchronization remain unchanged. The complete architecture and
 extension constraints are documented in `docs/BUSINESS_RULES.md`.
+
+# 481. Phase 19 — Read-Only Administration Platform
+
+The dashboard application exposes a separate `/admin` route alongside `/display/:displayId` and `/remote`.
+It uses the existing React/Vite application and approved light visual system, but its components and layout
+are isolated under the administration component namespace. The initial platform is inspection-only: it
+contains no form controls, mutation endpoint, persistence, hot reload, or customer configuration editor.
+
+`GET /api/v1/admin` assembles a safe administration projection from existing shared configuration and
+process-local runtime owners. It reads display snapshots from the Presentation Manager, connected-client
+counts from the WebSocket gateway, active and queued event state from the Event Engine, cache diagnostics
+from the dashboard cache, and business rules, slides, profiles, and timing from shared configuration. This
+projection does not call ServiceTitan, calculate a KPI, or duplicate presentation synchronization logic.
+
+The administration workspace contains these keyboard-navigable sections:
+
+```text
+Display Management
+Business Rules
+Presentation Settings
+Event Settings
+Diagnostics
+System Information
+```
+
+Display Management reports every registered display, profile, current authoritative slide, rotation state,
+next rotation, and connected display/remote clients. Business Rules reports rule ID, priority, declarative
+condition, action, enabled state, cooldown, and event duration. Presentation and Event Settings report the
+configured profiles, five available slides, rotation interval, kiosk state, queue capacity, cooldown,
+durations, active event, and pending count. Diagnostics and System Information report safe cache and client
+health, versions, process uptime, backend/dashboard/WebSocket state, and connection totals without raw
+ServiceTitan data or secrets.
+
+Future administration phases may add validated editing, authorization, persistence, configuration versioning,
+preview, audit history, and safe apply/rollback workflows. Until those capabilities are approved, `/admin`
+remains read-only and source/shared configuration remains authoritative.

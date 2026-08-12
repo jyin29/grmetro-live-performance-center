@@ -4,8 +4,9 @@ import { ErrorView } from "./components/ErrorView";
 import { Header } from "./components/Header";
 import { LoadingView } from "./components/LoadingView";
 import { RemoteControlPage } from "./components/RemoteControlPage";
-import { DEFAULT_DISPLAY_ID, findDisplay } from "./config/displayRegistry";
 import { useDashboard } from "./hooks/useDashboard";
+import { AdminPage } from "./components/admin/AdminPage";
+import { resolveApplicationRoute } from "./config/applicationRoutes";
 
 function DashboardPage({ displayId }) {
   const { data, error, loading, refreshing, retry, lastSuccessfulRefresh } = useDashboard();
@@ -35,9 +36,8 @@ function DashboardPage({ displayId }) {
 }
 
 export default function App() {
-  const path = window.location.pathname.replace(/\/+$/, "");
-  if (path === "/remote") return <RemoteControlPage />;
-  const routeDisplayId = path.match(/^\/display\/([^/]+)$/)?.[1];
-  const displayId = routeDisplayId && findDisplay(routeDisplayId) ? routeDisplayId : DEFAULT_DISPLAY_ID;
-  return <DashboardPage displayId={displayId} />;
+  const route = resolveApplicationRoute(window.location.pathname);
+  if (route.type === "admin") return <AdminPage />;
+  if (route.type === "remote") return <RemoteControlPage />;
+  return <DashboardPage displayId={route.displayId} />;
 }
