@@ -14321,3 +14321,42 @@ ServiceTitan data or secrets.
 Future administration phases may add validated editing, authorization, persistence, configuration versioning,
 preview, audit history, and safe apply/rollback workflows. Until those capabilities are approved, `/admin`
 remains read-only and source/shared configuration remains authoritative.
+
+# 481. Phase 21 — Technician Management Drilldown
+
+The `/remote` management workflow includes a local, read-only Technician Detail section that answers why an individual technician is performing as shown. A manager can quickly select any technician in the current cached dashboard payload. The stable technician identifier remains selected across background payload refreshes; this browser-local selection sends no presentation command and cannot alter any display.
+
+The drilldown consumes `GET /api/v1/dashboard` through the existing dashboard polling hook. It introduces no endpoint, ServiceTitan request, calculation, engine behavior, persistence, or synchronization state. The view renders all eleven existing technician KPI records and preserves each backend value, goal, remaining amount, percent complete, rank context, and data-quality state. Missing values remain `No data` rather than zero.
+
+KPI cards are grouped for management scanning as follows:
+
+```text
+Revenue
+- Revenue
+- Service Revenue
+
+Sales
+- Closing %
+- Lead Conversion %
+- 10+ Opportunities
+- Install Revenue
+- Install Count
+- Install Average Ticket
+
+Operations
+- Billable Calls
+- Tech Leads
+- Marketed Leads
+
+Recognition
+- Overall Rank
+- Rank Movement
+
+History
+- Historical Comparison
+- Historical Trend
+```
+
+Each KPI card may show the existing immediately previous-refresh comparison and existing backend trend direction. The detail also displays matching recent technician achievement/event records, current management insights and alerts, data-quality labels, and dashboard refresh time. Unavailable history and KPIs are explicit. The compact responsive card grid follows the approved light remote theme and avoids unnecessary whitespace.
+
+This management feature does not change the five-slide TV dashboard, Presentation Manager, display command routing, Business Rules Engine, Historical Engine, Trend Engine, Event Engine, Administration platform, KPI calculations, or ServiceTitan integration.
