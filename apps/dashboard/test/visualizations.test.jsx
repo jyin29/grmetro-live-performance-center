@@ -1,9 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { KpiComparisonChart } from "../src/components/KpiComparisonChart";
 import { ManagementAttention } from "../src/components/ManagementAttention";
 import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
+import { TechnicianPerformanceCard } from "../src/components/TechnicianPerformanceCard";
 import { SlideDeck } from "../src/components/SlideDeck";
 import { PRESENTATION_SLIDES } from "../src/config/slideRegistry";
 import { nextSlideIndex, SLIDE_ROTATION_INTERVAL_MS, SLIDE_TRANSITION_DURATION_MS } from "../src/config/slideRotation";
@@ -109,5 +111,22 @@ describe("dashboard visualizations", () => {
     ]} />);
     expect(ranking).toContain("#1");
     expect(ranking).toContain("↑1");
+  });
+
+  it("renders the five television-priority technician metrics without confirmed-status clutter", () => {
+    const kpis = Object.fromEntries([
+      ["revenue", 12000, "currency"], ["closingRate", 72, "percentage"], ["billableServiceCalls", 8, "integer"],
+      ["installRevenue", 4800, "currency"], ["installAverageTicket", 2400, "currency"]
+    ].map(([id, value, format]) => [id, { id, value, format, hasData: true, dataQuality: "confirmed" }]));
+    const markup = renderToStaticMarkup(<TechnicianPerformanceCard technician={{ id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 0 }, kpis }} data={{}} />);
+    for (const label of ["Revenue", "Closing %", "Billable Calls", "Install Revenue", "Average Ticket"]) expect(markup).toContain(label);
+    expect(markup).not.toContain("Data status");
+  });
+
+  it("uses responsive room-distance typography for technician KPI values", () => {
+    const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+    expect(css).toMatch(/\.technician-metric strong[^}]*font-size:\s*clamp\(34px,\s*2\.35vw,\s*48px\)/);
+    expect(css).toContain("@media (max-height: 760px)");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });

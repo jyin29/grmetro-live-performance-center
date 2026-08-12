@@ -51,9 +51,8 @@ export function TechnicianPerformanceCard({ technician, data }) {
     <div className="performance-card__metrics">
       {metrics.map(([id, label]) => <TechnicianMetric key={id} label={label} metric={technician.kpis?.[id]} />)}
     </div>
-    {qualities.length > 0 && <footer className="performance-card__status">
-      <span>Data status</span>
-      <div>{qualities.map((quality) => <StatusBadge key={quality} tone={quality === "unavailable" ? "neutral" : "live"}>{quality}</StatusBadge>)}</div>
+    {qualities.some((quality) => quality !== "confirmed") && <footer className="performance-card__status">
+      <span>Data status</span><div>{qualities.filter((quality) => quality !== "confirmed").map((quality) => <StatusBadge key={quality} tone={quality === "unavailable" ? "neutral" : "live"}>{quality}</StatusBadge>)}</div>
     </footer>}
   </article>;
 }

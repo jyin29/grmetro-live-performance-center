@@ -1,11 +1,19 @@
 import logoUrl from "../../../../assets/branding/grmetro-logo.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_DISPLAY_ID } from "../config/displayRegistry";
 import { usePresentationController } from "../controller/PresentationController";
+import { fetchRefreshStatus, requestDashboardRefresh } from "../api/managementApi";
 
 export function RemoteControlPage() {
   const [selectedDisplayId, setSelectedDisplayId] = useState(DEFAULT_DISPLAY_ID);
   const controller = usePresentationController(selectedDisplayId, "remote");
+  const [refreshStatus, setRefreshStatus] = useState({ state: "idle", message: "Ready to refresh" });
+  useEffect(() => { fetchRefreshStatus().then(setRefreshStatus).catch(() => {}); }, []);
+  async function refreshDashboard() {
+    setRefreshStatus({ state: "refreshing", message: "Refreshing dashboard data…" });
+    try { setRefreshStatus(await requestDashboardRefresh()); }
+    catch (error) { setRefreshStatus({ state: "failed", message: error.message }); }
+  }
   return <main className="remote-page">
     <header className="remote-header">
       <img src={logoUrl} alt="GRmetro Heating & Cooling" />
@@ -55,6 +63,14 @@ export function RemoteControlPage() {
         onClick={() => controller.selectSlide(index)}
       ><span>Slide {index + 1}</span><small>{slide.label}</small></button>)}</div>
     </nav>
+    <section className="remote-management" aria-labelledby="management-title">
+      <div><p>Management</p><h2 id="management-title">Dashboard data</h2></div>
+      <p>Request a fresh update through the same protected refresh pipeline used by the automatic scheduler.</p>
+      <button type="button" onClick={refreshDashboard} disabled={refreshStatus.state === "refreshing"}>
+        {refreshStatus.state === "refreshing" ? "Refreshing…" : "Refresh Dashboard Now"}
+      </button>
+      <div className={`remote-management__status is-${refreshStatus.state}`} role="status" aria-live="polite">{refreshStatus.message}</div>
+    </section>
     <p className="remote-note">Commands are synchronized through the backend and sent only to the selected display.</p>
   </main>;
 }
