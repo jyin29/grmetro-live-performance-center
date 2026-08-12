@@ -1,5 +1,9 @@
 "use strict";
 
+const { InMemorySnapshotStore } = require("../history/snapshotStore");
+const { compareDashboardSnapshots } = require("../history/comparisonEngine");
+const { deepFreeze } = require("../history/dashboardSnapshot");
+
 const CACHE_UNAVAILABLE = Object.freeze({
   code: "CACHE_UNAVAILABLE",
   message: "Dashboard data is unavailable until the first successful refresh."
@@ -12,8 +16,9 @@ function iso(value) {
 }
 
 class DashboardCache {
-  constructor({ clock = () => new Date() } = {}) {
+  constructor({ clock = () => new Date(), snapshotStore, snapshotRetentionLimit = 1440 } = {}) {
     this.clock = clock;
+    this.snapshotStore = snapshotStore || new InMemorySnapshotStore({ retentionLimit: snapshotRetentionLimit });
     this.payload = null;
     this.refreshStartedAt = null;
     this.refreshCompletedAt = null;
@@ -28,7 +33,9 @@ class DashboardCache {
   storeSuccessfulPayload(payload, at = this.clock()) {
     if (!payload || typeof payload !== "object") throw new TypeError("A successful refresh requires a presentation payload.");
     const completedAt = iso(at);
-    this.payload = payload;
+    const currentSnapshot = this.snapshotStore.append(payload, completedAt);
+    const comparison = compareDashboardSnapshots(this.snapshotStore.previous(), currentSnapshot);
+    this.payload = deepFreeze({ ...currentSnapshot.dashboard, historicalComparison: comparison });
     this.refreshCompletedAt = completedAt;
     this.lastSuccessfulRefreshAt = completedAt;
     this.lastFailure = null;

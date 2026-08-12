@@ -60,12 +60,17 @@ test("health reports safe status and cache metadata only", async () => {
   });
 });
 
-test("dashboard serves the exact cached normalized payload without refreshing", async () => {
+test("dashboard serves the cached payload with backwards-compatible historical comparison data without refreshing", async () => {
   let refreshes = 0;
   const setup = fixture({ scheduler: { active: false, async refresh() { refreshes += 1; } } });
   const payload = { version: 1, technicians: [], slides: {}, status: { cache: "fresh" } };
   setup.cache.storeSuccessfulPayload(payload);
-  await run(setup.app, async (base) => assert.deepEqual((await json(base, "/api/v1/dashboard")).body, payload));
+  await run(setup.app, async (base) => {
+    const body = (await json(base, "/api/v1/dashboard")).body;
+    assert.deepEqual({ ...body, historicalComparison: undefined }, { ...payload, historicalComparison: undefined });
+    assert.equal(body.historicalComparison.available, false);
+    assert.equal(body.historicalComparison.reason, "no-history");
+  });
   assert.equal(refreshes, 0);
 });
 

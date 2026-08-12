@@ -1833,6 +1833,18 @@ Do not place long debugging transcripts in this file.
 - Added a compact stationary banner that shows at most two Critical, Warning, or Informational items without changing the five-slide rotation.
 - Documented every condition and explicitly deferred pace, benchmark, near-goal, risk, and leader-gap insights until the backend provides approved values or classifications.
 
+## 2026-08-12 — Phase 13 Historical Metrics and Snapshot Engine
+
+- [x] Create immutable, timestamped, schema-versioned dashboard snapshots after successful refreshes.
+- [x] Add a configurable bounded in-memory rolling snapshot store.
+- [x] Add reusable presentation-neutral value, ranking, overall movement, and goal-progress comparisons.
+- [x] Extend the existing dashboard response with backwards-compatible `historicalComparison` data.
+- [x] Handle first snapshot, missing/unavailable KPI data, valid zeroes, new technicians, stale partial-refresh records, and failed refreshes.
+- [x] Document lifecycle, retention, API shape, limitations, and future persistence/trend extension points.
+- [x] Add comprehensive backend snapshot, retention, comparison, movement, and edge-case tests.
+
+No ServiceTitan request, endpoint mapping, normalization, KPI calculation, slide, route, or frontend presentation behavior changed. History remains intentionally process-local and count-bounded; persistence and time-window aggregation are future work.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

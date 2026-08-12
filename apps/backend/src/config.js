@@ -16,6 +16,7 @@ const DEFAULTS = Object.freeze({
   TIMEZONE: "America/New_York", REFRESH_INTERVAL_SECONDS: "60",
   REMOTE_OVERRIDE_SECONDS: "120", RETURN_TRANSITION_MILLISECONDS: "1000",
   STALE_WARNING_SECONDS: "180", STALE_CRITICAL_SECONDS: "600",
+  SNAPSHOT_RETENTION_LIMIT: "1440",
   JSON_BODY_LIMIT: "100kb", REMOTE_RATE_LIMIT_WINDOW_SECONDS: "60",
   REMOTE_RATE_LIMIT_MAX_REQUESTS: "30", LOG_LEVEL: "info"
 });
@@ -82,6 +83,7 @@ function loadConfig(environment = process.env, options = {}) {
     remoteOverrideSeconds: integer(env.REMOTE_OVERRIDE_SECONDS, "REMOTE_OVERRIDE_SECONDS", { min: 10, max: 3600 }),
     returnTransitionMilliseconds: integer(env.RETURN_TRANSITION_MILLISECONDS, "RETURN_TRANSITION_MILLISECONDS", { max: 60000 }),
     staleWarningSeconds: warning, staleCriticalSeconds: critical,
+    snapshotRetentionLimit: integer(env.SNAPSHOT_RETENTION_LIMIT, "SNAPSHOT_RETENTION_LIMIT", { min: 1, max: 10080 }),
     jsonBodyLimit: env.JSON_BODY_LIMIT,
     remoteRateLimit: Object.freeze({ windowSeconds: integer(env.REMOTE_RATE_LIMIT_WINDOW_SECONDS, "REMOTE_RATE_LIMIT_WINDOW_SECONDS", { max: 3600 }), maxRequests: integer(env.REMOTE_RATE_LIMIT_MAX_REQUESTS, "REMOTE_RATE_LIMIT_MAX_REQUESTS", { max: 10000 }) }),
     logLevel: env.LOG_LEVEL, mockMode: mock.mockMode, developmentRoutesEnabled: mock.developmentRoutesEnabled

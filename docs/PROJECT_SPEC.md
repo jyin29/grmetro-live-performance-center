@@ -14161,3 +14161,13 @@ README.md
 ```
 
 The complete `PROJECT_SPEC.md` consists of Parts 1 through 11 in numerical order.
+
+---
+
+# 476. Phase 13 Historical Metrics Addendum
+
+Dashboard history is maintained as a bounded, in-memory sequence of immutable, timestamped snapshots created only after successful dashboard refreshes. The default retention is 1,440 snapshots and is configurable through `SNAPSHOT_RETENTION_LIMIT`; no database or persistence is introduced.
+
+`GET /api/v1/dashboard` retains its existing fields and adds `historicalComparison`. The comparison is calculated against the immediately previous successful snapshot and contains presentation-neutral KPI value, KPI rank, overall rank, and goal-progress deltas. First-snapshot, unavailable KPI, missing technician, stale technician, and zero-value states remain explicit. Failed refresh attempts do not create snapshots or replace the previous successful response.
+
+The snapshot store is isolated behind an append/read interface so later persistence, time-window selection, aggregation, trends, exports, management insights, and AI summaries can reuse the snapshot schema without changing ServiceTitan integration or dashboard calculations. The complete contract and lifecycle are defined in `docs/HISTORICAL_METRICS.md`.
