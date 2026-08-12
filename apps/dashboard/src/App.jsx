@@ -8,7 +8,7 @@ import { DEFAULT_DISPLAY_ID, findDisplay } from "./config/displayRegistry";
 import { useDashboard } from "./hooks/useDashboard";
 
 function DashboardPage({ displayId }) {
-  const { data, error, loading, refreshing, retry } = useDashboard();
+  const { data, error, loading, refreshing, retry, lastSuccessfulRefresh } = useDashboard();
 
   if (loading) {
     return <div className="app-shell">
@@ -31,7 +31,7 @@ function DashboardPage({ displayId }) {
     </div>;
   }
 
-  return <DashboardLayout data={data} displayId={displayId} error={error} refreshing={refreshing} />;
+  return <DashboardLayout data={data} displayId={displayId} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} />;
 }
 
 export default function App() {

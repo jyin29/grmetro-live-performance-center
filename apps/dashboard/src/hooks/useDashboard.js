@@ -4,7 +4,7 @@ import { fetchDashboard } from "../api/dashboardApi";
 const POLL_INTERVAL_MS = 60_000;
 
 export function useDashboard() {
-  const [state, setState] = useState({ data: null, error: null, loading: true, refreshing: false });
+  const [state, setState] = useState({ data: null, error: null, loading: true, refreshing: false, lastSuccessfulRefresh: null });
   const controllerRef = useRef(null);
 
   const load = useCallback(async ({ background = false } = {}) => {
@@ -14,7 +14,7 @@ export function useDashboard() {
     setState((current) => ({ ...current, error: null, loading: !current.data && !background, refreshing: Boolean(current.data) }));
     try {
       const data = await fetchDashboard({ signal: controller.signal });
-      setState({ data, error: null, loading: false, refreshing: false });
+      setState({ data, error: null, loading: false, refreshing: false, lastSuccessfulRefresh: Date.now() });
     } catch (error) {
       if (error.name !== "AbortError") setState((current) => ({ ...current, error, loading: false, refreshing: false }));
     }
@@ -24,6 +24,14 @@ export function useDashboard() {
     load();
     const interval = window.setInterval(() => load({ background: true }), POLL_INTERVAL_MS);
     return () => { window.clearInterval(interval); controllerRef.current?.abort(); };
+  }, [load]);
+
+  useEffect(() => {
+    const recover = () => { if (!document.hidden) load({ background: true }); };
+    document.addEventListener("visibilitychange", recover);
+    window.addEventListener("online", recover);
+    window.addEventListener("pageshow", recover);
+    return () => { document.removeEventListener("visibilitychange", recover); window.removeEventListener("online", recover); window.removeEventListener("pageshow", recover); };
   }, [load]);
 
   return { ...state, retry: load };
