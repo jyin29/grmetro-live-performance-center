@@ -78,7 +78,8 @@ test("failures preserve cache and do not stop later scheduled refreshes", async 
   } } });
   setup.instance.start();
   await flush();
-  assert.equal(cache.getPayload(), prior);
+  assert.equal(cache.getPayload().marker, prior.marker);
+  assert.equal(cache.getPayload().historicalComparison.currentSnapshotId, "snapshot-00000001");
   setup.timers.tick();
   await flush();
   assert.equal(cache.getPayload().marker, "new");
