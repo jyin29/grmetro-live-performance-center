@@ -42,6 +42,10 @@ function metricLabelIndex(data) {
 // This presentation helper uses prepared fields only: no KPI aggregation,
 // averaging, scoring, or pace calculation belongs in the dashboard.
 export function managementInsights(data, presentationState = {}, now = Date.now(), limit = 2) {
+  const preparedInsights = Array.isArray(data?.managementInsights)
+    ? data.managementInsights
+    : data?.managementInsights?.insights;
+  if (Array.isArray(preparedInsights)) return preparedInsights.slice(0, limit);
   const insights = [];
   const add = (insight) => insights.push(insight);
   const freshnessState = freshness(data?.refreshedAt, now);

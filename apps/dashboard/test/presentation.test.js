@@ -54,4 +54,9 @@ describe("dashboard presentation helpers", () => {
     expect(informational.map(({ priority }) => priority)).toEqual(["informational", "informational"]);
     expect(informational.map(({ eyebrow }) => eyebrow)).toEqual(["Goal achieved", "Ranking movement"]);
   });
+
+  it("uses backend-prepared management insights when the dashboard response provides them", () => {
+    const prepared = [{ id: "prepared", priority: "informational", eyebrow: "Trend", title: "Revenue increasing", detail: "4 consecutive increases" }];
+    expect(managementInsights({ managementInsights: { insights: prepared } })).toEqual(prepared);
+  });
 });

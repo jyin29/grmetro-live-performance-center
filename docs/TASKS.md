@@ -1857,6 +1857,17 @@ No ServiceTitan request, endpoint mapping, normalization, KPI calculation, slide
 
 No ServiceTitan integration, normalization, KPI calculation, endpoint mapping, slide, or layout changed. Small trend indicators remain an optional future presentation consumer.
 
+## 2026-08-12 — Phase 14 Historical Intelligence Presentation
+
+- [x] Add reusable trend indicator, trend badge, compact comparison, and dependency-free SVG sparkline presentation components.
+- [x] Present backend comparison deltas and trend labels in Revenue, Sales, Operations, and technician standing without frontend trend calculations.
+- [x] Present backend streak counts only when consecutive movement is available and meaningful.
+- [x] Preserve explicit `Unknown` states while gracefully omitting absent comparison and trend history.
+- [x] Prefer backend-provided management insights when the existing dashboard response includes them.
+- [x] Add presentation coverage for trend labels, comparison formats, unknown values, missing history, and sparklines.
+
+The backend response does not currently expose historical numeric series, so Revenue, Closing %, and Goal Progress sparklines are gracefully omitted. The reusable SVG primitive is ready for those three placements when the existing response supplies sufficient points; the frontend does not reconstruct a series from trend summaries. No slide, route, ServiceTitan request, backend calculation, normalization rule, endpoint, or dependency changed.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:
