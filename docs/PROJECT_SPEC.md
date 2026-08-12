@@ -14161,3 +14161,43 @@ README.md
 ```
 
 The complete `PROJECT_SPEC.md` consists of Parts 1 through 11 in numerical order.
+
+---
+
+# 476. Phase 13 Historical Metrics Addendum
+
+Dashboard history is maintained as a bounded, in-memory sequence of immutable, timestamped snapshots created only after successful dashboard refreshes. The default retention is 1,440 snapshots and is configurable through `SNAPSHOT_RETENTION_LIMIT`; no database or persistence is introduced.
+
+`GET /api/v1/dashboard` retains its existing fields and adds `historicalComparison`. The comparison is calculated against the immediately previous successful snapshot and contains presentation-neutral KPI value, KPI rank, overall rank, and goal-progress deltas. First-snapshot, unavailable KPI, missing technician, stale technician, and zero-value states remain explicit. Failed refresh attempts do not create snapshots or replace the previous successful response.
+
+The snapshot store is isolated behind an append/read interface so later persistence, time-window selection, aggregation, trends, exports, management insights, and AI summaries can reuse the snapshot schema without changing ServiceTitan integration or dashboard calculations. The complete contract and lifecycle are defined in `docs/HISTORICAL_METRICS.md`.
+
+The existing dashboard response also adds `historicalTrends`. The reusable backend engine consumes ordered snapshots through adjacent comparison-engine results and analyzes existing KPI values, KPI ranks, goal progress, and overall rank. It requires configurable minimum history, suppresses inconsistent one-refresh movement, and reports trends, momentum, consistency, streak counts, and explicit unknown states without a new endpoint or business calculation.
+
+---
+
+# 477. Phase 15 Networked Display Command Architecture
+
+The presentation controller is divided into replaceable responsibilities:
+
+```text
+Remote Controller → WebSocket Transport → Backend Presentation Command Bus → Presentation Manager
+```
+
+The command bus accepts transport-neutral command objects containing a command type, target `displayId`, and optional payload. Its supported commands are Next Slide, Previous Slide, Go To Slide, Pause Rotation, Resume Rotation, and Restart Rotation Timer. The remote controller dispatches these commands and does not mutate presentation state directly.
+
+The backend in-memory Presentation Manager owns one isolated authoritative state record and timer for each configured display. A snapshot contains `displayId`, display name, `activeSlideIndex`, `isRunning`, `rotationStartedAt`, `nextRotationAt`, presentation profile, `lastUpdated`, and `timerRevision`. This record contains presentation control only; dashboard KPI data remains in the existing dashboard cache and REST response. Commands validate the target and update only that display. Previous and next navigation wrap across the existing five-entry slide registry.
+
+The WebSocket endpoint is `/ws/presentation`. A client connects with a validated `displayId` and a `clientType` of `display` or `remote`. The backend immediately sends the latest snapshot. Display subscriptions receive only their target display, while every remote subscribed to that display receives the same broadcast. Only remote clients may submit the existing transport-neutral command objects. The WebSocket gateway performs subscription, serialization, and routing only; it does not implement presentation decisions.
+
+The complete flow is:
+
+```text
+Remote → WebSocket → Backend Presentation Controller → Command Bus → Authoritative Display State → Broadcast → Connected Displays and Remotes
+```
+
+The **30-second rotation timer lives only in the backend Presentation Manager**. Browsers never advance slides independently. Each manual navigation, resume, or restart command rearms the target display's backend timer and increments its timer revision. All observers render the same broadcast snapshot, so two browsers showing one display remain synchronized rather than calculating from independent client timers.
+
+Clients automatically reconnect with bounded exponential backoff. A browser refresh, remote reconnect, or display reconnect receives the current snapshot as its first message and therefore needs no manual refresh. During a temporary disconnect, a dashboard keeps its last rendered slide and reports that presentation synchronization is reconnecting. After a backend restart, in-memory presentation state intentionally resets to the configured Slide 1/running defaults; reconnecting clients hydrate that new authoritative snapshot and continue with a newly backend-owned timer.
+
+For local development, start the backend and Vite dashboard in separate terminals with `npm run dev:backend` and `npm run dev:dashboard`, then open `/display/main-office` and `/remote`. Vite proxies both `/api` HTTP traffic and `/ws` WebSocket upgrades to `127.0.0.1:3000`. Use multiple browser windows or devices on the same reachable development host to verify live synchronization. Production uses the same-origin `/ws/presentation` URL.

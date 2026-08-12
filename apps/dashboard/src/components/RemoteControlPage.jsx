@@ -1,13 +1,25 @@
 import logoUrl from "../../../../assets/branding/grmetro-logo.png";
+import { useState } from "react";
+import { DEFAULT_DISPLAY_ID } from "../config/displayRegistry";
 import { usePresentationController } from "../controller/PresentationController";
 
 export function RemoteControlPage() {
-  const controller = usePresentationController();
+  const [selectedDisplayId, setSelectedDisplayId] = useState(DEFAULT_DISPLAY_ID);
+  const controller = usePresentationController(selectedDisplayId, "remote");
   return <main className="remote-page">
     <header className="remote-header">
       <img src={logoUrl} alt="GRmetro Heating & Cooling" />
       <div><p>Live Performance Center</p><h1>Presentation Remote</h1></div>
     </header>
+
+    <section className="remote-display" aria-labelledby="display-title">
+      <div><p>Target display</p><h2 id="display-title">{controller.displayName}</h2></div>
+      <label>Control a display
+        <select value={selectedDisplayId} onChange={(event) => setSelectedDisplayId(event.target.value)}>
+          {controller.displays.map((display) => <option key={display.id} value={display.id}>{display.name}</option>)}
+        </select>
+      </label>
+    </section>
 
     <section className="remote-status" aria-live="polite">
       <p>Currently showing</p>
@@ -16,6 +28,7 @@ export function RemoteControlPage() {
       <div className={`remote-status__mode ${controller.isRunning ? "is-running" : "is-paused"}`}>
         <i aria-hidden="true" /> Automatic rotation is {controller.isRunning ? "running" : "paused"}
       </div>
+      <small>{controller.connectionState === "connected" ? "Connected live" : "Reconnecting…"}</small>
     </section>
 
     <section className="remote-controls" aria-labelledby="rotation-controls-title">
@@ -28,6 +41,7 @@ export function RemoteControlPage() {
         <button type="button" onClick={controller.previousSlide}>← <span>Previous Slide</span></button>
         <button type="button" onClick={controller.nextSlide}><span>Next Slide</span> →</button>
       </div>
+      <button className="remote-controls__restart" type="button" onClick={controller.restartRotationTimer}>Restart Rotation Timer</button>
     </section>
 
     <nav className="remote-jump" aria-labelledby="jump-title">
@@ -40,6 +54,6 @@ export function RemoteControlPage() {
         onClick={() => controller.selectSlide(index)}
       ><span>Slide {index + 1}</span><small>{slide.label}</small></button>)}</div>
     </nav>
-    <p className="remote-note">This controller is local to this browser for Phase 12A.</p>
+    <p className="remote-note">Commands are synchronized through the backend and sent only to the selected display.</p>
   </main>;
 }

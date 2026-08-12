@@ -2107,6 +2107,12 @@ The five presentation views are framed around immediate owner questions: daily p
 
 The presentation uses only existing backend-prepared KPI values, goals, percent complete, remaining values, ranks, normalized chart values, and refresh metadata. It does not create team totals, time-of-day pace, alert thresholds, or a new business score in React. Service/install values remain visibly unavailable until their backend classifications are approved. The full audit is recorded in `docs/DASHBOARD_CONTENT_AUDIT.md`.
 
+## 91. Phase 14 historical context presentation
+
+The existing five-slide presentation consumes the dashboard response's `historicalComparison` and `historicalTrends` fields without adding frontend trend calculations. Reusable compact comparison values and backend-label trend indicators appear beside Revenue and goal progress, Sales and Operations KPI bars, and technician overall standing. Available streak counts may appear as concise consecutive-increase, decrease, improvement, or decline context; absent history is omitted and explicit unknown history displays `Unknown`.
+
+An inline SVG `Sparkline` presentation primitive is available for Revenue, Closing %, and Goal Progress once the dashboard response contains an actual numeric history series. The current comparison/trend response contains summaries but no series, so the slides intentionally omit sparklines rather than reconstructing or inventing historical points in React. The historical context retains the light theme, room-distance hierarchy, stationary shell, compact density, and global reduced-motion behavior.
+
 # End of UI_SPEC.md
 
 The next companion document is:

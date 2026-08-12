@@ -224,7 +224,13 @@ button { font: inherit; }
 .remote-header div { padding-left: 18px; border-left: 1px solid var(--border); }
 .remote-header p { margin: 0 0 4px; color: var(--teal); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .remote-header h1 { margin: 0; font-size: clamp(24px, 7vw, 34px); line-height: 1.05; letter-spacing: -.035em; }
-.remote-status, .remote-controls, .remote-jump { margin-bottom: 18px; padding: clamp(22px, 6vw, 30px); background: var(--surface); border: 1px solid rgba(223,230,234,.9); border-radius: 20px; box-shadow: var(--shadow); }
+.remote-display, .remote-status, .remote-controls, .remote-jump { margin-bottom: 18px; padding: clamp(22px, 6vw, 30px); background: var(--surface); border: 1px solid rgba(223,230,234,.9); border-radius: 20px; box-shadow: var(--shadow); }
+.remote-display { display: grid; grid-template-columns: 1fr minmax(190px, .8fr); align-items: end; gap: 18px; border-top: 5px solid var(--teal); }
+.remote-display p { margin: 0 0 5px; color: var(--teal); font-size: 12px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.remote-display h2 { margin: 0; font-size: 28px; }
+.remote-display label { color: var(--muted); font-size: 13px; font-weight: 800; }
+.remote-display select { width: 100%; min-height: 56px; margin-top: 7px; padding: 0 14px; color: var(--text); background: #f5f8f8; border: 2px solid var(--border); border-radius: 12px; font: inherit; font-size: 16px; font-weight: 750; }
+.remote-display select:focus-visible { outline: 4px solid rgba(8,127,131,.28); outline-offset: 3px; border-color: var(--teal); }
 .remote-status { text-align: center; border-top: 5px solid var(--gold); }
 .remote-status > p { margin: 0 0 10px; color: var(--muted); font-size: 14px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .remote-status > strong { display: block; color: #9a760b; font-size: clamp(40px, 12vw, 60px); line-height: 1; letter-spacing: -.04em; }
@@ -240,6 +246,7 @@ button { font: inherit; }
 .remote-controls__primary button { padding: 12px; color: #fff; background: var(--teal); }
 .remote-controls__direction { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 .remote-controls__direction button { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; color: var(--teal); background: #eff8f7; border-color: #b9dddd; }
+.remote-controls .remote-controls__restart { width: 100%; margin-top: 12px; color: #765b08; background: #fff8df; border-color: #e6d18c; }
 .remote-jump > div { display: grid; gap: 10px; }
 .remote-jump button { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; color: #26343d; background: #f5f7f8; border-color: var(--border); text-align: left; }
 .remote-jump button span { font-size: 17px; }.remote-jump button small { color: var(--muted); font-size: 14px; }
@@ -254,6 +261,7 @@ button { font: inherit; }
   .remote-header { display: block; }.remote-header div { margin-top: 12px; padding: 0; border: 0; }
   .remote-controls__primary { grid-template-columns: 1fr; }
   .remote-controls__direction button span { max-width: 80px; }
+  .remote-display { grid-template-columns: 1fr; align-items: start; }
 }
 
 /* Business-domain presentation hierarchy. */
@@ -275,3 +283,19 @@ button { font: inherit; }
   .operations-domain__panel .comparison-chart__rows { gap: 6px; }
   .operations-domain__panel .comparison-bar { height: 24px; }
 }
+
+/* Phase 14 historical context. Compact annotations remain secondary to live values. */
+.comparison-value { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: clamp(12px, .76vw, 15px); font-weight: 850; white-space: nowrap; }
+.comparison-value--positive { color: #08766f; }.comparison-value--negative { color: #9a5f16; }
+.trend-indicator { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: clamp(11px, .7vw, 14px); font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.trend-indicator small { margin-left: 5px; color: var(--muted); font-size: .9em; font-weight: 700; }
+.trend-indicator--positive { color: #08766f; }.trend-indicator--negative { color: #9a5f16; }.trend-indicator--unknown { color: #7b8790; }
+.trend-badge { display: inline-flex; padding: 3px 7px; border-radius: 99px; background: #f1f5f5; }
+.comparison-metric { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.comparison-metric__context { display: flex; align-items: center; gap: 6px; }
+.pace-row__value > .comparison-value { margin-left: 8px; vertical-align: middle; }
+.pace-row > b .trend-indicator { display: flex; justify-content: flex-end; margin-top: 3px; }
+.performance-card__ranking > .comparison-value,.performance-card__ranking > .trend-indicator { justify-content: flex-end; }
+.sparkline { width: 100px; height: 30px; overflow: visible; }
+.sparkline polyline { fill: none; stroke: var(--teal); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-height: 760px) { .trend-indicator small,.comparison-metric__context .trend-badge { display: none; } }

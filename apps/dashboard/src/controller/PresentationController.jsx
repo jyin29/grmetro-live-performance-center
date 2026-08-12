@@ -1,40 +1,37 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { DEFAULT_DISPLAY_ID, findDisplay, PRESENTATION_DISPLAYS } from "../config/displayRegistry";
 import { PRESENTATION_SLIDES } from "../config/slideRegistry";
-import { SLIDE_ROTATION_INTERVAL_MS } from "../config/slideRotation";
-import { createPresentationState, PRESENTATION_ACTIONS, presentationControllerReducer } from "./presentationControllerState";
+import { createPresentationCommand, PRESENTATION_COMMANDS } from "./presentationCommands";
+import { createWebSocketPresentationTransport } from "./presentationTransport";
 
 const PresentationControllerContext = createContext(null);
+const slideCount = PRESENTATION_SLIDES.length;
 
 export function PresentationControllerProvider({ children }) {
-  const slideCount = PRESENTATION_SLIDES.length;
-  const [state, dispatch] = useReducer(presentationControllerReducer, slideCount, createPresentationState);
-  const [runtimePaused, setRuntimePaused] = useState(false);
-  const send = useCallback((type, detail = {}) => dispatch({ type, slideCount, ...detail }), [slideCount]);
-
-  useEffect(() => {
-    if (!state.isRunning || runtimePaused || slideCount < 2) return undefined;
-    const interval = window.setInterval(() => send(PRESENTATION_ACTIONS.NEXT), SLIDE_ROTATION_INTERVAL_MS);
-    return () => window.clearInterval(interval);
-  }, [runtimePaused, send, slideCount, state.isRunning]);
-
-  const value = useMemo(() => ({
-    activeSlideIndex: state.activeSlideIndex,
-    activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex],
-    isRunning: state.isRunning,
-    slides: PRESENTATION_SLIDES,
-    nextSlide: () => send(PRESENTATION_ACTIONS.NEXT),
-    pauseRotation: () => send(PRESENTATION_ACTIONS.PAUSE),
-    previousSlide: () => send(PRESENTATION_ACTIONS.PREVIOUS),
-    resumeRotation: () => send(PRESENTATION_ACTIONS.RESUME),
-    selectSlide: (index) => send(PRESENTATION_ACTIONS.SELECT, { index }),
-    setRuntimePaused,
-  }), [send, state.activeSlideIndex, state.isRunning]);
-
-  return <PresentationControllerContext.Provider value={value}>{children}</PresentationControllerContext.Provider>;
+  return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>;
 }
 
-export function usePresentationController() {
-  const controller = useContext(PresentationControllerContext);
-  if (!controller) throw new Error("usePresentationController must be used within PresentationControllerProvider");
-  return controller;
+export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_ID, clientType = "display") {
+  if (!useContext(PresentationControllerContext)) throw new Error("usePresentationController must be used within PresentationControllerProvider");
+  const displayId = findDisplay(requestedDisplayId)?.id ?? DEFAULT_DISPLAY_ID;
+  const display = findDisplay(displayId);
+  const [state, setState] = useState(() => ({ displayId, displayName: display.name, presentationProfile: display.presentationProfile,
+    activeSlideIndex: 0, isRunning: true, timerRevision: 0, lastUpdated: null }));
+  const [connectionState, setConnectionState] = useState("connecting");
+  const [transport, setTransport] = useState(null);
+
+  useEffect(() => {
+    setState((current) => ({ ...current, displayId, displayName: display.name, presentationProfile: display.presentationProfile }));
+    const nextTransport = createWebSocketPresentationTransport({ displayId, clientType, onState: setState, onConnectionChange: setConnectionState });
+    setTransport(nextTransport);
+    return () => nextTransport.close();
+  }, [clientType, display.name, display.presentationProfile, displayId]);
+  const send = useCallback((type, payload) => transport?.send(createPresentationCommand(type, displayId, payload)), [displayId, transport]);
+  return useMemo(() => ({
+    ...state, connectionState, activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex % slideCount], displays: PRESENTATION_DISPLAYS, slides: PRESENTATION_SLIDES,
+    nextSlide: () => send(PRESENTATION_COMMANDS.NEXT_SLIDE), pauseRotation: () => send(PRESENTATION_COMMANDS.PAUSE_ROTATION),
+    previousSlide: () => send(PRESENTATION_COMMANDS.PREVIOUS_SLIDE), restartRotationTimer: () => send(PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER),
+    resumeRotation: () => send(PRESENTATION_COMMANDS.RESUME_ROTATION), selectSlide: (index) => send(PRESENTATION_COMMANDS.GO_TO_SLIDE, { index }),
+    setRuntimePaused: () => {},
+  }), [connectionState, send, state]);
 }

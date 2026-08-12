@@ -1833,6 +1833,64 @@ Do not place long debugging transcripts in this file.
 - Added a compact stationary banner that shows at most two Critical, Warning, or Informational items without changing the five-slide rotation.
 - Documented every condition and explicitly deferred pace, benchmark, near-goal, risk, and leader-gap insights until the backend provides approved values or classifications.
 
+## 2026-08-12 — Phase 13 Historical Metrics and Snapshot Engine
+
+- [x] Create immutable, timestamped, schema-versioned dashboard snapshots after successful refreshes.
+- [x] Add a configurable bounded in-memory rolling snapshot store.
+- [x] Add reusable presentation-neutral value, ranking, overall movement, and goal-progress comparisons.
+- [x] Extend the existing dashboard response with backwards-compatible `historicalComparison` data.
+- [x] Handle first snapshot, missing/unavailable KPI data, valid zeroes, new technicians, stale partial-refresh records, and failed refreshes.
+- [x] Document lifecycle, retention, API shape, limitations, and future persistence/trend extension points.
+- [x] Add comprehensive backend snapshot, retention, comparison, movement, and edge-case tests.
+
+No ServiceTitan request, endpoint mapping, normalization, KPI calculation, slide, route, or frontend presentation behavior changed. History remains intentionally process-local and count-bounded; persistence and time-window aggregation are future work.
+
+## 2026-08-12 — Phase 13 Trend Analysis Engine
+
+- [x] Add a reusable trend engine over ordered snapshots and adjacent comparison results.
+- [x] Add configurable minimum history and consistency-based noise suppression.
+- [x] Analyze KPI values, KPI ranks, goal progress, overall ranks, momentum, consistency, and streaks.
+- [x] Preserve unknown states for insufficient, unavailable, or stale history and roster changes.
+- [x] Extend `GET /api/v1/dashboard` backwards-compatibly with `historicalTrends` and no new endpoint.
+- [x] Document the algorithm, configuration, labels, API contract, and future extensions.
+- [x] Cover increasing, decreasing, stable, noisy, missing, partial, addition, removal, and edge cases.
+
+No ServiceTitan integration, normalization, KPI calculation, endpoint mapping, slide, or layout changed. Small trend indicators remain an optional future presentation consumer.
+
+## 2026-08-12 — Phase 14 Historical Intelligence Presentation
+
+- [x] Add reusable trend indicator, trend badge, compact comparison, and dependency-free SVG sparkline presentation components.
+- [x] Present backend comparison deltas and trend labels in Revenue, Sales, Operations, and technician standing without frontend trend calculations.
+- [x] Present backend streak counts only when consecutive movement is available and meaningful.
+- [x] Preserve explicit `Unknown` states while gracefully omitting absent comparison and trend history.
+- [x] Prefer backend-provided management insights when the existing dashboard response includes them.
+- [x] Add presentation coverage for trend labels, comparison formats, unknown values, missing history, and sparklines.
+
+The backend response does not currently expose historical numeric series, so Revenue, Closing %, and Goal Progress sparklines are gracefully omitted. The reusable SVG primitive is ready for those three placements when the existing response supplies sufficient points; the frontend does not reconstruct a series from trend summaries. No slide, route, ServiceTitan request, backend calculation, normalization rule, endpoint, or dependency changed.
+
+## 2026-08-12 — Phase 15 Local Display Command Architecture
+
+- [x] Add a transport-independent presentation command contract and command bus.
+- [x] Support Next, Previous, Go To Slide, Pause, Resume, and Restart Timer commands.
+- [x] Add an in-memory Display Manager with isolated slide, timer, paused state, and presentation profile per display.
+- [x] Route `/display/:displayId` through the targeted local display controller.
+- [x] Improve `/remote` with immediate display selection, targeted status, and the complete command set.
+- [x] Preserve the light theme, mobile touch sizing, keyboard focus, and reduced-motion behavior.
+- [x] Test dispatch, target changes, wrapping, pause/resume, timer restart, command validation, and isolation.
+
+## 2026-08-12 — Phase 15 Real-Time Multi-Device Synchronization
+
+- [x] Move presentation-only state and every 30-second rotation timer to an in-memory backend Presentation Manager.
+- [x] Reuse the existing transport-neutral presentation command contract through a backend command bus.
+- [x] Add validated `/ws/presentation` display and remote subscriptions with targeted state broadcasts.
+- [x] Hydrate displays and remotes immediately from authoritative state and reconnect automatically with bounded backoff.
+- [x] Make `/remote` a live multi-device controller whose selected-display state reflects changes from other remotes.
+- [x] Remove independent browser slide advancement while preserving all five existing slides and their presentation behavior.
+- [x] Centralize display profiles and command identifiers in shared configuration.
+- [x] Cover multiple displays, multiple remotes, target isolation, commands, backend rotation, validation, reconnect hydration, and restart defaults.
+
+Remaining Phase 15 work is operational validation on the final office network and approved display hardware, including the documented long-running stability and multi-TV acceptance runs. Final room/hardware approval remains an existing business blocker.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

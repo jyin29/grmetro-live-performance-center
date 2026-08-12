@@ -1,5 +1,10 @@
 "use strict";
 
+const { InMemorySnapshotStore } = require("../history/snapshotStore");
+const { compareDashboardSnapshots } = require("../history/comparisonEngine");
+const { analyzeDashboardTrends } = require("../history/trendEngine");
+const { deepFreeze } = require("../history/dashboardSnapshot");
+
 const CACHE_UNAVAILABLE = Object.freeze({
   code: "CACHE_UNAVAILABLE",
   message: "Dashboard data is unavailable until the first successful refresh."
@@ -12,8 +17,10 @@ function iso(value) {
 }
 
 class DashboardCache {
-  constructor({ clock = () => new Date() } = {}) {
+  constructor({ clock = () => new Date(), snapshotStore, snapshotRetentionLimit = 1440, trendMinimumHistory = 4 } = {}) {
     this.clock = clock;
+    this.snapshotStore = snapshotStore || new InMemorySnapshotStore({ retentionLimit: snapshotRetentionLimit });
+    this.trendMinimumHistory = trendMinimumHistory;
     this.payload = null;
     this.refreshStartedAt = null;
     this.refreshCompletedAt = null;
@@ -28,7 +35,10 @@ class DashboardCache {
   storeSuccessfulPayload(payload, at = this.clock()) {
     if (!payload || typeof payload !== "object") throw new TypeError("A successful refresh requires a presentation payload.");
     const completedAt = iso(at);
-    this.payload = payload;
+    const currentSnapshot = this.snapshotStore.append(payload, completedAt);
+    const comparison = compareDashboardSnapshots(this.snapshotStore.previous(), currentSnapshot);
+    const trends = analyzeDashboardTrends(this.snapshotStore.list(), { minimumHistory: this.trendMinimumHistory });
+    this.payload = deepFreeze({ ...currentSnapshot.dashboard, historicalComparison: comparison, historicalTrends: trends });
     this.refreshCompletedAt = completedAt;
     this.lastSuccessfulRefreshAt = completedAt;
     this.lastFailure = null;

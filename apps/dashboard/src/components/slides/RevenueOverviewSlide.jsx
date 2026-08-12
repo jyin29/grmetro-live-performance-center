@@ -1,5 +1,8 @@
 import { RevenueChart } from "../RevenueChart";
 import { AnimatedMetric } from "../AnimatedMetric";
+import { ComparisonValue } from "../ComparisonValue";
+import { TrendIndicator } from "../TrendIndicator";
+import { metricHistory } from "../../lib/historicalPresentation";
 
 export function RevenueOverviewSlide({ data }) {
   const revenue = data.slides.revenue;
@@ -10,11 +13,12 @@ export function RevenueOverviewSlide({ data }) {
       <div className="pace-list">
         {revenue.rows.map((row) => {
           const metric = row.metrics.find(({ id }) => id === "revenue");
+          const history = metricHistory(data, row.technicianId, "revenue");
           return <article className="pace-row" key={row.technicianId}>
             <span className="pace-row__rank">#{metric.rank}</span><strong>{row.shortName || row.name}</strong>
             <div className="pace-row__track"><i style={{ width: `${Math.min(100, metric.percentComplete || 0)}%` }} /></div>
-            <div className="pace-row__value"><AnimatedMetric metric={metric} /><small>of <AnimatedMetric metric={{ ...metric, value: metric.goal, hasData: metric.goal !== null }} /></small></div>
-            <b className={metric.reached ? "is-on-pace" : ""}>{metric.hasData && metric.percentComplete !== null ? `${Math.round(metric.percentComplete)}%` : "No data"}</b>
+            <div className="pace-row__value"><AnimatedMetric metric={metric} /><ComparisonValue comparison={history.comparison?.value} format={metric.format} /><small>of <AnimatedMetric metric={{ ...metric, value: metric.goal, hasData: metric.goal !== null }} /></small></div>
+            <b className={metric.reached ? "is-on-pace" : ""}>{metric.hasData && metric.percentComplete !== null ? `${Math.round(metric.percentComplete)}%` : "No data"}<TrendIndicator trend={history.trends?.goalProgress} streakNoun="improvements" /></b>
           </article>;
         })}
       </div>

@@ -2,6 +2,9 @@ import { StatusBadge } from "./StatusBadge";
 import { TechnicianMetric } from "./TechnicianMetric";
 import { AnimatedMetric } from "./AnimatedMetric";
 import { useChangeHighlight } from "../hooks/useChangeHighlight";
+import { ComparisonValue } from "./ComparisonValue";
+import { TrendIndicator } from "./TrendIndicator";
+import { technicianHistory } from "../lib/historicalPresentation";
 
 const metrics = [
   ["revenue", "Revenue"],
@@ -17,12 +20,13 @@ function rankMovement(change) {
   return { label: "No movement", symbol: "—", tone: "steady" };
 }
 
-export function TechnicianPerformanceCard({ technician }) {
+export function TechnicianPerformanceCard({ technician, data }) {
   const qualifies = technician.overall?.qualifies;
   const movement = rankMovement(technician.overall?.rankChange);
   const qualities = [...new Set(metrics.map(([id]) => technician.kpis?.[id]?.dataQuality ?? "unavailable"))];
   const changeSignature = `${technician.overall?.rank}:${metrics.map(([id]) => `${technician.kpis?.[id]?.hasData}:${technician.kpis?.[id]?.value}`).join("|")}`;
   const highlighted = useChangeHighlight(changeSignature);
+  const history = technicianHistory(data, technician.id);
 
   return <article className={`performance-card${highlighted ? " is-updated" : ""}`}>
     <header className="performance-card__header">
@@ -33,7 +37,10 @@ export function TechnicianPerformanceCard({ technician }) {
       </div>
       <div className="performance-card__ranking">
         <strong>{qualifies ? <>#<AnimatedMetric metric={{ value: technician.overall.rank, hasData: true, format: "integer" }} /></> : "—"}</strong>
-        <span className={`performance-card__movement performance-card__movement--${movement.tone}`} aria-label={movement.label}>{movement.symbol}{movement.tone !== "steady" && Math.abs(technician.overall.rankChange)}</span>
+        {history.comparison?.overallRanking?.available
+          ? <ComparisonValue comparison={history.comparison.overallRanking} kind="rank" />
+          : <span className={`performance-card__movement performance-card__movement--${movement.tone}`} aria-label={movement.label}>{movement.symbol}{movement.tone !== "steady" && Math.abs(technician.overall.rankChange)}</span>}
+        <TrendIndicator trend={history.trends?.overallRanking} streakNoun="improvements" />
       </div>
     </header>
     <div className="performance-card__metrics">
