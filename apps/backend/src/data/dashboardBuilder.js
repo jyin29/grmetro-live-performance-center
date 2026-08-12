@@ -8,7 +8,9 @@ const { applyGoals } = require("./goalEngine");
 const { rankKpis, sortByPrimaryKpi } = require("./rankingEngine");
 const { calculateOverallScores } = require("./overallScoreEngine");
 const { buildAxis } = require("./axis");
-const { detectAchievementEvents, activeEvents } = require("./achievementEvents");
+const { activeEvents } = require("./achievementEvents");
+const businessRules = require("../../../../shared/businessRules");
+const { evaluateBusinessRules } = require("../rules/businessRulesEngine");
 
 const GROUPS = Object.freeze({
   revenue: ["revenue", "serviceRevenue", "installRevenue"],
@@ -51,13 +53,17 @@ function buildDashboardPayload(normalizedRecords, options = {}) {
     initials: record.initials, ...publicOverall(record.overall), kpis: Object.fromEntries(["revenue", "billableServiceCalls", "closingRate", "leadConversionRate", "installs", "installAverageTicket"].map((id) => [id, record.kpis[id]])) }));
   while (entries.length < 3) entries.push({ placeholder: true, status: "insufficient-data" });
   generatedSlides["top-three"] = { ...slides[4], entries };
-  const newEvents = detectAchievementEvents(records, previous, { now: timestamp });
+  const ruleResult = evaluateBusinessRules({ rules: (options.businessRules || businessRules).rules,
+    current: records, previous, now: timestamp,
+    eventDurationMilliseconds: (options.businessRules || businessRules).settings.eventDurationMilliseconds });
+  const newEvents = ruleResult.events;
   const events = activeEvents([...(options.previousPayload?.events || []), ...newEvents], timestamp);
   return {
     version: 1, generatedAt: timestamp, refreshedAt: options.refreshedAt || timestamp,
     rotationEpoch: options.rotationEpoch || timestamp, status: options.status || { cache: "fresh" },
     technicians: records.map((record) => ({ ...record, overall: publicOverall(record.overall) })),
-    slides: generatedSlides, overallTopThree: entries, events
+    slides: generatedSlides, overallTopThree: entries, events,
+    managementInsights: ruleResult.managementInsights.slice(0, (options.businessRules || businessRules).settings.maximumAttentionItems)
   };
 }
 

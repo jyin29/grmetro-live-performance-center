@@ -1,8 +1,10 @@
 "use strict";
 
 const EVENT_PRIORITIES = Object.freeze({ critical: 0, celebration: 1, information: 2 });
-const DEFAULTS = Object.freeze({ displayDurationMilliseconds: 7000, cooldownMilliseconds: 30 * 60 * 1000,
-  maximumQueueSize: 20, maximumDeduplicationEntries: 100 });
+const businessRules = require("../../../../shared/businessRules");
+const DEFAULTS = Object.freeze({ displayDurationMilliseconds: businessRules.settings.overlayDurationMilliseconds,
+  cooldownMilliseconds: businessRules.settings.cooldownMilliseconds,
+  maximumQueueSize: businessRules.settings.maximumQueueSize, maximumDeduplicationEntries: 100 });
 
 function asDate(value, label) {
   const date = value instanceof Date ? value : new Date(value);
