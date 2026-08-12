@@ -2177,3 +2177,11 @@ slide stage, indicator, and footer must remain inside one viewport. Sales combin
 Marketed Leads, and Memberships Sold in one compact pipeline panel. Operations combines Calls,
 Opportunities, Memberships Sold, and Installs in one throughput panel and keeps install economics together.
 KPI values remain visually dominant while headings, legends, annotations, padding, and gaps are reduced.
+
+## 2026-08-12 — final KPI-lane density rule
+
+Comparison blocks omit a KPI lane when every technician has `hasData: false`. If an entire grouped block has
+no validated values, it presents one compact mapping notice rather than five repeated `No data` lanes. Sales
+uses Closing % alone as its dominant outcome while Lead Conversion remains unavailable. This is presentation
+filtering only; normalized KPI records and data-quality states remain in the backend payload and remote detail.
+The final inventory and placement rationale are recorded in `docs/FINAL_KPI_AUDIT.md`.

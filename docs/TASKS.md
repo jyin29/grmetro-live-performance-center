@@ -2058,3 +2058,16 @@ It shall provide concise, binding instructions that Codex reads before making re
 No endpoint or request was added: `MembershipsSold` was already in the centralized Technicians datasource
 field list. Membership Revenue, Maintenance Agreements, Agreement Sales, and Recurring Service Agreements
 remain unavailable because no validated response fields were found.
+
+## 2026-08-12 — Final dashboard presentation and KPI audit
+
+- [x] Re-audit all twelve normalized technician KPI records from source field through television placement.
+- [x] Record every slide's final KPI usage and explain every normalized KPI not visible in live presentation.
+- [x] Record all requested-but-unnormalized datasource fields and remaining unavailable ServiceTitan metrics.
+- [x] Suppress empty KPI lanes while retaining one concise unavailable-mapping state for empty groups.
+- [x] Give Closing % the full Sales outcome block and preserve the compact pipeline and operations groups.
+- [x] Preserve exactly five slides, backend business ownership, missing-data semantics, and all existing APIs.
+
+The complete final inventory is `docs/FINAL_KPI_AUDIT.md`. This pass changes presentation only: no endpoint,
+request field, normalization rule, KPI calculation, ranking, history, event, synchronization, or remote
+behavior changed.
