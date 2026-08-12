@@ -107,6 +107,33 @@ test("dashboard returns 503 CACHE_UNAVAILABLE before a successful refresh", asyn
   });
 });
 
+test("management refresh uses the scheduler pipeline and reports completion status", async () => {
+  const triggers = [];
+  const setup = fixture({ scheduler: { active: false, async refresh(trigger) { triggers.push(trigger); return { ok: true, skipped: false }; } } });
+  await run(setup.app, async (base) => {
+    assert.equal((await json(base, "/api/v1/management/refresh")).body.state, "idle");
+    const completed = await json(base, "/api/v1/management/refresh", { method: "POST" });
+    assert.equal(completed.response.status, 200);
+    assert.equal(completed.body.state, "succeeded");
+    assert.match(completed.body.message, /completed successfully/i);
+    assert.deepEqual(triggers, ["remote-management"]);
+    assert.equal((await json(base, "/api/v1/management/refresh")).body.state, "succeeded");
+  });
+});
+
+test("management refresh reports active and failed scheduler outcomes without retrying", async () => {
+  await run(fixture({ scheduler: { active: true, async refresh() { throw new Error("must not run"); } } }).app, async (base) => {
+    const active = await json(base, "/api/v1/management/refresh", { method: "POST" });
+    assert.equal(active.response.status, 409);
+    assert.equal(active.body.state, "refreshing");
+  });
+  await run(fixture({ scheduler: { active: false, async refresh() { return { ok: false }; } } }).app, async (base) => {
+    const failed = await json(base, "/api/v1/management/refresh", { method: "POST" });
+    assert.equal(failed.response.status, 503);
+    assert.equal(failed.body.state, "failed");
+  });
+});
+
 test("TV reads, overrides, resume, isolation, and countdown use the existing manager", async () => {
   const setup = fixture();
   await run(setup.app, async (base) => {

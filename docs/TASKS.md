@@ -1964,6 +1964,16 @@ KPI, snapshot, comparison, trend, synchronization, Event Engine, and Business Ru
 
 # 31. Final Completion Criteria
 
+## 2026-08-12 — Remote management and technician-card readability
+
+- [x] Add an in-place manual dashboard refresh control to `/remote` using the existing scheduler pipeline.
+- [x] Prevent duplicate manual refresh requests and report ready, refreshing, success, and failure states.
+- [x] Increase responsive typography and spacing for the five manager-priority technician metrics.
+- [x] Remove routine confirmed-status card clutter while retaining non-confirmed data-quality notices.
+- [ ] Add remote date/sort controls after the existing dashboard date/sort feature and its allowed values are identified. **Blocked: this repository has no dashboard date/sort presentation state or control to reuse; adding one would invent a filtering/business-order system and conflict with the explicit presentation-only constraint.**
+
+This quality-of-life increment changes no ServiceTitan request, KPI calculation, business/history/trend/event engine, WebSocket synchronization, or dashboard calculation. Manual refresh enters the same overlap-protected scheduler method used by scheduled refreshes.
+
 ## 2026-08-12 — KPI catalog presentation density pass
 
 - [x] Audit every cataloged Tier 1 and Tier 2 KPI against the existing prepared dashboard payload.

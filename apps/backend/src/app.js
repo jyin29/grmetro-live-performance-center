@@ -10,6 +10,7 @@ const { createDashboardRoutes } = require("./routes/dashboardRoutes");
 const { createTvRoutes } = require("./routes/tvRoutes");
 const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
+const { createManagementRoutes } = require("./routes/managementRoutes");
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
   browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime }) {
@@ -23,6 +24,7 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   app.use("/api/v1/health", createHealthRoutes({ cache, applicationVersion, browserStatusProvider, serviceTitanStatusProvider, clock }));
   app.use("/api/v1/dashboard", createDashboardRoutes({ cache }));
   app.use("/api/v1/tvs", createTvRoutes({ tvManager, rateLimiter, clock }));
+  if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
   app.use(notFound);

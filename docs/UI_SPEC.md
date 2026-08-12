@@ -2115,6 +2115,10 @@ An inline SVG `Sparkline` presentation primitive is available for Revenue, Closi
 
 # End of UI_SPEC.md
 
+## 2026-08-12 management remote and room-distance card refinement
+
+The existing `/remote` page includes a Management section with a manual dashboard refresh action. The action invokes the backend scheduler's existing refresh method, prevents duplicate requests while a refresh is active, and reports idle, refreshing, successful, or failed status without exposing internal errors. Technician scorecards give Revenue, Closing %, Billable Calls, Install Revenue, and Average Ticket larger responsive values and omit the routine confirmed-status footer to reduce television clutter. Existing light-theme, 720p, 1080p, 4K, animation, and reduced-motion behavior remains in place.
+
 ## Final KPI-density presentation pass
 
 Revenue uses a single full-height ranked table instead of a revenue table plus a duplicate compact chart. Each technician row presents Revenue Today, its relative distribution bar, configured Revenue Goal, backend-prepared Revenue Remaining, and backend-prepared Goal Progress. Sales gives Closing % the dominant region and pairs it with opportunities and lead volume. Technician cards hide unavailable metric slots and fill them only with existing available canonical KPI values. Operations retains calls/activity and install economics without estimating unresolved classifications. Recognition remains the dedicated Overall Top 3 podium.
