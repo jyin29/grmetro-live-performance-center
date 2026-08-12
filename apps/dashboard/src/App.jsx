@@ -4,9 +4,10 @@ import { ErrorView } from "./components/ErrorView";
 import { Header } from "./components/Header";
 import { LoadingView } from "./components/LoadingView";
 import { RemoteControlPage } from "./components/RemoteControlPage";
+import { DEFAULT_DISPLAY_ID, findDisplay } from "./config/displayRegistry";
 import { useDashboard } from "./hooks/useDashboard";
 
-function DashboardPage() {
+function DashboardPage({ displayId }) {
   const { data, error, loading, refreshing, retry } = useDashboard();
 
   if (loading) {
@@ -30,9 +31,13 @@ function DashboardPage() {
     </div>;
   }
 
-  return <DashboardLayout data={data} error={error} refreshing={refreshing} />;
+  return <DashboardLayout data={data} displayId={displayId} error={error} refreshing={refreshing} />;
 }
 
 export default function App() {
-  return window.location.pathname.replace(/\/+$/, "") === "/remote" ? <RemoteControlPage /> : <DashboardPage />;
+  const path = window.location.pathname.replace(/\/+$/, "");
+  if (path === "/remote") return <RemoteControlPage />;
+  const routeDisplayId = path.match(/^\/display\/([^/]+)$/)?.[1];
+  const displayId = routeDisplayId && findDisplay(routeDisplayId) ? routeDisplayId : DEFAULT_DISPLAY_ID;
+  return <DashboardPage displayId={displayId} />;
 }

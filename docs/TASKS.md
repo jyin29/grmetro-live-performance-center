@@ -1868,6 +1868,19 @@ No ServiceTitan integration, normalization, KPI calculation, endpoint mapping, s
 
 The backend response does not currently expose historical numeric series, so Revenue, Closing %, and Goal Progress sparklines are gracefully omitted. The reusable SVG primitive is ready for those three placements when the existing response supplies sufficient points; the frontend does not reconstruct a series from trend summaries. No slide, route, ServiceTitan request, backend calculation, normalization rule, endpoint, or dependency changed.
 
+## 2026-08-12 — Phase 15 Local Display Command Architecture
+
+- [x] Add a transport-independent presentation command contract and command bus.
+- [x] Support Next, Previous, Go To Slide, Pause, Resume, and Restart Timer commands.
+- [x] Add an in-memory Display Manager with isolated slide, timer, paused state, and presentation profile per display.
+- [x] Route `/display/:displayId` through the targeted local display controller.
+- [x] Improve `/remote` with immediate display selection, targeted status, and the complete command set.
+- [x] Preserve the light theme, mobile touch sizing, keyboard focus, and reduced-motion behavior.
+- [x] Test dispatch, target changes, wrapping, pause/resume, timer restart, command validation, and isolation.
+- [x] Keep the architecture frontend-local with no WebSockets or backend synchronization.
+
+The implemented boundary is `Remote Controller → Command Bus → Display Manager`. A future WebSocket adapter can deserialize the same `{ type, displayId, payload }` command contract into the bus, and manager subscriptions can publish authoritative state without changing remote button handlers or presentation slides. State currently exists only inside one browser runtime; separate tabs, windows, and physical displays do not synchronize. ServiceTitan integration, KPI calculations, historical engines, dashboard business logic, and all five presentation slides were unchanged.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

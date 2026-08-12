@@ -5,8 +5,8 @@ import { ManagementAttention } from "./ManagementAttention";
 import { SlideDeck } from "./SlideDeck";
 import { managementInsights } from "../lib/presentation";
 
-export function DashboardLayout({ data, error, refreshing }) {
-  const presentation = usePresentationController();
+export function DashboardLayout({ data, displayId, error, refreshing }) {
+  const presentation = usePresentationController(displayId);
   const rotationPaused = !presentation.isRunning || refreshing || Boolean(error);
 
   useEffect(() => {
