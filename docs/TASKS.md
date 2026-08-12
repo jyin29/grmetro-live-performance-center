@@ -1877,9 +1877,19 @@ The backend response does not currently expose historical numeric series, so Rev
 - [x] Improve `/remote` with immediate display selection, targeted status, and the complete command set.
 - [x] Preserve the light theme, mobile touch sizing, keyboard focus, and reduced-motion behavior.
 - [x] Test dispatch, target changes, wrapping, pause/resume, timer restart, command validation, and isolation.
-- [x] Keep the architecture frontend-local with no WebSockets or backend synchronization.
 
-The implemented boundary is `Remote Controller → Command Bus → Display Manager`. A future WebSocket adapter can deserialize the same `{ type, displayId, payload }` command contract into the bus, and manager subscriptions can publish authoritative state without changing remote button handlers or presentation slides. State currently exists only inside one browser runtime; separate tabs, windows, and physical displays do not synchronize. ServiceTitan integration, KPI calculations, historical engines, dashboard business logic, and all five presentation slides were unchanged.
+## 2026-08-12 — Phase 15 Real-Time Multi-Device Synchronization
+
+- [x] Move presentation-only state and every 30-second rotation timer to an in-memory backend Presentation Manager.
+- [x] Reuse the existing transport-neutral presentation command contract through a backend command bus.
+- [x] Add validated `/ws/presentation` display and remote subscriptions with targeted state broadcasts.
+- [x] Hydrate displays and remotes immediately from authoritative state and reconnect automatically with bounded backoff.
+- [x] Make `/remote` a live multi-device controller whose selected-display state reflects changes from other remotes.
+- [x] Remove independent browser slide advancement while preserving all five existing slides and their presentation behavior.
+- [x] Centralize display profiles and command identifiers in shared configuration.
+- [x] Cover multiple displays, multiple remotes, target isolation, commands, backend rotation, validation, reconnect hydration, and restart defaults.
+
+Remaining Phase 15 work is operational validation on the final office network and approved display hardware, including the documented long-running stability and multi-TV acceptance runs. Final room/hardware approval remains an existing business blocker.
 
 # 31. Final Completion Criteria
 

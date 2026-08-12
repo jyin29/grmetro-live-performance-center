@@ -14176,24 +14176,28 @@ The existing dashboard response also adds `historicalTrends`. The reusable backe
 
 ---
 
-# 477. Phase 15 Local Display Command Architecture
+# 477. Phase 15 Networked Display Command Architecture
 
-The dashboard presentation controller is divided into three frontend-only responsibilities:
+The presentation controller is divided into replaceable responsibilities:
 
 ```text
-Remote Controller → Presentation Command Bus → Display Manager
+Remote Controller → WebSocket Transport → Backend Presentation Command Bus → Presentation Manager
 ```
 
 The command bus accepts transport-neutral command objects containing a command type, target `displayId`, and optional payload. Its supported commands are Next Slide, Previous Slide, Go To Slide, Pause Rotation, Resume Rotation, and Restart Rotation Timer. The remote controller dispatches these commands and does not mutate presentation state directly.
 
-The in-memory Display Manager owns one isolated state record and rotation timer for each configured local display. A record contains its current slide, running or paused state, timer revision, and presentation profile. Commands validate the target and update only that display. Previous and next navigation wrap across the existing five-entry slide registry. `/display/:displayId` selects the matching local display record, while `/remote` can change its target without changing state or issuing a command.
+The backend in-memory Presentation Manager owns one isolated authoritative state record and timer for each configured display. A snapshot contains `displayId`, display name, `activeSlideIndex`, `isRunning`, `rotationStartedAt`, `nextRotationAt`, presentation profile, `lastUpdated`, and `timerRevision`. This record contains presentation control only; dashboard KPI data remains in the existing dashboard cache and REST response. Commands validate the target and update only that display. Previous and next navigation wrap across the existing five-entry slide registry.
 
-This phase is intentionally local to one browser JavaScript runtime. It adds no WebSocket, backend endpoint, persistence, cross-tab messaging, or network synchronization. Consequently, a `/remote` page controls only display routes rendered in that same runtime; separately opened browser tabs and physical displays do not yet share state.
+The WebSocket endpoint is `/ws/presentation`. A client connects with a validated `displayId` and a `clientType` of `display` or `remote`. The backend immediately sends the latest snapshot. Display subscriptions receive only their target display, while every remote subscribed to that display receives the same broadcast. Only remote clients may submit the existing transport-neutral command objects. The WebSocket gateway performs subscription, serialization, and routing only; it does not implement presentation decisions.
 
-Future synchronization shall adapt transport messages into the same command object contract and dispatch them through the command bus:
+The complete flow is:
 
 ```text
-Remote Controller → WebSocket transport → Presentation Command Bus → Display Manager
+Remote → WebSocket → Backend Presentation Controller → Command Bus → Authoritative Display State → Broadcast → Connected Displays and Remotes
 ```
 
-The command bus handler and Display Manager subscription boundary are the synchronization hook points. A future transport may serialize command objects, route them by `displayId`, hydrate authoritative display snapshots, and publish manager changes without rewriting remote control actions or presentation slides.
+The **30-second rotation timer lives only in the backend Presentation Manager**. Browsers never advance slides independently. Each manual navigation, resume, or restart command rearms the target display's backend timer and increments its timer revision. All observers render the same broadcast snapshot, so two browsers showing one display remain synchronized rather than calculating from independent client timers.
+
+Clients automatically reconnect with bounded exponential backoff. A browser refresh, remote reconnect, or display reconnect receives the current snapshot as its first message and therefore needs no manual refresh. During a temporary disconnect, a dashboard keeps its last rendered slide and reports that presentation synchronization is reconnecting. After a backend restart, in-memory presentation state intentionally resets to the configured Slide 1/running defaults; reconnecting clients hydrate that new authoritative snapshot and continue with a newly backend-owned timer.
+
+For local development, start the backend and Vite dashboard in separate terminals with `npm run dev:backend` and `npm run dev:dashboard`, then open `/display/main-office` and `/remote`. Vite proxies both `/api` HTTP traffic and `/ws` WebSocket upgrades to `127.0.0.1:3000`. Use multiple browser windows or devices on the same reachable development host to verify live synchronization. Production uses the same-origin `/ws/presentation` URL.

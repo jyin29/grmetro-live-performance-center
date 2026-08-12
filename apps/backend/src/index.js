@@ -12,6 +12,10 @@ const { TvManager } = require("./tv/tvManager");
 const { ExpirationMonitor } = require("./tv/expirationMonitor");
 const { createBrowserManagerForConfig } = require("./browser/createBrowserManager");
 const { createServiceTitanClient } = require("./servicetitan/createServiceTitanClient");
+const { PRESENTATION_DISPLAYS, PRESENTATION_SLIDE_COUNT, PRESENTATION_ROTATION_MILLISECONDS } = require("../../../shared/presentation");
+const { createPresentationManager } = require("./presentation/presentationManager");
+const { createPresentationCommandBus } = require("./presentation/presentationCommandBus");
+const { createPresentationWebSocket } = require("./presentation/presentationWebSocket");
 
 function start() {
   const config = loadConfig();
@@ -26,6 +30,9 @@ function start() {
     returnTransitionMilliseconds: config.returnTransitionMilliseconds
   });
   const expirationMonitor = new ExpirationMonitor({ tvManager });
+  const presentationManager = createPresentationManager({ displays: PRESENTATION_DISPLAYS,
+    slideCount: PRESENTATION_SLIDE_COUNT, rotationMilliseconds: PRESENTATION_ROTATION_MILLISECONDS });
+  const presentationCommandBus = createPresentationCommandBus({ handleCommand: presentationManager.handleCommand });
   const scheduler = provider ? new RefreshScheduler({
     provider, cache, logger,
     intervalMilliseconds: config.refreshIntervalSeconds * 1000,
@@ -41,11 +48,13 @@ function start() {
     application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv,
     host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan"
   }));
-  installGracefulShutdown({ server, logger, scheduler: { stop() { scheduler?.stop(); expirationMonitor.stop(); serviceTitanClient?.stop(); browserManager?.stop(); } } });
+  const presentationWebSocket = createPresentationWebSocket({ server, manager: presentationManager, commandBus: presentationCommandBus, logger });
+  installGracefulShutdown({ server, logger, scheduler: { stop() { scheduler?.stop(); expirationMonitor.stop(); presentationWebSocket.close(); presentationManager.destroy(); serviceTitanClient?.stop(); browserManager?.stop(); } } });
   expirationMonitor.start();
   browserManager?.start();
   scheduler.start();
-  return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient };
+  return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient,
+    presentationManager, presentationWebSocket };
 }
 
 if (require.main === module) start();
