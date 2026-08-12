@@ -14360,3 +14360,41 @@ History
 Each KPI card may show the existing immediately previous-refresh comparison and existing backend trend direction. The detail also displays matching recent technician achievement/event records, current management insights and alerts, data-quality labels, and dashboard refresh time. Unavailable history and KPIs are explicit. The compact responsive card grid follows the approved light remote theme and avoids unnecessary whitespace.
 
 This management feature does not change the five-slide TV dashboard, Presentation Manager, display command routing, Business Rules Engine, Historical Engine, Trend Engine, Event Engine, Administration platform, KPI calculations, or ServiceTitan integration.
+
+# 482. Phase 22 — Operations Console
+
+The `/remote` route is the active-management companion to the passive television dashboard. Phase 22 turns
+that route into a responsive Operations Console without changing the television route or any backend
+business owner. It reuses the cached dashboard payload, read-only administration projection, management
+refresh route, and presentation WebSocket command infrastructure.
+
+The console has six keyboard-accessible tabs:
+
+```text
+Dashboard
+Technicians
+Displays
+Management
+Administration
+Diagnostics
+```
+
+Dashboard summarizes refresh timing, backend and WebSocket health, the active event, and connected-client
+counts. Technicians provides a searchable team list and the existing full technician management drilldown.
+Displays lists every registered display and exposes pause, resume, restart-rotation, jump-to-slide, and
+dashboard-refresh actions. Presentation commands are always sent with the currently selected stable display
+ID, so an action cannot change another display. Management groups current insights, recent events, alerts,
+celebrations, and business-rule results. Administration embeds the existing read-only administration
+projection rather than creating a second configuration model. Diagnostics combines safe backend, dashboard,
+presentation, display-manager, WebSocket, scheduler, watchdog, kiosk, connection, reconnect, build, and
+application indicators.
+
+The existing dashboard poll supplies live KPI, technician, event, and insight changes. The selected display's
+existing WebSocket connection supplies immediate presentation state, while the safe administration projection
+is refreshed in the background every five seconds for fleet and runtime changes. A one-second presentation-only
+clock updates the automatic-refresh countdown. None of these client updates contacts ServiceTitan or requires a
+page reload.
+
+Phase 22 does not modify ServiceTitan integration, KPI calculations, the Business Rules Engine, Historical
+Engine, Trend Engine, Event Engine, presentation synchronization, Administration platform behavior, or the
+five-slide television dashboard.

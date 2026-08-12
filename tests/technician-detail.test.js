@@ -42,4 +42,4 @@ test("technician drilldown renders grouped available backend metrics", () => {
 });
 test("technician drilldown renders missing KPI handling", () => { const markup = render(); assert.match(markup, /Service Revenue/); assert.match(markup, /No data/); assert.match(markup, /Data quality: unavailable/); });
 test("technician drilldown renders backend historical trends", () => { const markup = render(); assert.match(markup, /Increasing/); assert.match(markup, /\+\$500/); assert.match(markup, /Improving/); });
-test("technician drilldown renders recent events, achievements, and alerts", () => { const markup = render(); assert.match(markup, /Achievements &amp; Recent Events/); assert.match(markup, /Revenue goal achieved/); assert.match(markup, /Install data needs review/); });
+test("technician drilldown renders recent events, achievements, insights, and alerts", () => { const markup = render(); for (const text of ["Recent Events", "Achievements", "Revenue goal achieved", "Management Insights", "Current Alerts", "Install data needs review"]) assert.match(markup, new RegExp(text)); });

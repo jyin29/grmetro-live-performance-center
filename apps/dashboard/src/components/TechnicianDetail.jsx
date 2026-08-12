@@ -33,6 +33,8 @@ export function TechnicianDetail({ data, selectedId }) {
   const { technician } = model;
   const overallTrend = trendPresentation(model.trends?.overallRanking);
   const overallComparison = formatComparison(model.comparison?.overallRanking, "integer", "rank");
+  const achievements = model.events;
+  const alerts = model.insights.filter((item) => item.priority === "critical" || item.priority === "warning");
   return <section className="technician-detail" aria-labelledby="technician-detail-title">
     <header><div><p>Technician Detail</p><h2 id="technician-detail-title">{technician.name}</h2></div><div className="technician-detail__refresh"><span>Refresh time</span><strong>{refreshLabel(model.refreshedAt)}</strong></div></header>
     <div className="technician-detail__groups">
@@ -45,7 +47,7 @@ export function TechnicianDetail({ data, selectedId }) {
         <article><p>Historical Comparison</p><strong>{model.comparison?.available ? "Available" : "Not available"}</strong><small>{model.comparison?.reason || "Compared with the previous successful refresh"}</small></article>
         <article><p>Historical Trend</p><strong>{model.trends?.available ? "Available" : "Not available"}</strong><small>{model.trends?.reason || `${model.trends.snapshotCount || "Multiple"} snapshots analyzed`}</small></article>
       </div></section>
-      <section className="technician-detail__activity"><EventList title="Achievements & Recent Events" items={model.events} empty="No recent events for this technician." /><EventList title="Current Alerts & Management Insights" items={model.insights} empty="No current management alerts." /></section>
+      <section className="technician-detail__activity"><EventList title="Recent Events" items={model.events} empty="No recent events for this technician." /><EventList title="Achievements" items={achievements} empty="No recent achievements for this technician." /><EventList title="Management Insights" items={model.insights} empty="No current management insights." /><EventList title="Current Alerts" items={alerts} empty="No current management alerts." /></section>
     </div>
   </section>;
 }
