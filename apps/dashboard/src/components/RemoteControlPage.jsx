@@ -3,11 +3,17 @@ import { useEffect, useState } from "react";
 import { DEFAULT_DISPLAY_ID } from "../config/displayRegistry";
 import { usePresentationController } from "../controller/PresentationController";
 import { fetchRefreshStatus, requestDashboardRefresh } from "../api/managementApi";
+import { useDashboard } from "../hooks/useDashboard";
+import { resolveSelectedTechnician } from "../lib/technicianDetail";
+import { TechnicianDetail } from "./TechnicianDetail";
 
 export function RemoteControlPage() {
   const [selectedDisplayId, setSelectedDisplayId] = useState(DEFAULT_DISPLAY_ID);
   const controller = usePresentationController(selectedDisplayId, "remote");
   const [refreshStatus, setRefreshStatus] = useState({ state: "idle", message: "Ready to refresh" });
+  const dashboard = useDashboard();
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
+  const selectedTechnician = resolveSelectedTechnician(dashboard.data?.technicians, selectedTechnicianId);
   useEffect(() => { fetchRefreshStatus().then(setRefreshStatus).catch(() => {}); }, []);
   async function refreshDashboard() {
     setRefreshStatus({ state: "refreshing", message: "Refreshing dashboard data…" });
@@ -71,6 +77,21 @@ export function RemoteControlPage() {
       </button>
       <div className={`remote-management__status is-${refreshStatus.state}`} role="status" aria-live="polite">{refreshStatus.message}</div>
     </section>
+    <section className="remote-technician-picker" aria-labelledby="technician-picker-title">
+      <div><p>Management workflow</p><h2 id="technician-picker-title">Inspect a technician</h2></div>
+      <p>Select a technician to understand the backend KPIs, history, trends, recognition, and current attention items behind their performance. This selection stays on this remote and never changes a display.</p>
+      {dashboard.loading && !dashboard.data ? <div className="remote-technician-picker__state">Loading technician data…</div> : dashboard.error && !dashboard.data
+        ? <button type="button" onClick={() => dashboard.retry()}>Retry Technician Data</button>
+        : <div className="remote-technician-picker__choices" role="list" aria-label="Technicians">
+          {(dashboard.data?.technicians || []).map((technician) => <button key={technician.id} type="button" role="listitem"
+            className={String(technician.id) === String(selectedTechnician?.id) ? "is-active" : ""}
+            aria-pressed={String(technician.id) === String(selectedTechnician?.id)}
+            onClick={() => setSelectedTechnicianId(technician.id)}><span>{technician.initials}</span>{technician.name}</button>)}
+        </div>}
+      {dashboard.refreshing && <div className="remote-technician-picker__state" role="status">Updating technician detail…</div>}
+      {dashboard.error && dashboard.data && <div className="remote-technician-picker__state is-warning" role="status">Showing the last successful technician data.</div>}
+    </section>
+    <TechnicianDetail data={dashboard.data} selectedId={selectedTechnician?.id} />
     <p className="remote-note">Commands are synchronized through the backend and sent only to the selected display.</p>
   </main>;
 }

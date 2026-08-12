@@ -2003,6 +2003,19 @@ All work is complete only when:
 - [ ] Management approves KPI meanings and rankings.
 - [ ] Version `v1.0.0` is tagged.
 
+## 2026-08-12 — Phase 21 Technician Management Drilldown
+
+- [x] Add a local Technician Detail section to `/remote` without adding a TV slide or display command.
+- [x] Allow quick selection of every technician in the current cached dashboard payload.
+- [x] Preserve the stable technician selection while refreshed payload objects replace prior data.
+- [x] Render all eleven existing backend KPI records in Revenue, Sales, and Operations groups.
+- [x] Render backend-prepared goals, remaining values, goal progress, overall rank, and rank movement.
+- [x] Render existing historical comparisons, trend directions, recent technician events, achievements, management insights, and alerts.
+- [x] Preserve missing KPI values as `No data` and expose backend data-quality states.
+- [x] Add focused coverage for selection, rendering, refresh updates, missing KPIs, trends, and events.
+- [x] Document the drilldown architecture, KPI grouping, and management workflow.
+
+The drilldown is a responsive, read-only operations view backed exclusively by the existing cached dashboard response. Its technician selection is local to one remote browser and cannot affect any television. Phase 21 changes no ServiceTitan integration, KPI calculation, business/history/trend/event engine, presentation synchronization, administration behavior, or five-slide TV presentation.
 ---
 
 # End of TASKS.md
