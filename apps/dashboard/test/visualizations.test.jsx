@@ -38,7 +38,7 @@ describe("dashboard visualizations", () => {
     expect(PRESENTATION_SLIDES).toHaveLength(5);
     expect(PRESENTATION_SLIDES.every(({ Component }) => typeof Component === "function")).toBe(true);
     expect(markup).toContain('data-slide-id="revenue"');
-    expect(markup).toContain("Daily Revenue Progress");
+    expect(markup).toContain("Revenue &amp; Goal Progress");
     expect(markup).toContain("Slide 1 of 5");
     expect(markup).toContain('aria-label="Show Revenue"');
 
@@ -49,7 +49,7 @@ describe("dashboard visualizations", () => {
     expect(performanceMarkup).toContain('data-slide-id="sales"');
     expect(performanceMarkup).toContain("Slide 2 of 5");
     expect(performanceMarkup).toContain("Sales");
-    expect(performanceMarkup).toContain("Closing Performance");
+    expect(performanceMarkup).toContain("Closing %");
 
     const businessMarkup = renderToStaticMarkup(<SlideDeck data={{ ...data, slides: {
       revenue: { axis: { maximum: 0, format: "currency" }, metrics: [], rows: [] },

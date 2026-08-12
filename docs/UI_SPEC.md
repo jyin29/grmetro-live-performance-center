@@ -2115,6 +2115,12 @@ An inline SVG `Sparkline` presentation primitive is available for Revenue, Closi
 
 # End of UI_SPEC.md
 
+## Final KPI-density presentation pass
+
+Revenue uses a single full-height ranked table instead of a revenue table plus a duplicate compact chart. Each technician row presents Revenue Today, its relative distribution bar, configured Revenue Goal, backend-prepared Revenue Remaining, and backend-prepared Goal Progress. Sales gives Closing % the dominant region and pairs it with opportunities and lead volume. Technician cards hide unavailable metric slots and fill them only with existing available canonical KPI values. Operations retains calls/activity and install economics without estimating unresolved classifications. Recognition remains the dedicated Overall Top 3 podium.
+
+Presentation headings use business language rather than implementation labels such as `Tier 1`, `Tier 2`, or `confirmed values only`. At 720p, the Revenue table remains visible; it is not replaced by or reduced to an empty secondary panel.
+
 The next companion document is:
 
 ```text

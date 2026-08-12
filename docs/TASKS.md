@@ -1964,6 +1964,17 @@ KPI, snapshot, comparison, trend, synchronization, Event Engine, and Business Ru
 
 # 31. Final Completion Criteria
 
+## 2026-08-12 — KPI catalog presentation density pass
+
+- [x] Audit every cataloged Tier 1 and Tier 2 KPI against the existing prepared dashboard payload.
+- [x] Surface every presently renderable Tier 1 KPI without adding calculations or a sixth slide.
+- [x] Replace unavailable technician-card slots with available opportunity and lead KPIs.
+- [x] Redesign Revenue around Revenue Today, distribution, Goal, Remaining, and Goal Progress.
+- [x] Remove the duplicate compact Revenue chart and implementation-facing tier labels.
+- [x] Preserve unavailable mappings as unavailable and record why they cannot be shown.
+
+This presentation-only pass changed no ServiceTitan integration, backend API, KPI calculation, engine, synchronization, or administration behavior. The remaining unavailable metrics are cataloged in `docs/DASHBOARD_CONTENT_AUDIT.md`.
+
 All work is complete only when:
 
 - [ ] Every release checklist item is complete.

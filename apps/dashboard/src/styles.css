@@ -274,6 +274,17 @@ button { font: inherit; }
 }
 
 /* Business-domain presentation hierarchy. */
+.question-slide { grid-template-rows: auto minmax(0, 1fr); }
+.pace-panel { display: flex; flex-direction: column; }
+.pace-list { flex: 1; align-content: stretch; grid-template-rows: repeat(5, minmax(0, 1fr)); }
+.revenue-table-heading { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(560px, 1.22fr); align-items: end; }
+.revenue-table-columns { display: grid; grid-template-columns: 1.2fr 1fr 1fr .7fr; gap: clamp(12px, 1vw, 20px); color: var(--muted); font-size: clamp(13px, .82vw, 17px); font-weight: 850; letter-spacing: .06em; text-align: right; text-transform: uppercase; }
+.pace-row { grid-template-columns: 52px minmax(130px,.52fr) minmax(180px,1fr) minmax(155px,.72fr) minmax(135px,.58fr) minmax(145px,.64fr) minmax(82px,.35fr); border-top: 1px solid var(--border); }
+.pace-row:first-child { border-top: 0; }
+.pace-row__value,.pace-row__support { text-align: right; font-variant-numeric: tabular-nums; }
+.pace-row__support { font-size: clamp(22px,1.4vw,29px); font-weight: 850; }
+.pace-row__value .comparison-value { display: flex; justify-content: flex-end; margin: 3px 0 0; }
+.pace-row__track { height: clamp(24px, 1.7vw, 34px); }
 .operations-health { grid-template: auto minmax(0, 1fr) / repeat(2, minmax(0, 1fr)); }
 .operations-health > .attention-heading { grid-column: 1 / -1; }
 .operations-domain__panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: clamp(24px, 1.8vw, 36px); }
@@ -286,6 +297,10 @@ button { font: inherit; }
 .operations-domain__panel .comparison-bar { height: clamp(28px, 1.8vw, 36px); }
 .operations-domain__panel .comparison-bar b { font-size: clamp(15px, .9vw, 18px); }
 @media (max-height: 760px) {
+  .revenue-table-heading { grid-template-columns: minmax(300px, 1fr) minmax(460px, 1.15fr); }
+  .pace-row { grid-template-columns: 40px minmax(105px,.45fr) minmax(130px,.75fr) minmax(120px,.6fr) minmax(105px,.5fr) minmax(110px,.52fr) 68px; }
+  .pace-row__track { height: 20px; }
+  .pace-row__support { font-size: 20px; }
   .operations-health { gap: 10px; }
   .operations-domain__panel { padding: 14px 18px; }
   .operations-domain__panel .comparison-chart { gap: 10px; }

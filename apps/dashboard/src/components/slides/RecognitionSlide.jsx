@@ -14,7 +14,7 @@ export function RecognitionSlide({ data }) {
   }
 
   return <main className="recognition-slide dashboard-slide" aria-labelledby="recognition-title">
-    <header className="top-three-heading"><p>Tier 1 · Overall standing</p><h2 id="recognition-title">Recognition</h2><span>Overall Top 3</span></header>
+    <header className="top-three-heading"><p>Overall standing</p><h2 id="recognition-title">Top 3</h2><span>Today’s top performers</span></header>
     <section className="podium" aria-label="Top three technicians">{[podium[1], podium[0], podium[2]].filter(Boolean).map((technician) => <article className={`podium-card podium-card--${technician.overall.rank}`} key={technician.id}>
       <span className="podium-card__place">#{technician.overall.rank}</span><span className="recognition-hero__avatar">{technician.initials}</span><h3>{technician.name}</h3>
       <div><span>Revenue</span><AnimatedMetric metric={technician.kpis?.revenue} /></div><div><span>Closing</span><AnimatedMetric metric={technician.kpis?.closingRate} /></div>
