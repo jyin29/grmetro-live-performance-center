@@ -1917,6 +1917,21 @@ The backend response does not currently expose historical numeric series, so Rev
 
 Remaining Phase 15 work is operational validation on the final office network and approved display hardware, including the documented long-running stability and multi-TV acceptance runs. Final room/hardware approval remains an existing business blocker.
 
+## 2026-08-12 — Phase 17 Unattended Display Hardening
+
+- [x] Add a reusable watchdog for frozen timers, stale presentation synchronization, stale dashboard refreshes, and disconnected WebSockets.
+- [x] Recover on visibility restoration, page restoration, network return, backend restart, and reconnect failure.
+- [x] Track connection state, reconnects, uptime, last synchronization, and last dashboard refresh only in diagnostics.
+- [x] Add a default-off diagnostics overlay with display ID, profile, uptime, WebSocket/backend state, reconnects, and build version.
+- [x] Add configurable kiosk, watchdog, reconnect, cursor-idle, diagnostics, and build settings.
+- [x] Add fullscreen controls, idle cursor hiding, overscroll/selection/drag prevention, and render-error recovery without removing accessibility.
+- [x] Explicitly clean up watchdog, polling, diagnostics, cursor, visibility, and recovery timers/listeners.
+- [x] Cover recovery, watchdog, diagnostics, fullscreen, hidden-tab, backend-restart, and cleanup behavior.
+
+Phase 17 changes dashboard operations only. Production still requires final-device kiosk validation, an
+eight-hour stability run (preferably 24 hours), OS process supervision, final hardware confirmation, and
+the existing live business-mapping approvals.
+
 # 31. Final Completion Criteria
 
 All work is complete only when:

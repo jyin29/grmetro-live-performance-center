@@ -14241,3 +14241,32 @@ Restrained opacity and small vertical movement provide entrance and exit without
 a full-screen transition. A live status announces events to screen readers, presentation controls stay
 keyboard accessible, and the global reduced-motion rule makes transitions immediate when requested.
 After expiration, the synchronized five-slide presentation continues from the same slide.
+
+# 479. Phase 17 — Unattended Display Production Hardening
+
+Phase 17 adds a presentation-client reliability layer only. It does not alter ServiceTitan integration,
+KPI or historical calculations, events, the Presentation Manager, WebSocket protocol, or business logic.
+
+Each display runs one reusable watchdog with configurable inspection, presentation-staleness, dashboard-
+staleness, and reconnect intervals. It observes the last authoritative WebSocket synchronization and last
+successful cached dashboard fetch. A disconnected or stale presentation forces a fresh WebSocket connection;
+a stale dashboard fetch triggers a cached REST refresh. Visibility restoration, `pageshow`, and network
+`online` events immediately run the same recovery path, covering sleep/wake, network interruption, and a
+backend restart. The display preserves its last rendered payload during recovery. A render error boundary
+shows a branded recovery state and performs a last-resort reload after five seconds.
+
+Kiosk mode is opt-in through `VITE_KIOSK_MODE=true`. It requests browser fullscreen when permitted; browsers
+may still require an initial user gesture, so production installations should launch Edge with `--kiosk`.
+Shift+F (and F11 where exposed to the page) toggles fullscreen. Display CSS prevents overscroll, accidental
+selection, and dragging without removing semantic markup, focus styles, keyboard controls, reduced-motion
+support, or selection inside interactive controls. The cursor hides after a configurable idle period.
+
+An optional diagnostics overlay is disabled by default and can be enabled with
+`VITE_DIAGNOSTICS_VISIBLE=true` or toggled locally with Shift+D. It shows only operational data: display ID,
+presentation profile, client uptime, WebSocket status, reconnect count, backend availability, and optional
+`VITE_BUILD_VERSION`. It contains no ServiceTitan or customer data.
+
+Production should use a same-origin build, stable private-network backend address, Edge kiosk startup,
+disabled device sleep, Task Scheduler restart-on-failure for backend and browser, and a build version tied to
+the deployed commit. Validate wake, offline/online, backend restart, browser restart, eight-hour memory
+stability, and every intended display device. The client watchdog complements operating-system supervision.

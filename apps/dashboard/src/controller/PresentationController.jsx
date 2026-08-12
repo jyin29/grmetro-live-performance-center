@@ -3,6 +3,7 @@ import { DEFAULT_DISPLAY_ID, findDisplay, PRESENTATION_DISPLAYS } from "../confi
 import { PRESENTATION_SLIDES } from "../config/slideRegistry";
 import { createPresentationCommand, PRESENTATION_COMMANDS } from "./presentationCommands";
 import { createWebSocketPresentationTransport } from "./presentationTransport";
+import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 
 const PresentationControllerContext = createContext(null);
 const slideCount = PRESENTATION_SLIDES.length;
@@ -19,19 +20,26 @@ export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_I
     activeSlideIndex: 0, isRunning: true, timerRevision: 0, lastUpdated: null }));
   const [connectionState, setConnectionState] = useState("connecting");
   const [transport, setTransport] = useState(null);
+  const [runtime, setRuntime] = useState({ reconnectCount: 0, lastSynchronization: null });
 
   useEffect(() => {
     setState((current) => ({ ...current, displayId, displayName: display.name, presentationProfile: display.presentationProfile }));
-    const nextTransport = createWebSocketPresentationTransport({ displayId, clientType, onState: setState, onConnectionChange: setConnectionState });
+    const nextTransport = createWebSocketPresentationTransport({ displayId, clientType,
+      reconnectMinimumMs: RUNTIME_SETTINGS.reconnectMinimumMs, reconnectMaximumMs: RUNTIME_SETTINGS.reconnectMaximumMs,
+      onState: (nextState) => { setState(nextState); setRuntime((current) => ({ ...current, lastSynchronization: Date.now() })); },
+      onConnectionChange: setConnectionState,
+      onReconnectAttempt: () => setRuntime((current) => ({ ...current, reconnectCount: current.reconnectCount + 1 })),
+    });
     setTransport(nextTransport);
     return () => nextTransport.close();
   }, [clientType, display.name, display.presentationProfile, displayId]);
   const send = useCallback((type, payload) => transport?.send(createPresentationCommand(type, displayId, payload)), [displayId, transport]);
   return useMemo(() => ({
-    ...state, connectionState, activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex % slideCount], displays: PRESENTATION_DISPLAYS, slides: PRESENTATION_SLIDES,
+    ...state, ...runtime, connectionState, activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex % slideCount], displays: PRESENTATION_DISPLAYS, slides: PRESENTATION_SLIDES,
     nextSlide: () => send(PRESENTATION_COMMANDS.NEXT_SLIDE), pauseRotation: () => send(PRESENTATION_COMMANDS.PAUSE_ROTATION),
     previousSlide: () => send(PRESENTATION_COMMANDS.PREVIOUS_SLIDE), restartRotationTimer: () => send(PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER),
     resumeRotation: () => send(PRESENTATION_COMMANDS.RESUME_ROTATION), selectSlide: (index) => send(PRESENTATION_COMMANDS.GO_TO_SLIDE, { index }),
     setRuntimePaused: () => {},
-  }), [connectionState, send, state]);
+    reconnect: () => transport?.reconnect(),
+  }), [connectionState, runtime, send, state, transport]);
 }

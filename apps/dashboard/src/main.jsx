@@ -3,9 +3,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { PresentationControllerProvider } from "./controller/PresentationController";
 import "./styles.css";
+import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <PresentationControllerProvider><App /></PresentationControllerProvider>
+    <DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary>
   </StrictMode>,
 );
