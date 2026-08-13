@@ -337,29 +337,63 @@ button { font: inherit; }
 
 /* 1080p presentation envelope: stationary shell, dense related-metric groups, and dominant values. */
 @media (min-width: 1600px) and (max-height: 1080px) {
-  .app-shell { padding: 20px 26px; gap: 14px; }
-  .header { min-height: 84px; }
-  .header__logo { height: 58px; }
-  .management-attention { min-height: 68px; }
+  .app-shell { padding: 14px 20px; gap: 10px; }
+  .header { min-height: 76px; padding-inline: 24px; }
+  .header__logo { width: 200px; height: 52px; }
+  .header h1 { font-size: 46px; }
+  .header__clock { font-size: 38px; }
+  .header__refresh-block strong { font-size: 28px; }
+  .management-attention { min-height: 62px; padding-block: 7px; }
   .slide-stage, .slide-deck, .dashboard-slide { min-height: 0; overflow: hidden; }
-  .question-slide__heading h2,.top-three-heading h2,.attention-heading h2 { font-size: 46px; }
-  .business-performance,.technician-performance { gap: 14px; }
-  .business-performance__revenue,.business-performance__conversion,.operations-domain__panel { padding: 20px 24px; }
-  .business-performance .panel__heading h3,.operations-domain__panel .panel__heading h3 { font-size: 27px; }
+  .question-slide__heading h2,.top-three-heading h2,.attention-heading h2 { font-size: 52px; }
+  .question-slide__heading > span,.top-three-heading > span { font-size: 22px; }
+  .business-performance,.technician-performance { gap: 10px; }
+  .business-performance { grid-template-columns: minmax(390px,.68fr) minmax(0,1.55fr); }
+  .business-performance__heading h2,.technician-performance__heading h2 { font-size: 50px; }
+  .business-performance__heading > span,.technician-performance__heading > span { font-size: 21px; }
+  .business-performance__revenue,.business-performance__conversion,.operations-domain__panel { padding: 16px 20px; }
+  .business-performance .panel__heading { padding-bottom: 12px; }
+  .business-performance .panel__heading h3,.operations-domain__panel .panel__heading h3 { font-size: 30px; }
   .business-performance__conversion .comparison-chart,.operations-domain__panel .comparison-chart { gap: 12px; padding-top: 10px; }
-  .business-performance__conversion .comparison-chart__rows,.operations-domain__panel .comparison-chart__rows { gap: 8px; }
-  .business-performance__conversion .comparison-row__metrics,.operations-domain__panel .comparison-row__metrics { gap: 5px; }
-  .business-performance__conversion .comparison-bar,.operations-domain__panel .comparison-bar { height: 24px; }
-  .business-performance__revenue .comparison-bar { height: 34px; }
-  .business-performance__revenue .comparison-bar b { font-size: 20px; }
-  .business-performance__revenue .comparison-row > strong { font-size: 22px; }
-  .performance-card { padding: 17px 20px; }
-  .performance-card__header { padding-bottom: 11px; }
-  .performance-card__metrics { gap: 12px 22px; padding: 14px 0; }
-  .technician-metric strong { font-size: clamp(32px,2vw,41px); }
-  .podium-card { padding: 22px 28px; }
-  .podium-card h3 { margin: 8px 0 14px; }
-  .footer { min-height: 22px; }
+  .business-performance__conversion .comparison-chart__rows,.operations-domain__panel .comparison-chart__rows { gap: 9px; }
+  .business-performance__conversion .comparison-row { grid-template-columns: minmax(150px,.3fr) minmax(0,1fr); }
+  .business-performance__conversion .comparison-row > strong { font-size: 25px; }
+  .business-performance__conversion .comparison-row__metrics,.operations-domain__panel .comparison-row__metrics { gap: 6px; }
+  .business-performance__conversion .comparison-bar,.operations-domain__panel .comparison-bar { height: 27px; }
+  .business-performance__conversion .comparison-bar b { font-size: 18px; }
+  .business-performance__revenue .comparison-chart { grid-template-columns: 1fr; gap: 14px; }
+  .business-performance__revenue .comparison-chart .chart-legend { flex-direction: row; }
+  .business-performance__revenue .comparison-chart__rows { grid-template-columns: 1fr; gap: 14px; }
+  .business-performance__revenue .comparison-row > strong { font-size: 25px; }
+  .business-performance__revenue .comparison-bar { height: 40px; }
+  .business-performance__revenue .comparison-bar b { font-size: 23px; }
+  .business-performance__revenue .comparison-metric__context { font-size: 16px; }
+  .technician-performance__grid { gap: 12px; }
+  .performance-card { padding: 14px 17px; }
+  .performance-card__header { gap: 12px; padding-bottom: 9px; }
+  .performance-card__avatar { width: 58px; font-size: 22px; }
+  .performance-card__identity h3 { font-size: 32px; }
+  .performance-card__identity span { font-size: 17px; font-weight: 750; }
+  .performance-card__ranking { gap: 8px; }
+  .performance-card__ranking strong { font-size: 46px; }
+  .performance-card__metrics { gap: 10px 20px; padding: 11px 0; }
+  .technician-metric span { margin-bottom: 5px; font-size: 18px; }
+  .technician-metric strong { font-size: clamp(38px,2.25vw,46px); }
+  .performance-card__status { padding-top: 8px; }
+  .comparison-value,.trend-indicator { font-size: 15px; }
+  .podium { gap: 18px; padding-inline: 20px; }
+  .podium-card { padding: 18px 24px; }
+  .podium-card__place { font-size: 62px; }
+  .podium-card .recognition-hero__avatar { width: 100px; font-size: 38px; }
+  .podium-card h3 { margin: 8px 0 12px; font-size: 44px; }
+  .podium-card > div { padding: 11px 0; font-size: 22px; }
+  .podium-card > div > span:last-child { font-size: 34px; }
+  .pace-panel,.pace-context { padding: 16px 20px; }
+  .pace-row { min-height: 66px; }
+  .pace-row > strong { font-size: 30px; }
+  .pace-row__value { font-size: 36px; }
+  .pace-row__track { height: 28px; }
+  .footer { min-height: 20px; font-size: 20px; }
 }
 @media (max-height: 760px) {
   .revenue-table-heading { grid-template-columns: minmax(300px, 1fr) minmax(460px, 1.15fr); }

@@ -2093,3 +2093,14 @@ behavior changed.
 - [x] Preserve all existing cached dashboard, management API, goal, administration, and WebSocket controller behavior.
 
 This is a frontend-only information-architecture and responsive presentation change. No backend route, API contract, KPI calculation, historical engine, business rule, display command, or synchronization behavior changed.
+
+## 2026-08-13 — Television readability density pass
+
+- [x] Reduce the stationary 1080p shell header, outer gutters, panel padding, and low-value spacing.
+- [x] Increase television-scale headings, technician identities, ranks, KPI values, bars, comparison context, trends, and podium content.
+- [x] Swap the Sales proportions so Closing % occupies the smaller left panel and the four pipeline metrics occupy the larger right panel.
+- [x] Preserve the existing Operations layout while increasing its chart typography and bar size consistently.
+- [x] Keep all five slides inside the 1920×1080 viewport without scrolling.
+
+This pass changes only dashboard CSS and presentation documentation. It adds or removes no KPI and changes no
+backend logic, API, calculation, ranking, WebSocket, business rule, or synchronization behavior.
