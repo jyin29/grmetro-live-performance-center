@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { PresentationControllerProvider } from "./controller/PresentationController";
 import "./styles.css";
+import "./remote-mobile-fixes.css";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(

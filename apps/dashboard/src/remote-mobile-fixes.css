@@ -1,0 +1,40 @@
+.home-activity button {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px 14px;
+  color: inherit;
+  background: #fff9e7;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-activity button:active {
+  background: #fff3c9;
+}
+
+.home-activity button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid rgba(8, 127, 131, .28);
+  outline-offset: -3px;
+}
+
+.home-activity button b {
+  color: #a38a42;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.operations-tabs button svg {
+  display: block;
+  margin: 0 auto;
+  transform-box: fill-box;
+  transform-origin: center;
+}
