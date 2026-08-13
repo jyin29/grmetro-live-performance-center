@@ -209,6 +209,15 @@ button { font: inherit; }
 @media (max-height: 760px) { .operations-health { grid-template-rows: minmax(150px,.65fr) minmax(0,1.35fr); gap: 10px; }.operations-health__hero { padding: 16px 26px; }.operations-health__signal { width: 76px; }.operations-health__hero h2 { font-size: 48px; }.operations-health__hero div > span { margin-top: 7px; font-size: 17px; }.operations-health__grid { gap: 10px; }.health-card { padding: 16px 22px; border-top-width: 4px; }.health-card p { margin-bottom: 8px; font-size: 17px; }.health-card strong { font-size: 34px; }.health-card > span { margin-top: 8px; font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 
+.goal-management__intro { color: var(--muted); font-size: 18px; font-weight: 650; }
+.goal-management__grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 18px; }
+.goal-management__grid label { display: grid; gap: 8px; color: #43545f; font-weight: 800; }
+.goal-management__grid input { min-height: 58px; padding: 0 16px; border: 2px solid var(--border); border-radius: 12px; color: #14212b; background: #f8fafb; font-size: 22px; font-weight: 850; }
+.goal-management__grid input:focus { outline: 4px solid rgba(8,127,131,.2); border-color: var(--teal); }
+.goal-management__actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.goal-management__actions button { min-height: 52px; padding: 0 24px; border: 1px solid var(--border); border-radius: 12px; font-weight: 850; }
+.operations-alert.is-success { color: #087157; background: #e7f7f1; }.operations-alert.is-error { color: #9c2f2f; background: #fff0f0; }
+
 /* Phase 12A local presentation remote. */
 .question-slide { width: 100%; min-height: 0; display: grid; grid-template: auto minmax(0, 1.25fr) minmax(220px, .7fr) / 1fr; gap: clamp(16px, 1.15vw, 22px); }
 .question-slide__heading,.top-three-heading,.attention-heading { display: flex; align-items: end; justify-content: space-between; padding-inline: 10px; }

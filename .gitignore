@@ -36,3 +36,7 @@ Thumbs.db
 drilldown-metadata*.json
 servicetitan-research-results*.json
 research-output/
+
+# Runtime-managed business configuration
+data/goals.json
+data/goals.json.tmp

@@ -17,6 +17,7 @@ const { createPresentationManager } = require("./presentation/presentationManage
 const { createPresentationCommandBus } = require("./presentation/presentationCommandBus");
 const { createPresentationWebSocket } = require("./presentation/presentationWebSocket");
 const { createEventEngine } = require("./events/eventEngine");
+const { GoalStore } = require("./goals/goalStore");
 
 function start() {
   const startedAt = new Date();
@@ -24,7 +25,8 @@ function start() {
   const logger = createLogger({ level: config.logLevel });
   const browserManager = createBrowserManagerForConfig(config, logger);
   const serviceTitanClient = browserManager ? createServiceTitanClient({ config, browserManager, logger }) : null;
-  const provider = createRefreshProvider({ config, browserManager, executor: serviceTitanClient?.executor, logger });
+  const goalStore = new GoalStore();
+  const provider = createRefreshProvider({ config, browserManager, executor: serviceTitanClient?.executor, logger, goalsProvider: () => goalStore.getGoals() });
   const cache = new DashboardCache({ snapshotRetentionLimit: config.snapshotRetentionLimit,
     trendMinimumHistory: config.trendMinimumHistory });
   const tvManager = new TvManager({
@@ -49,7 +51,7 @@ function start() {
     buildVersion: process.env.BUILD_VERSION || null,
     browserStatusProvider: browserManager ? () => browserManager.getStatus() : mockBrowserStatus,
     serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }), serviceTitanClient,
-    adminRuntime: { presentationManager, eventEngine, startedAt,
+    goalStore, adminRuntime: { presentationManager, eventEngine, startedAt,
       connectionStatusProvider: () => presentationWebSocket?.getConnectionSummary() || { total: 0, displays: 0, remotes: 0 } } });
   const server = app.listen(config.port, config.host, () => logger.info("Backend application started", {
     application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv,
