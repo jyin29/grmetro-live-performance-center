@@ -5,6 +5,7 @@ import { useChangeHighlight } from "../hooks/useChangeHighlight";
 import { ComparisonValue } from "./ComparisonValue";
 import { TrendIndicator } from "./TrendIndicator";
 import { technicianHistory } from "../lib/historicalPresentation";
+import { displayRank } from "../lib/presentation";
 
 const preferredMetrics = [
   ["revenue", "Revenue"],
@@ -28,6 +29,7 @@ export function TechnicianPerformanceCard({ technician, data }) {
   const availableMetrics = preferredMetrics.filter(([id]) => technician.kpis?.[id]?.hasData);
   const metrics = availableMetrics.slice(0, 5);
   const qualifies = technician.overall?.qualifies;
+  const shownRank = displayRank(technician);
   const movement = rankMovement(technician.overall?.rankChange);
   const qualities = [...new Set(metrics.map(([id]) => technician.kpis?.[id]?.dataQuality).filter(Boolean))];
   const changeSignature = `${technician.overall?.rank}:${metrics.map(([id]) => `${technician.kpis?.[id]?.hasData}:${technician.kpis?.[id]?.value}`).join("|")}`;
@@ -39,10 +41,10 @@ export function TechnicianPerformanceCard({ technician, data }) {
       <span className="performance-card__avatar" aria-hidden="true">{technician.initials}</span>
       <div className="performance-card__identity">
         <h3>{technician.name}</h3>
-        <span>{qualifies ? "Overall team standing" : "Awaiting qualifying data"}</span>
+        <span>{shownRank.label}</span>
       </div>
       <div className="performance-card__ranking">
-        <strong>{qualifies ? <>#<AnimatedMetric metric={{ value: technician.overall.rank, hasData: true, format: "integer" }} /></> : "—"}</strong>
+        <strong>{shownRank.rank ? <>#<AnimatedMetric metric={{ value: shownRank.rank, hasData: true, format: "integer" }} /></> : "—"}</strong>
         {history.comparison?.overallRanking?.available
           ? <ComparisonValue comparison={history.comparison.overallRanking} kind="rank" />
           : <span className={`performance-card__movement performance-card__movement--${movement.tone}`} aria-label={movement.label}>{movement.symbol}{movement.tone !== "steady" && Math.abs(technician.overall.rankChange)}</span>}

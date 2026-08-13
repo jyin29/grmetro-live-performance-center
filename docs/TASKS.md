@@ -2071,3 +2071,13 @@ remain unavailable because no validated response fields were found.
 The complete final inventory is `docs/FINAL_KPI_AUDIT.md`. This pass changes presentation only: no endpoint,
 request field, normalization rule, KPI calculation, ranking, history, event, synchronization, or remote
 behavior changed.
+
+## 2026-08-13 — Dashboard usability, ranking fallback, controls, and goal management
+
+- [x] Order technician presentation by Overall Rank, Revenue Rank fallback, then configured technician order.
+- [x] Replace the permanent Recognition placeholder with a clearly labeled Revenue Rank fallback.
+- [x] Expose Previous, Next, direct slide, Pause, Resume, and restart-timer controls for the selected display.
+- [x] Add backend-persisted Goal Management with validation and refresh synchronization.
+- [x] Document every displayed dashboard number and rank qualification in `DASHBOARD_METRIC_GUIDE.md`.
+- [ ] Overall ranking remains blocked until enough KPI goals and unresolved KPI mappings are approved; Revenue Rank is the labeled fallback.
+- [ ] Membership Opportunities and Membership Conversion remain unavailable because no validated native field or approved derivation exists.

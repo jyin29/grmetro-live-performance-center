@@ -17,9 +17,9 @@ async function mapLimited(items, limit, worker) {
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run)); return results;
 }
 class ServiceTitanRefreshProvider {
-  constructor({ config, browserManager, executor, logger, technicianConfiguration = technicians, classificationConfiguration = jobClassifications, concurrency = 2 } = {}) {
+  constructor({ config, browserManager, executor, logger, technicianConfiguration = technicians, classificationConfiguration = jobClassifications, concurrency = 2, goalsProvider } = {}) {
     if (!config || !browserManager || !executor) throw new TypeError("Live ServiceTitan provider requires configuration, browser manager, and request executor.");
-    this.config = config; this.browserManager = browserManager; this.executor = executor; this.logger = logger || { info() {}, warn() {} }; this.technicians = technicianConfiguration; this.classifications = classificationConfiguration; this.concurrency = concurrency;
+    this.config = config; this.browserManager = browserManager; this.executor = executor; this.logger = logger || { info() {}, warn() {} }; this.technicians = technicianConfiguration; this.classifications = classificationConfiguration; this.concurrency = concurrency; this.goalsProvider = goalsProvider;
   }
   async refreshTechnician(technician, now) {
     const started = Date.now();
@@ -60,7 +60,7 @@ class ServiceTitanRefreshProvider {
       return { ...normalizeServiceTitanTechnician({ TechnicianId: result.technicianId }, { technicians: this.technicians }), kpis: require("../data/normalization/kpi").normalizeKpis({}), stale: true, available: false, lastSuccessfulUpdate: null };
     });
     const timestamp = new Date(now).toISOString();
-    const payload = buildDashboardPayload(records, { now: timestamp, previousPayload, rotationEpoch: previousPayload?.rotationEpoch || timestamp, status: { browser: "connected", serviceTitan: results.every((result) => result.ok) ? "connected" : "partial-failure", cache: "fresh", staleTechnicianCount: results.filter((result) => !result.ok).length } });
+    const payload = buildDashboardPayload(records, { now: timestamp, previousPayload, goals: this.goalsProvider?.(), rotationEpoch: previousPayload?.rotationEpoch || timestamp, status: { browser: "connected", serviceTitan: results.every((result) => result.ok) ? "connected" : "partial-failure", cache: "fresh", staleTechnicianCount: results.filter((result) => !result.ok).length } });
     return { ...payload, provider: "servicetitan", diagnostics: { date: date || null, results: results.map(({ record, ...safe }) => ({ ...safe, stale: !safe.ok })) } };
   }
 }

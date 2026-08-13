@@ -150,10 +150,16 @@ export function operationsHealthPresentation(data, presentationState = {}, now =
 
 export function rankedTechnicians(technicians = []) {
   return [...technicians].sort((left, right) => {
-    const leftRank = left.overall?.rank ?? Number.POSITIVE_INFINITY;
-    const rightRank = right.overall?.rank ?? Number.POSITIVE_INFINITY;
-    return leftRank - rightRank || left.name.localeCompare(right.name);
+    const leftRank = left.overall?.qualifies ? left.overall.rank : left.kpis?.revenue?.rank;
+    const rightRank = right.overall?.qualifies ? right.overall.rank : right.kpis?.revenue?.rank;
+    return (leftRank ?? Number.POSITIVE_INFINITY) - (rightRank ?? Number.POSITIVE_INFINITY) || String(left.id).localeCompare(String(right.id));
   });
+}
+
+export function displayRank(technician) {
+  if (technician?.overall?.qualifies && technician.overall.rank) return { rank: technician.overall.rank, label: "Overall Rank", source: "overall" };
+  if (technician?.kpis?.revenue?.rank) return { rank: technician.kpis.revenue.rank, label: "Revenue Rank", source: "revenue" };
+  return { rank: null, label: "Configured Order", source: "fallback" };
 }
 
 export function summaryMetrics(data) {

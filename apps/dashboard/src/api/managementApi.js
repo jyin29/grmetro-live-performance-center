@@ -15,3 +15,11 @@ export async function fetchRefreshStatus(fetchImpl = fetch) {
 export async function requestDashboardRefresh(fetchImpl = fetch) {
   return read(await fetchImpl("/api/v1/management/refresh", { method: "POST", headers: { accept: "application/json" } }));
 }
+
+export async function fetchGoals(fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/goals", { headers: { accept: "application/json" } }));
+}
+
+export async function saveGoals(goals, fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/goals", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(goals) }));
+}

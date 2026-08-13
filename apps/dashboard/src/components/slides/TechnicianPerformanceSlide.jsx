@@ -1,4 +1,5 @@
 import { TechnicianPerformanceCard } from "../TechnicianPerformanceCard";
+import { rankedTechnicians } from "../../lib/presentation";
 
 export function TechnicianPerformanceSlide({ data }) {
   return <main className="technician-performance dashboard-slide" aria-labelledby="technician-performance-title">
@@ -10,7 +11,7 @@ export function TechnicianPerformanceSlide({ data }) {
       <span>Overall rank · Revenue · Closing · Best available field activity</span>
     </div>
     <section className="technician-performance__grid" aria-label="Technician performance cards">
-      {data.technicians.map((technician) => <TechnicianPerformanceCard key={technician.id} technician={technician} data={data} />)}
+      {rankedTechnicians(data.technicians).map((technician) => <TechnicianPerformanceCard key={technician.id} technician={technician} data={data} />)}
     </section>
   </main>;
 }

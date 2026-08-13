@@ -103,9 +103,10 @@ function buildSlides(records) {
 }
 
 class MockRefreshProvider {
-  constructor({ scenario = "normal", config } = {}) {
+  constructor({ scenario = "normal", config, goalsProvider } = {}) {
     if (!config?.mockMode) throw new Error("MockRefreshProvider requires explicit MOCK_MODE=true configuration.");
     this.config = config;
+    this.goalsProvider = goalsProvider;
     this.scenario = this.#validateScenario(scenario);
   }
 
@@ -133,6 +134,13 @@ class MockRefreshProvider {
         ? new Date(new Date(timestamp).getTime() - 240000).toISOString() : timestamp,
       kpis: Object.fromEntries(KPI_IDS.map((id, index) => [id, makeMetric(id, values[technicianIndex][index])]))
     }));
+    const runtimeGoals = this.goalsProvider?.() || {};
+    for (const record of records) for (const [id, goal] of Object.entries(runtimeGoals)) {
+      if (!record.kpis[id] || !(goal > 0)) continue;
+      Object.assign(record.kpis[id], { goal, percentComplete: record.kpis[id].hasData ? record.kpis[id].value / goal * 100 : null,
+        remaining: record.kpis[id].hasData ? Math.max(0, goal - record.kpis[id].value) : null,
+        reached: record.kpis[id].hasData ? record.kpis[id].value >= goal : false });
+    }
     if (definition.failedTechnicianIndex !== undefined && previousPayload) {
       const failedId = technicians[definition.failedTechnicianIndex].id;
       const retained = previousPayload.technicians?.find((record) => record.id === failedId);

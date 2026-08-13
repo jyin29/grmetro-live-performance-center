@@ -1,7 +1,7 @@
 import logoUrl from "../../../../assets/branding/grmetro-logo.png";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAdminState } from "../api/adminApi";
-import { fetchRefreshStatus, requestDashboardRefresh } from "../api/managementApi";
+import { fetchGoals, fetchRefreshStatus, requestDashboardRefresh, saveGoals } from "../api/managementApi";
 import { DEFAULT_DISPLAY_ID } from "../config/displayRegistry";
 import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 import { usePresentationController } from "../controller/PresentationController";
@@ -13,7 +13,7 @@ import { TechnicianDetail } from "./TechnicianDetail";
 
 export const OPERATIONS_TABS = [
   ["dashboard", "Dashboard"], ["technicians", "Technicians"], ["displays", "Displays"],
-  ["management", "Management"], ["administration", "Administration"], ["diagnostics", "Diagnostics"],
+  ["management", "Management"], ["goals", "Goal Management"], ["administration", "Administration"], ["diagnostics", "Diagnostics"],
 ];
 
 const ADMIN_POLL_MS = 5_000;
@@ -59,11 +59,39 @@ export function DashboardTab({ dashboard, admin, controller, countdown }) {
 
 export function DisplayControls({ controller }) {
   return <div className="operations-display-actions" aria-label={`Controls for ${controller.displayName}`}>
+    <button type="button" onClick={controller.previousSlide}>← Previous</button>
+    <button type="button" onClick={controller.nextSlide}>Next →</button>
     <button type="button" onClick={controller.pauseRotation} disabled={!controller.isRunning}>Pause</button>
     <button type="button" onClick={controller.resumeRotation} disabled={controller.isRunning}>Resume</button>
     <button type="button" onClick={controller.restartRotationTimer}>Restart Rotation</button>
     <div className="operations-slide-buttons" aria-label="Jump to slide">{controller.slides.map((slide, index) => <button type="button" key={slide.id} className={controller.activeSlideIndex === index ? "is-active" : ""} aria-pressed={controller.activeSlideIndex === index} onClick={() => controller.selectSlide(index)}>{slide.label}</button>)}</div>
   </div>;
+}
+
+const GOAL_LABELS = { revenue: "Daily Revenue Goal", closingRate: "Closing %",
+  billableServiceCalls: "Billable Calls", installRevenue: "Install Revenue", installAverageTicket: "Average Ticket",
+  membershipsSold: "Memberships Sold", opportunities: "Opportunities" };
+
+export function GoalManagement({ onSaved }) {
+  const [state, setState] = useState({ loading: true, values: {}, saved: {}, status: "", error: false });
+  useEffect(() => { fetchGoals().then(({ goals, editableGoalIds }) => {
+    const values = Object.fromEntries(editableGoalIds.map((id) => [id, goals[id] ?? ""]));
+    setState({ loading: false, values, saved: values, status: "", error: false });
+  }).catch(() => setState((current) => ({ ...current, loading: false, error: true, status: "Could not load goals." }))); }, []);
+  if (state.loading) return <div className="operations-alert">Loading goals…</div>;
+  const update = (id, value) => setState((current) => ({ ...current, values: { ...current.values, [id]: value }, status: "", error: false }));
+  const cancel = () => setState((current) => ({ ...current, values: current.saved, status: "Changes canceled.", error: false }));
+  const save = async (event) => { event.preventDefault(); const payload = {};
+    for (const [id, raw] of Object.entries(state.values)) { const value = raw === "" ? null : Number(raw); if (value !== null && (!Number.isFinite(value) || value < 0)) return setState((current) => ({ ...current, error: true, status: `${GOAL_LABELS[id]} must be zero or greater.` })); payload[id] = value; }
+    try { const result = await saveGoals(payload); const values = Object.fromEntries(Object.keys(state.values).map((id) => [id, result.goals[id] ?? ""])); setState({ loading: false, values, saved: values, status: result.message, error: false }); onSaved(); }
+    catch (error) { setState((current) => ({ ...current, error: true, status: error.message })); }
+  };
+  return <form className="operations-section goal-management" onSubmit={save}><div className="operations-section__heading"><div><p>Authoritative backend goals</p><h2>Goal Management</h2></div></div>
+    <p className="goal-management__intro">Saved goals apply to every display immediately and persist across browser and backend restarts.</p>
+    <div className="goal-management__grid">{Object.entries(state.values).map(([id, value]) => <label key={id}><span>{GOAL_LABELS[id]}</span><input aria-label={GOAL_LABELS[id]} type="number" min="0" step={id === "closingRate" ? "0.1" : "1"} value={value} placeholder="Not configured" onChange={(event) => update(id, event.target.value)} /></label>)}</div>
+    {state.status && <div className={`operations-alert${state.error ? " is-error" : " is-success"}`} role="status">{state.status}</div>}
+    <div className="goal-management__actions"><button type="button" onClick={cancel}>Cancel</button><button className="operations-primary" type="submit">Save Goals</button></div>
+  </form>;
 }
 
 export function DisplaysTab({ admin, controller, selectedDisplayId, onSelectDisplay, onRefresh }) {
@@ -137,6 +165,7 @@ export function RemoteControlPage() {
       {activeTab === "technicians" && <div className="operations-stack"><section className="operations-section"><div className="operations-section__heading"><div><p>Team</p><h2>Technicians</h2></div><label className="operations-search">Search technicians<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label></div><div className="operations-technicians" role="list">{filteredTechnicians.map((technician) => <button type="button" role="listitem" key={technician.id} aria-pressed={String(technician.id) === String(selectedTechnician?.id)} className={String(technician.id) === String(selectedTechnician?.id) ? "is-selected" : ""} onClick={() => setSelectedTechnicianId(technician.id)}><span>{technician.initials}</span><strong>{technician.name}</strong></button>)}</div></section><TechnicianDetail data={dashboard.data} selectedId={selectedTechnician?.id} /></div>}
       {activeTab === "displays" && <DisplaysTab admin={adminState.data} controller={controller} selectedDisplayId={selectedDisplayId} onSelectDisplay={setSelectedDisplayId} onRefresh={refreshDashboard} />}
       {activeTab === "management" && <ManagementTab data={dashboard.data} />}
+      {activeTab === "goals" && <GoalManagement onSaved={() => dashboard.retry({ background: true })} />}
       {activeTab === "administration" && (adminState.data ? <div className="operations-admin"><AdminContent data={adminState.data} /></div> : <div className="operations-alert">Loading administration information…</div>)}
       {activeTab === "diagnostics" && <DiagnosticsTab admin={adminState.data} controller={controller} />}
     </div>
