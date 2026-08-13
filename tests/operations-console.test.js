@@ -4,9 +4,9 @@ const { readFileSync } = require("node:fs");
 
 const source = readFileSync(new URL("../apps/dashboard/src/components/RemoteControlPage.jsx", `file://${__filename}`), "utf8");
 
-test("operations console defines accessible six-tab navigation", () => {
-  for (const tab of ["Dashboard", "Technicians", "Displays", "Management", "Administration", "Diagnostics"]) assert.match(source, new RegExp(`\\[?\\"${tab.toLowerCase()}\\", \\"${tab}\\"`));
-  assert.match(source, /aria-label="Operations Console sections"/);
+test("operations console defines accessible mobile bottom navigation", () => {
+  for (const [id, tab] of [["home", "Home"], ["technicians", "Technicians"], ["displays", "Displays"], ["settings", "Settings"]]) assert.match(source, new RegExp(`\\[\\"${id}\\", \\"${tab}\\"\\]`));
+  assert.match(source, /aria-label="Primary navigation"/);
   assert.match(source, /aria-current=\{activeTab === id \? "page"/);
 });
 
@@ -31,7 +31,8 @@ test("technician search and stable selection drive the expanded drilldown", asyn
   assert.match(source, /<TechnicianDetail/);
 });
 
-test("management and diagnostics render every requested operations group", () => {
-  for (const heading of ["Current Management Insights", "Recent Events", "Current Alerts", "Recent Celebrations", "Business Rule Results"]) assert.match(source, new RegExp(heading));
+test("management and diagnostics remain available inside settings", () => {
+  for (const heading of ["Recent Events", "Current Alerts", "Achievements", "Business Rule Results"]) assert.match(source, new RegExp(heading));
+  assert.match(source, /Business Rules &amp; Administration/);
   for (const label of ["Backend", "Dashboard", "Presentation", "Display Manager", "WebSocket", "Refresh Scheduler", "Watchdog", "Kiosk Mode", "Connection Quality", "Reconnect Count", "Build Version", "Application Version"]) assert.match(source, new RegExp(label));
 });
