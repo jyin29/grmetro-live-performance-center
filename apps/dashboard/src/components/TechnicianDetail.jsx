@@ -21,6 +21,10 @@ function MetricCard({ item }) {
   </article>;
 }
 
+function RankCard({ label, rank, note }) {
+  return <article className="technician-detail__metric is-rank"><p>{label}</p><strong>{rank ? `#${rank}` : "No data"}</strong>{note && <small>{note}</small>}</article>;
+}
+
 function EventList({ title, items, empty }) {
   return <section className="technician-detail__list"><h3>{title}</h3>{items.length
     ? <ul>{items.map((item) => <li key={item.id || `${item.ruleId}-${item.createdAt}`}><b>{item.title || item.type}</b>{item.detail && <span>{item.detail}</span>}<small>{item.eyebrow || item.priority}</small></li>)}</ul>
@@ -36,11 +40,11 @@ export function TechnicianDetail({ data, selectedId }) {
   const achievements = model.events;
   const alerts = model.insights.filter((item) => item.priority === "critical" || item.priority === "warning");
   return <section className="technician-detail" aria-labelledby="technician-detail-title">
-    <header><div><p>Technician Detail</p><h2 id="technician-detail-title">{technician.name}</h2></div><div className="technician-detail__refresh"><span>Refresh time</span><strong>{refreshLabel(model.refreshedAt)}</strong></div></header>
+    <header><div><p>Technician Profile</p><h2 id="technician-detail-title">{technician.name}</h2></div><div className="technician-detail__refresh"><span>Updated</span><strong>{refreshLabel(model.refreshedAt)}</strong></div></header>
     <div className="technician-detail__groups">
-      {model.groups.map((group) => <section key={group.id} className={`technician-detail__group is-${group.id}`}><h3>{group.label}</h3><div>{group.metrics.map((item) => <MetricCard key={item.id} item={item} />)}</div></section>)}
+      {model.groups.map((group) => <section key={group.id} className={`technician-detail__group is-${group.id}`}><h3>{group.label}</h3><div>{group.metrics.map((item) => <MetricCard key={item.id} item={item} />)}{group.id === "revenue" && <RankCard label="Revenue Rank" rank={technician.kpis?.revenue?.rank} note="Team position today" />}</div></section>)}
       <section className="technician-detail__group is-recognition"><h3>Recognition</h3><div>
-        <article className="technician-detail__metric"><p>Overall Rank</p><strong>{technician.overall?.qualifies && technician.overall.rank ? `#${technician.overall.rank}` : "No data"}</strong><div className="technician-detail__context"><span className={`is-${overallTrend.tone}`}>{overallTrend.symbol} {overallTrend.label}</span><span>{overallComparison || "No historical comparison"}</span></div></article>
+        <article className="technician-detail__metric is-rank"><p>Overall Rank</p><strong>{technician.overall?.qualifies && technician.overall.rank ? `#${technician.overall.rank}` : "No data"}</strong><div className="technician-detail__context"><span className={`is-${overallTrend.tone}`}>{overallTrend.symbol} {overallTrend.label}</span><span>{overallComparison || "No historical comparison"}</span></div></article>
         <article className="technician-detail__metric"><p>Rank Movement</p><strong>{Number.isFinite(technician.overall?.rankChange) ? `${technician.overall.rankChange > 0 ? "+" : ""}${technician.overall.rankChange}` : "No data"}</strong><small>Backend-prepared movement</small></article>
       </div></section>
       <section className="technician-detail__group is-history"><h3>History</h3><div className="technician-detail__history">

@@ -2081,3 +2081,15 @@ behavior changed.
 - [x] Document every displayed dashboard number and rank qualification in `DASHBOARD_METRIC_GUIDE.md`.
 - [ ] Overall ranking remains blocked until enough KPI goals and unresolved KPI mappings are approved; Revenue Rank is the labeled fallback.
 - [ ] Membership Opportunities and Membership Conversion remain unavailable because no validated native field or approved derivation exists.
+
+## 2026-08-13 — Mobile-first remote redesign
+
+- [x] Replace the desktop-style remote tabs with fixed Home, Technicians, Displays, and Settings bottom navigation.
+- [x] Make Home the default status, refresh, alerts/events, and quick-actions surface.
+- [x] Add search-first technician browsing and dedicated full-screen technician profiles.
+- [x] Present display selection, status, playback, restart, and all five direct-slide controls as thumb-friendly actions.
+- [x] Replace dense goal editing with large mobile cards and persistent Save/Cancel actions.
+- [x] Move events, alerts, diagnostics, business rules, and administration into Settings and Advanced.
+- [x] Preserve all existing cached dashboard, management API, goal, administration, and WebSocket controller behavior.
+
+This is a frontend-only information-architecture and responsive presentation change. No backend route, API contract, KPI calculation, historical engine, business rule, display command, or synchronization behavior changed.

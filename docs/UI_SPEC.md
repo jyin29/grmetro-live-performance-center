@@ -2185,3 +2185,7 @@ no validated values, it presents one compact mapping notice rather than five rep
 uses Closing % alone as its dominant outcome while Lead Conversion remains unavailable. This is presentation
 filtering only; normalized KPI records and data-quality states remain in the backend payload and remote detail.
 The final inventory and placement rationale are recorded in `docs/FINAL_KPI_AUDIT.md`.
+
+## 2026-08-13 — Mobile-first Remote Navigation
+
+The `/remote` application uses a phone-first native application pattern. Its four persistent bottom-navigation destinations are Home, Technicians, Displays, and Settings. Home is the default and prioritizes live health, refresh timing/state, connected displays, alerts/events, manual refresh, and shortcuts. Technician selection opens a dedicated single-column profile; display controls are isolated on Displays; goal editing uses touch-oriented cards; events, alerts, diagnostics, business rules, and read-only administration remain available through Settings, with system-oriented content grouped under Advanced. Controls target a minimum 48px touch area and the layout scales from portrait phones to tablets. This organization is presentation-only and does not alter APIs, calculations, synchronization, or display behavior.

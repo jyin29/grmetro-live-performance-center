@@ -5,7 +5,7 @@ const KPI_GROUPS = Object.freeze([
 ]);
 
 const KPI_LABELS = Object.freeze({
-  revenue: "Revenue", serviceRevenue: "Service Revenue", closingRate: "Closing %",
+  revenue: "Revenue Today", serviceRevenue: "Service Revenue", closingRate: "Closing %",
   leadConversionRate: "Lead Conversion %", opportunities: "10+ Opportunities",
   installRevenue: "Install Revenue", installs: "Install Count",
   installAverageTicket: "Install Average Ticket", billableServiceCalls: "Billable Calls",
