@@ -2094,6 +2094,12 @@ behavior changed.
 
 This is a frontend-only information-architecture and responsive presentation change. No backend route, API contract, KPI calculation, historical engine, business rule, display command, or synchronization behavior changed.
 
+### Mobile remote navigation-control polish
+
+- [x] Order bottom navigation as Home, Displays, Technicians, and Settings.
+- [x] Align the technician-search SVG icon consistently across mobile widths.
+- [x] Make Previous and Next display controls symmetrical without changing their command handlers.
+
 ## 2026-08-13 — Television readability density pass
 
 - [x] Reduce the stationary 1080p shell header, outer gutters, panel padding, and low-value spacing.

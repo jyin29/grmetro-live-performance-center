@@ -5,7 +5,7 @@ const { readFileSync } = require("node:fs");
 const source = readFileSync(new URL("../apps/dashboard/src/components/RemoteControlPage.jsx", `file://${__filename}`), "utf8");
 
 test("operations console defines accessible mobile bottom navigation", () => {
-  for (const [id, tab] of [["home", "Home"], ["technicians", "Technicians"], ["displays", "Displays"], ["settings", "Settings"]]) assert.match(source, new RegExp(`\\[\\"${id}\\", \\"${tab}\\"\\]`));
+  assert.match(source, /OPERATIONS_TABS = \[\["home", "Home"\], \["displays", "Displays"\], \["technicians", "Technicians"\], \["settings", "Settings"\]\]/);
   assert.match(source, /aria-label="Primary navigation"/);
   assert.match(source, /aria-current=\{activeTab === id \? "page"/);
 });
@@ -17,7 +17,7 @@ test("operations console receives live dashboard, administration, and presentati
 });
 
 test("display controls remain scoped to the selected display", () => {
-  for (const action of ["pauseRotation", "resumeRotation", "restartRotationTimer", "selectSlide"]) assert.match(source, new RegExp(`controller\\.${action}`));
+  for (const action of ["previousSlide", "nextSlide", "pauseRotation", "resumeRotation", "restartRotationTimer", "selectSlide"]) assert.match(source, new RegExp(`controller\\.${action}`));
   assert.match(source, /onSelectDisplay\(display\.displayId\)/);
   assert.match(source, /Refresh Dashboard/);
 });
@@ -28,6 +28,7 @@ test("technician search and stable selection drive the expanded drilldown", asyn
   assert.equal(resolveSelectedTechnician(technicians, 2).name, "Bravo");
   assert.equal(resolveSelectedTechnician(technicians, 99).name, "Alpha");
   assert.match(source, /type="search"/);
+  assert.match(source, /<Icon name="search"/);
   assert.match(source, /<TechnicianDetail/);
 });
 
