@@ -2189,3 +2189,17 @@ The final inventory and placement rationale are recorded in `docs/FINAL_KPI_AUDI
 ## 2026-08-13 — Mobile-first Remote Navigation
 
 The `/remote` application uses a phone-first native application pattern. Its four persistent bottom-navigation destinations are Home, Technicians, Displays, and Settings. Home is the default and prioritizes live health, refresh timing/state, connected displays, alerts/events, manual refresh, and shortcuts. Technician selection opens a dedicated single-column profile; display controls are isolated on Displays; goal editing uses touch-oriented cards; events, alerts, diagnostics, business rules, and read-only administration remain available through Settings, with system-oriented content grouped under Advanced. Controls target a minimum 48px touch area and the layout scales from portrait phones to tablets. This organization is presentation-only and does not alter APIs, calculations, synchronization, or display behavior.
+
+## 2026-08-13 — Television readability density pass
+
+At 1920×1080, room-distance readability takes priority over decorative whitespace. The stationary shell uses a
+shorter header and tighter outer gutters so slide titles, technician names, ranks, KPI values, comparison values,
+trend indicators, bar labels, and podium content can render at a larger scale without scrolling. Cards retain clear
+grouping while using reduced padding and gaps.
+
+The Sales slide uses a smaller left Closing % panel and a substantially wider right pipeline panel. Opportunities,
+Tech Leads, Marketed Leads, and Memberships Sold remain compactly grouped in the pipeline panel rather than being
+split into separate cards. The Technicians slide enlarges identity, rank, KPI, and goal-related presentation within
+the existing five-card layout. Operations retains its existing layout with larger typography, and Recognition keeps
+the approved second–first–third podium while enlarging ranks, names, Revenue, Closing %, and supporting text. This is
+presentation-only and changes no KPI, calculation, ranking qualification, API, or synchronization behavior.
