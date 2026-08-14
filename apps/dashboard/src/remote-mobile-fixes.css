@@ -38,40 +38,15 @@
 .dashboard-period-toggle button { min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--muted); font-weight:700; }
 .dashboard-period-toggle button.is-active { color:var(--primary,#087f83); box-shadow:none; }
 
-/* Sliding selection indicators use the same grid geometry as their buttons. */
-.operations-tabs,.display-picker,.operations-slide-buttons,.dashboard-period-toggle { --slide-index:0; position:relative; isolation:isolate; }
+/* Measured sliding highlights: JavaScript sets the exact selected button offset and width. */
+.operations-tabs,.display-picker,.operations-slide-buttons,.dashboard-period-toggle { --highlight-x:0px; --highlight-width:0px; position:relative; isolation:isolate; }
 .operations-tabs > button,.display-picker > button,.operations-slide-buttons > button,.dashboard-period-toggle > button { position:relative; z-index:2; background:transparent !important; }
-.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; z-index:1; pointer-events:none; box-sizing:border-box; transition:transform 320ms cubic-bezier(.22,1,.36,1); will-change:transform; }
-
-/* Bottom nav: exactly one quarter of the usable inner width, with the same 6px inset on both ends. */
-.operations-tabs::before { top:6px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); left:6px; width:calc((100% - 12px) / 4); border-radius:14px; background:rgba(8,127,131,.12); transform:translate3d(calc(var(--slide-index) * 100%),0,0); }
-.operations-tabs:has(> :nth-child(1).is-active),.operations-tabs:has(> :nth-child(1)[aria-current="page"]) { --slide-index:0; }
-.operations-tabs:has(> :nth-child(2).is-active),.operations-tabs:has(> :nth-child(2)[aria-current="page"]) { --slide-index:1; }
-.operations-tabs:has(> :nth-child(3).is-active),.operations-tabs:has(> :nth-child(3)[aria-current="page"]) { --slide-index:2; }
-.operations-tabs:has(> :nth-child(4).is-active),.operations-tabs:has(> :nth-child(4)[aria-current="page"]) { --slide-index:3; }
-
-/* Display picker: account for the real gaps between buttons so the highlight stays centered. */
-.display-picker { --picker-count:5; --picker-gap:8px; }
-.display-picker::before { top:4px; bottom:4px; left:0; width:calc((100% - (var(--picker-gap) * (var(--picker-count) - 1))) / var(--picker-count)); border-radius:12px; background:rgba(8,127,131,.11); transform:translate3d(calc(var(--slide-index) * (100% + var(--picker-gap))),0,0); }
-.display-picker:has(> :nth-child(1).is-selected) { --slide-index:0; }
-.display-picker:has(> :nth-child(2).is-selected) { --slide-index:1; }
-.display-picker:has(> :nth-child(3).is-selected) { --slide-index:2; }
-.display-picker:has(> :nth-child(4).is-selected) { --slide-index:3; }
-.display-picker:has(> :nth-child(5).is-selected) { --slide-index:4; }
-
-/* Direct Slide 1–5 controls: same gap-aware geometry. */
-.operations-slide-buttons { --slide-count:5; --slide-gap:8px; }
-.operations-slide-buttons::before { top:3px; bottom:3px; left:0; width:calc((100% - (var(--slide-gap) * (var(--slide-count) - 1))) / var(--slide-count)); border-radius:10px; background:rgba(8,127,131,.11); transform:translate3d(calc(var(--slide-index) * (100% + var(--slide-gap))),0,0); }
-.operations-slide-buttons:has(> :nth-child(1).is-active),.operations-slide-buttons:has(> :nth-child(1)[aria-pressed="true"]) { --slide-index:0; }
-.operations-slide-buttons:has(> :nth-child(2).is-active),.operations-slide-buttons:has(> :nth-child(2)[aria-pressed="true"]) { --slide-index:1; }
-.operations-slide-buttons:has(> :nth-child(3).is-active),.operations-slide-buttons:has(> :nth-child(3)[aria-pressed="true"]) { --slide-index:2; }
-.operations-slide-buttons:has(> :nth-child(4).is-active),.operations-slide-buttons:has(> :nth-child(4)[aria-pressed="true"]) { --slide-index:3; }
-.operations-slide-buttons:has(> :nth-child(5).is-active),.operations-slide-buttons:has(> :nth-child(5)[aria-pressed="true"]) { --slide-index:4; }
-
-/* Today / MTD: two equal tracks separated by the toggle's 4px gap. */
-.dashboard-period-toggle::before { top:4px; bottom:4px; left:4px; width:calc((100% - 12px) / 2); border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); transform:translate3d(calc(var(--slide-index) * (100% + 4px)),0,0); }
-.dashboard-period-toggle:has(> :nth-child(1).is-active) { --slide-index:0; }
-.dashboard-period-toggle:has(> :nth-child(2).is-active) { --slide-index:1; }
+.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; z-index:1; pointer-events:none; box-sizing:border-box; width:var(--highlight-width); transform:translate3d(var(--highlight-x),0,0); opacity:0; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),opacity 120ms ease; will-change:transform,width; }
+.operations-tabs.has-measured-highlight::before,.display-picker.has-measured-highlight::before,.operations-slide-buttons.has-measured-highlight::before,.dashboard-period-toggle.has-measured-highlight::before { opacity:1; }
+.operations-tabs::before { top:6px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); left:0; border-radius:14px; background:rgba(8,127,131,.12); }
+.display-picker::before { top:4px; bottom:4px; left:0; border-radius:12px; background:rgba(8,127,131,.11); }
+.operations-slide-buttons::before { top:3px; bottom:3px; left:0; border-radius:10px; background:rgba(8,127,131,.11); }
+.dashboard-period-toggle::before { top:4px; bottom:4px; left:0; border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); }
 
 @media (max-width:760px) { .operations-mobile__content,.operations-content { padding-bottom:calc(92px + env(safe-area-inset-bottom,0px)); } .operations-tabs { padding-bottom:env(safe-area-inset-bottom,0px); } }
 @media (prefers-reduced-motion:reduce) { .operations-console *,.operations-console *::before,.operations-console *::after,.operations-mobile__content > *,.mobile-home,.displays-mobile,.technicians-mobile,.settings-mobile,.goal-management,.operations-feed-grid { animation:none !important; transition-duration:.01ms !important; transition-delay:0ms !important; scroll-behavior:auto !important; } }

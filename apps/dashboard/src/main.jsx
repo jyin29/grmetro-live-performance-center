@@ -5,6 +5,7 @@ import { PresentationControllerProvider } from "./controller/PresentationControl
 import "./styles.css";
 import "./remote-mobile-fixes.css";
 import "./operations-slide-fixes.css";
+import "./measuredSlidingHighlights";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(
