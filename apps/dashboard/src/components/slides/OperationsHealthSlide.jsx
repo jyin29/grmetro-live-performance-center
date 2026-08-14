@@ -7,6 +7,29 @@ function metricFor(row, metricId) {
   return row.metrics?.find((metric) => metric.id === metricId);
 }
 
+function visualRatio(slide, metricId, metric) {
+  if (!metric?.hasData) return 0;
+
+  // When a real goal exists, the goal is the full 100% scale. Otherwise the
+  // current leader is deliberately shown at 80% so lower values remain visible
+  // without making the leading bar look artificially maxed out.
+  if (metric.goal > 0) {
+    return Math.max(0, Math.min(1, Number(metric.value) / Number(metric.goal)));
+  }
+
+  const maximum = Math.max(
+    0,
+    ...slide.rows
+      .map((row) => metricFor(row, metricId))
+      .filter((item) => item?.hasData)
+      .map((item) => Number(item.value) || 0),
+  );
+
+  return maximum > 0
+    ? Math.max(0, Math.min(.8, ((Number(metric.value) || 0) / maximum) * .8))
+    : 0;
+}
+
 function OperationsActivityMatrix({ slide }) {
   const metrics = ACTIVITY_METRICS.map((id) => slide?.metrics?.find((metric) => metric.id === id)).filter(Boolean);
   if (!slide?.rows?.length || !metrics.length) return <p className="chart-empty">Operations activity data is not available yet.</p>;
@@ -22,7 +45,7 @@ function OperationsActivityMatrix({ slide }) {
         {metrics.map((definition) => {
           const metric = metricFor(row, definition.id);
           return <div className="operations-activity-matrix__metric" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}>
-            <span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%`, backgroundColor: definition.color }} />
+            <span style={{ width: `${visualRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} />
             <b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b>
           </div>;
         })}
@@ -45,7 +68,7 @@ function InstallEconomicsRows({ slide }) {
           return <div className="install-economics-row__metric" key={`${row.technicianId}-${metricId}`}>
             <span>{definition.shortLabel || definition.label}</span>
             <b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b>
-            <i aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%`, backgroundColor: definition.color }} /></i>
+            <i aria-hidden="true"><span style={{ width: `${visualRatio(slide, metricId, metric) * 100}%`, backgroundColor: definition.color }} /></i>
           </div>;
         })}
       </div>
