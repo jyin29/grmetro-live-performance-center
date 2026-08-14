@@ -4,9 +4,9 @@
 .home-activity button b { color:#a38a42; font-size:22px; font-weight:500; line-height:1; }
 .operations-tabs button svg { display:block; margin:0 auto; transform-box:fill-box; transform-origin:center; }
 .mobile-search > svg { position:absolute; top:50%; left:17px; width:20px; height:20px; color:var(--muted); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:translateY(-50%); pointer-events:none; }
-.display-direction { min-width:0; }
-.display-direction button { position:relative; display:grid; place-items:center; min-width:0; min-height:56px; padding:12px 38px; text-align:center; }
-.display-direction__arrow { position:absolute; left:16px; top:50%; line-height:1; transform:translateY(-50%); }
+.display-direction { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; min-width:0; }
+.display-direction button { position:relative; display:grid; place-items:center; width:100%; min-width:0; min-height:56px; padding:12px 42px; text-align:center; }
+.display-direction__arrow { position:absolute; left:16px; top:50%; width:20px; text-align:center; line-height:1; transform:translateY(-50%); }
 .display-direction__arrow--next { right:16px; left:auto; }
 @keyframes remote-content-in { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
 @keyframes remote-card-in { from { opacity:0; transform:translateY(5px) scale(.992); } to { opacity:1; transform:translateY(0) scale(1); } }
