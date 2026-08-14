@@ -2,25 +2,25 @@
 
 /* Slide 1 */
 .revenue-chart .chart-name,
-.revenue-chart text.chart-name { font-size: 19px !important; font-weight: 850; }
+.revenue-chart text.chart-name { font-size:19px !important; font-weight:850; }
 
-/* Slide 3: five columns; labels stay secondary and KPI values are the dominant TV-readable element. */
+/* Slide 3: KPI values are intentionally much larger than their labels. */
 .technician-performance__grid { grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:1fr; gap:clamp(8px,.6vw,12px); }
-.technician-performance .performance-card { min-width:0; min-height:0; padding:clamp(11px,.78vw,16px); overflow:visible; }
-.technician-performance .performance-card__header { gap:8px; padding-bottom:7px; }
+.technician-performance .performance-card { min-width:0; min-height:0; padding:clamp(10px,.72vw,15px); overflow:visible; }
+.technician-performance .performance-card__header { gap:8px; padding-bottom:6px; }
 .technician-performance .performance-card__avatar { width:clamp(44px,2.8vw,55px); font-size:clamp(17px,1.05vw,21px); }
 .technician-performance .performance-card__identity h3 { font-size:clamp(23px,1.5vw,30px); line-height:1.05; }
 .technician-performance .performance-card__identity > span { font-size:clamp(14px,.9vw,18px); }
 .technician-performance .performance-card__identity small { font-size:clamp(11px,.7vw,14px); }
-.technician-performance .performance-card__metrics { grid-template-columns:1fr; align-content:stretch; gap:clamp(4px,.28vw,6px); padding:5px 0; overflow:visible; }
+.technician-performance .performance-card__metrics { grid-template-columns:1fr; align-content:stretch; gap:4px; padding:4px 0; overflow:visible; }
 .technician-performance .technician-metric {
   min-width:0;
   overflow:visible;
   display:grid;
-  grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);
+  grid-template-columns:minmax(0,.64fr) minmax(0,1.36fr);
   align-items:center;
-  gap:6px;
-  padding:clamp(7px,.45vw,9px) clamp(7px,.48vw,10px);
+  gap:5px;
+  padding:5px 7px;
   border-radius:9px;
   background:linear-gradient(135deg,#f7fbfb,#f5f7f9);
 }
@@ -29,26 +29,26 @@
   min-width:0;
   margin:0;
   color:#53636d;
-  font-size:clamp(15px,.92vw,18px);
+  font-size:clamp(14px,.88vw,17px);
   font-weight:800;
-  line-height:1.08;
+  line-height:1.05;
   overflow-wrap:anywhere;
 }
 .technician-performance .technician-metric strong {
   min-width:0;
   overflow:visible;
   color:#14212b;
-  font-size:clamp(52px,3.45vw,70px);
+  font-size:clamp(56px,3.65vw,74px);
   font-weight:950;
-  line-height:1.08;
+  line-height:1;
   letter-spacing:-.055em;
   text-align:right;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
-.technician-performance .performance-card__ranking { padding-top:6px; }
+.technician-performance .performance-card__ranking { padding-top:4px; }
 .technician-performance .performance-card__ranking span { font-size:clamp(13px,.82vw,16px); }
-.technician-performance .performance-card__ranking strong { font-size:clamp(40px,2.55vw,52px); line-height:1.08; }
+.technician-performance .performance-card__ranking strong { font-size:clamp(42px,2.7vw,55px); line-height:1; }
 
 /* Slide 4: comfortable split layout. */
 .operations-layout-v2 { grid-template-columns:minmax(0,1.7fr) minmax(390px,1fr); gap:clamp(18px,1.3vw,26px); }
@@ -73,17 +73,19 @@
 .recognition-slide .podium-card > div > span:last-child { color:#14212b; font-size:clamp(38px,2.7vw,54px); font-weight:950; line-height:1; letter-spacing:-.035em; }
 .recognition-slide .podium-card__place { font-size:clamp(40px,2.9vw,58px); }
 
+/* The dashboard TV is around 768px tall. Do NOT shrink Slide 3 KPI values at that breakpoint. */
 @media (max-height:800px) {
   .technician-performance__grid { gap:6px; }
-  .technician-performance .performance-card { padding:8px 9px; }
-  .technician-performance .performance-card__header { padding-bottom:4px; }
+  .technician-performance .performance-card { padding:7px 8px; }
+  .technician-performance .performance-card__header { padding-bottom:3px; }
   .technician-performance .performance-card__identity h3 { font-size:20px; }
-  .technician-performance .performance-card__metrics { gap:3px; padding:3px 0; }
-  .technician-performance .technician-metric { grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); padding:5px; gap:4px; }
+  .technician-performance .performance-card__metrics { gap:2px; padding:2px 0; }
+  .technician-performance .technician-metric { grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr); padding:3px 5px; gap:4px; }
   .technician-performance .technician-metric span { font-size:13px; }
-  .technician-performance .technician-metric strong { font-size:44px; line-height:1.08; }
-  .technician-performance .performance-card__ranking { padding-top:3px; }
-  .technician-performance .performance-card__ranking strong { font-size:36px; }
+  .technician-performance .technician-metric strong { font-size:56px; line-height:1; }
+  .technician-performance .performance-card__ranking { padding-top:2px; }
+  .technician-performance .performance-card__ranking strong { font-size:42px; }
+
   .operations-layout-v2 { grid-template-columns:minmax(0,1.72fr) minmax(360px,1fr); gap:13px; }
   .operations-layout-v2 .operations-domain__panel { padding:14px 17px; }
   .operations-layout-v2 .install-economics-list { gap:3px; padding-top:4px; }
