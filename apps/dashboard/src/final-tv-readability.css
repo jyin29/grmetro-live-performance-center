@@ -4,102 +4,70 @@
 .revenue-chart .chart-name,
 .revenue-chart text.chart-name { font-size: 19px !important; font-weight: 850; }
 
-/* Slide 3: visibility first. Five columns stay, but the actual KPI data dominates each card. */
-.technician-performance__grid {
-  grid-template-columns: repeat(5,minmax(0,1fr));
-  grid-auto-rows: 1fr;
-  gap: clamp(8px,.6vw,12px);
-}
-.technician-performance .performance-card {
-  min-width: 0;
-  min-height: 0;
-  padding: clamp(11px,.78vw,16px);
-}
-.technician-performance .performance-card__header {
-  gap: 8px;
-  padding-bottom: 7px;
-}
-.technician-performance .performance-card__avatar {
-  width: clamp(44px,2.8vw,55px);
-  font-size: clamp(17px,1.05vw,21px);
-}
-.technician-performance .performance-card__identity h3 {
-  font-size: clamp(23px,1.5vw,30px);
-  line-height: 1;
-}
-.technician-performance .performance-card__identity > span { font-size: clamp(14px,.9vw,18px); }
-.technician-performance .performance-card__identity small { font-size: clamp(11px,.7vw,14px); }
-.technician-performance .performance-card__metrics {
-  grid-template-columns: 1fr;
-  align-content: stretch;
-  gap: clamp(4px,.28vw,6px);
-  padding: 5px 0;
-}
+/* Slide 3: five columns; labels stay secondary and KPI values are the dominant TV-readable element. */
+.technician-performance__grid { grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:1fr; gap:clamp(8px,.6vw,12px); }
+.technician-performance .performance-card { min-width:0; min-height:0; padding:clamp(11px,.78vw,16px); overflow:visible; }
+.technician-performance .performance-card__header { gap:8px; padding-bottom:7px; }
+.technician-performance .performance-card__avatar { width:clamp(44px,2.8vw,55px); font-size:clamp(17px,1.05vw,21px); }
+.technician-performance .performance-card__identity h3 { font-size:clamp(23px,1.5vw,30px); line-height:1.05; }
+.technician-performance .performance-card__identity > span { font-size:clamp(14px,.9vw,18px); }
+.technician-performance .performance-card__identity small { font-size:clamp(11px,.7vw,14px); }
+.technician-performance .performance-card__metrics { grid-template-columns:1fr; align-content:stretch; gap:clamp(4px,.28vw,6px); padding:5px 0; overflow:visible; }
 .technician-performance .technician-metric {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0,1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: clamp(6px,.4vw,8px) clamp(7px,.48vw,10px);
-  border-radius: 9px;
-  background: linear-gradient(135deg,#f7fbfb,#f5f7f9);
+  min-width:0;
+  overflow:visible;
+  display:grid;
+  grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);
+  align-items:center;
+  gap:6px;
+  padding:clamp(7px,.45vw,9px) clamp(7px,.48vw,10px);
+  border-radius:9px;
+  background:linear-gradient(135deg,#f7fbfb,#f5f7f9);
 }
-.technician-performance .technician-metric:nth-child(2n) { background: linear-gradient(135deg,#fff9e9,#fffdf7); }
+.technician-performance .technician-metric:nth-child(2n) { background:linear-gradient(135deg,#fff9e9,#fffdf7); }
 .technician-performance .technician-metric span {
-  min-width: 0;
-  margin: 0;
-  color: #53636d;
-  font-size: clamp(17px,1.08vw,22px);
-  font-weight: 850;
-  line-height: 1.05;
+  min-width:0;
+  margin:0;
+  color:#53636d;
+  font-size:clamp(15px,.92vw,18px);
+  font-weight:800;
+  line-height:1.08;
+  overflow-wrap:anywhere;
 }
 .technician-performance .technician-metric strong {
-  color: #14212b;
-  font-size: clamp(46px,3vw,61px);
-  font-weight: 950;
-  line-height: .9;
-  letter-spacing: -.045em;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  min-width:0;
+  overflow:visible;
+  color:#14212b;
+  font-size:clamp(52px,3.45vw,70px);
+  font-weight:950;
+  line-height:1.08;
+  letter-spacing:-.055em;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
 }
-.technician-performance .performance-card__ranking { padding-top: 6px; }
-.technician-performance .performance-card__ranking span { font-size: clamp(13px,.82vw,16px); }
-.technician-performance .performance-card__ranking strong { font-size: clamp(38px,2.4vw,49px); line-height: 1; }
+.technician-performance .performance-card__ranking { padding-top:6px; }
+.technician-performance .performance-card__ranking span { font-size:clamp(13px,.82vw,16px); }
+.technician-performance .performance-card__ranking strong { font-size:clamp(40px,2.55vw,52px); line-height:1.08; }
 
-/* Slide 4: keep both panels comfortable instead of compressing every technician row. */
-.operations-layout-v2 {
-  grid-template-columns: minmax(0,1.7fr) minmax(390px,1fr);
-  gap: clamp(18px,1.3vw,26px);
-}
-.operations-layout-v2 .operations-domain__panel { padding: clamp(18px,1.25vw,25px); }
+/* Slide 4: comfortable split layout. */
+.operations-layout-v2 { grid-template-columns:minmax(0,1.7fr) minmax(390px,1fr); gap:clamp(18px,1.3vw,26px); }
+.operations-layout-v2 .operations-domain__panel { padding:clamp(18px,1.25vw,25px); }
 .operations-layout-v2 .operations-activity-matrix__body,
-.operations-layout-v2 .install-economics-list { height: 100%; align-content: space-evenly; }
-.operations-layout-v2 .operations-activity-matrix__row { min-height: clamp(66px,4.35vw,84px); padding-block: clamp(7px,.5vw,10px); }
-.operations-layout-v2 .operations-activity-matrix__row > strong { font-size: clamp(20px,1.3vw,26px); }
-.operations-layout-v2 .operations-activity-matrix__metric b { font-size: clamp(20px,1.3vw,27px); }
-.operations-layout-v2 .install-economics-list { gap: clamp(5px,.35vw,8px); padding-top: 8px; }
-.operations-layout-v2 .install-economics-row {
-  min-height: 0;
-  padding: clamp(7px,.45vw,10px) 3px;
-  gap: clamp(5px,.35vw,8px);
-}
-.operations-layout-v2 .install-economics-row > strong {
-  min-width: 0;
-  overflow: hidden;
-  font-size: clamp(20px,1.28vw,26px);
-  font-weight: 900;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.operations-layout-v2 .install-economics-row__metrics { grid-template-columns: 1fr; gap: clamp(5px,.32vw,7px); }
-.operations-layout-v2 .install-economics-row__metric { gap: 3px 7px; }
-.operations-layout-v2 .install-economics-row__metric > span { font-size: clamp(11px,.7vw,14px); line-height: 1.05; }
-.operations-layout-v2 .install-economics-row__metric b { font-size: clamp(19px,1.2vw,24px); line-height: 1; }
-.operations-layout-v2 .install-economics-row__metric i { height: 6px; }
-.operations-layout-v2 .operations-domain__economics .panel__heading { padding-bottom: 9px; }
-.operations-layout-v2 .operations-domain__economics .panel__heading > span { display: none; }
+.operations-layout-v2 .install-economics-list { height:100%; align-content:space-evenly; }
+.operations-layout-v2 .operations-activity-matrix__row { min-height:clamp(66px,4.35vw,84px); padding-block:clamp(7px,.5vw,10px); }
+.operations-layout-v2 .operations-activity-matrix__row > strong { font-size:clamp(20px,1.3vw,26px); }
+.operations-layout-v2 .operations-activity-matrix__metric b { font-size:clamp(20px,1.3vw,27px); }
+.operations-layout-v2 .install-economics-list { gap:clamp(5px,.35vw,8px); padding-top:8px; }
+.operations-layout-v2 .install-economics-row { min-height:0; padding:clamp(7px,.45vw,10px) 3px; gap:clamp(5px,.35vw,8px); }
+.operations-layout-v2 .install-economics-row > strong { min-width:0; overflow:hidden; font-size:clamp(20px,1.28vw,26px); font-weight:900; line-height:1; text-overflow:ellipsis; white-space:nowrap; }
+.operations-layout-v2 .install-economics-row__metrics { grid-template-columns:1fr; gap:clamp(5px,.32vw,7px); }
+.operations-layout-v2 .install-economics-row__metric { gap:3px 7px; }
+.operations-layout-v2 .install-economics-row__metric > span { font-size:clamp(11px,.7vw,14px); line-height:1.05; }
+.operations-layout-v2 .install-economics-row__metric b { font-size:clamp(19px,1.2vw,24px); line-height:1; }
+.operations-layout-v2 .install-economics-row__metric i { height:6px; }
+.operations-layout-v2 .operations-domain__economics .panel__heading { padding-bottom:9px; }
+.operations-layout-v2 .operations-domain__economics .panel__heading > span { display:none; }
 
 /* Slide 5 */
 .recognition-slide .podium-card > div > span:last-child { color:#14212b; font-size:clamp(38px,2.7vw,54px); font-weight:950; line-height:1; letter-spacing:-.035em; }
@@ -111,12 +79,11 @@
   .technician-performance .performance-card__header { padding-bottom:4px; }
   .technician-performance .performance-card__identity h3 { font-size:20px; }
   .technician-performance .performance-card__metrics { gap:3px; padding:3px 0; }
-  .technician-performance .technician-metric { padding:4px 5px; gap:5px; }
-  .technician-performance .technician-metric span { font-size:15px; }
-  .technician-performance .technician-metric strong { font-size:38px; }
+  .technician-performance .technician-metric { grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); padding:5px; gap:4px; }
+  .technician-performance .technician-metric span { font-size:13px; }
+  .technician-performance .technician-metric strong { font-size:44px; line-height:1.08; }
   .technician-performance .performance-card__ranking { padding-top:3px; }
-  .technician-performance .performance-card__ranking strong { font-size:34px; }
-
+  .technician-performance .performance-card__ranking strong { font-size:36px; }
   .operations-layout-v2 { grid-template-columns:minmax(0,1.72fr) minmax(360px,1fr); gap:13px; }
   .operations-layout-v2 .operations-domain__panel { padding:14px 17px; }
   .operations-layout-v2 .install-economics-list { gap:3px; padding-top:4px; }
