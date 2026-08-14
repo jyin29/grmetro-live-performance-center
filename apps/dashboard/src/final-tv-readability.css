@@ -1,52 +1,54 @@
 /* Final TV readability pass: presentation-only sizing and spacing. */
 
-/* Slide 3: make technician cards readable from room distance and add restrained color. */
+/* Slide 3: preserve the compact card layout; numeric enlargement lives in technician-performance-tv.css. */
 .performance-card { padding: clamp(18px,1.25vw,24px); }
 .performance-card__header { gap: clamp(14px,1vw,20px); }
 .performance-card__avatar { width: clamp(54px,3.5vw,68px); font-size: clamp(18px,1.25vw,24px); }
 .performance-card__identity h3 { font-size: clamp(23px,1.55vw,30px); }
 .performance-card__identity > span { font-size: clamp(15px,1vw,20px); color: var(--teal); font-weight: 850; }
 .performance-card__identity small { font-size: clamp(12px,.82vw,16px); }
-.performance-card__ranking strong { font-size: clamp(30px,2.2vw,42px); color: var(--gold); }
 .performance-card__metrics { gap: clamp(10px,.8vw,16px); }
 .performance-card__metrics > * { padding: clamp(10px,.7vw,14px); border-radius: 12px; background: linear-gradient(135deg,#f7fbfb,#f5f7f9); }
 .performance-card__metrics > *:nth-child(1), .performance-card__metrics > *:nth-child(4) { background: linear-gradient(135deg,#eef8f7,#f7fbfb); }
 .performance-card__metrics > *:nth-child(2), .performance-card__metrics > *:nth-child(5) { background: linear-gradient(135deg,#fff9e9,#fffdf7); }
 .performance-card__metrics span { font-size: clamp(13px,.86vw,17px); }
-.performance-card__metrics strong, .performance-card__metrics b { font-size: clamp(22px,1.55vw,30px); }
 
-/* Slide 4: spread the metrics out, give economics more width, and prevent overflow. */
-.operations-layout-v2 { grid-template-columns: minmax(0,1.72fr) minmax(390px,1.08fr); gap: clamp(16px,1.15vw,22px); }
-.operations-layout-v2 .operations-domain__panel { padding: clamp(20px,1.45vw,28px); }
+/* Slide 1: technician names should be readable from across the room. */
+.revenue-chart .chart-name { font-size: 23px; font-weight: 800; }
+
+/* Slide 4: give activity more room and stack the two install economics metrics vertically. */
+.operations-layout-v2 { grid-template-columns: minmax(0,1.9fr) minmax(350px,.9fr); gap: clamp(18px,1.3vw,26px); }
+.operations-layout-v2 .operations-domain__panel { padding: clamp(22px,1.55vw,30px); }
 .operations-layout-v2 .operations-activity-matrix__body,
 .operations-layout-v2 .install-economics-list { height: 100%; align-content: space-evenly; }
-.operations-layout-v2 .operations-activity-matrix__row { min-height: clamp(70px,4.8vw,92px); padding-block: clamp(9px,.68vw,13px); }
-.operations-layout-v2 .operations-activity-matrix__row > strong { font-size: clamp(19px,1.25vw,24px); }
-.operations-layout-v2 .operations-activity-matrix__header strong { font-size: clamp(14px,.88vw,17px); }
-.operations-layout-v2 .operations-activity-matrix__metric { min-height: 40px; }
-.operations-layout-v2 .operations-activity-matrix__metric b { font-size: clamp(19px,1.22vw,25px); }
-.operations-layout-v2 .install-economics-row { min-height: clamp(96px,6.6vw,126px); padding-block: clamp(10px,.8vw,15px); gap: clamp(10px,.8vw,16px); }
+.operations-layout-v2 .operations-activity-matrix__row { min-height: clamp(76px,5vw,98px); padding-block: clamp(10px,.75vw,15px); }
+.operations-layout-v2 .operations-activity-matrix__row > strong { font-size: clamp(20px,1.3vw,26px); }
+.operations-layout-v2 .operations-activity-matrix__header strong { font-size: clamp(14px,.9vw,18px); }
+.operations-layout-v2 .operations-activity-matrix__metric { min-height: 42px; }
+.operations-layout-v2 .operations-activity-matrix__metric b { font-size: clamp(20px,1.3vw,26px); }
+.operations-layout-v2 .install-economics-row { min-height: clamp(112px,7.6vw,148px); padding-block: clamp(10px,.8vw,15px); gap: clamp(8px,.65vw,12px); }
 .operations-layout-v2 .install-economics-row > strong { font-size: clamp(19px,1.25vw,25px); }
-.operations-layout-v2 .install-economics-row__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); gap: clamp(10px,.85vw,16px); }
-.operations-layout-v2 .install-economics-row__metric { min-width: 0; gap: 6px; }
-.operations-layout-v2 .install-economics-row__metric > span { min-width: 0; font-size: clamp(12px,.8vw,16px); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-.operations-layout-v2 .install-economics-row__metric b { min-width: 0; font-size: clamp(20px,1.45vw,29px); line-height: 1; }
-.operations-layout-v2 .install-economics-row__metric i { height: 11px; }
+.operations-layout-v2 .install-economics-row__metrics { grid-template-columns: 1fr; gap: clamp(8px,.6vw,12px); }
+.operations-layout-v2 .install-economics-row__metric { min-width: 0; gap: 4px; }
+.operations-layout-v2 .install-economics-row__metric > span { font-size: clamp(11px,.74vw,15px); }
+.operations-layout-v2 .install-economics-row__metric b { min-width: 0; font-size: clamp(19px,1.35vw,27px); line-height: 1; }
+.operations-layout-v2 .install-economics-row__metric i { height: 9px; }
 .operations-layout-v2 .operations-domain__economics .panel__heading > span { display: none; }
 
 @media (max-height: 800px) {
-  .operations-layout-v2 { grid-template-columns: minmax(0,1.7fr) minmax(360px,1.1fr); gap: 14px; }
+  .operations-layout-v2 { grid-template-columns: minmax(0,1.9fr) minmax(330px,.9fr); gap: 14px; }
   .operations-layout-v2 .operations-domain__panel { padding: 16px 18px; }
-  .operations-layout-v2 .install-economics-row { min-height: 78px; padding-block: 7px; gap: 7px; }
-  .operations-layout-v2 .install-economics-row__metrics { gap: 9px; }
-  .operations-layout-v2 .install-economics-row__metric b { font-size: clamp(18px,1.3vw,25px); }
-  .operations-layout-v2 .install-economics-row__metric > span { font-size: clamp(11px,.72vw,14px); }
+  .operations-layout-v2 .install-economics-row { min-height: 92px; padding-block: 5px; gap: 4px; }
+  .operations-layout-v2 .install-economics-row__metrics { gap: 5px; }
+  .operations-layout-v2 .install-economics-row__metric b { font-size: clamp(17px,1.2vw,23px); }
+  .operations-layout-v2 .install-economics-row__metric > span { font-size: clamp(10px,.68vw,13px); }
+  .operations-layout-v2 .install-economics-row__metric i { height: 7px; }
 }
 
-/* Slide 5: make podium values the visual focus. */
-.recognition-slide .podium-card__place { font-size: clamp(30px,2.2vw,44px); }
+/* Slide 5: make the actual performance numbers dominant at TV distance. */
+.recognition-slide .podium-card__place { font-size: clamp(32px,2.35vw,47px); }
 .recognition-slide .recognition-hero__avatar { width: clamp(78px,5.4vw,104px); height: clamp(78px,5.4vw,104px); font-size: clamp(25px,1.8vw,36px); }
 .recognition-slide .podium-card h3 { font-size: clamp(27px,2vw,39px); }
-.recognition-slide .podium-card > div span { font-size: clamp(15px,1vw,20px); }
+.recognition-slide .podium-card > div span { font-size: clamp(16px,1vw,20px); }
 .recognition-slide .podium-card > div strong,
-.recognition-slide .podium-card > div b { font-size: clamp(30px,2.25vw,44px); font-weight: 900; }
+.recognition-slide .podium-card > div b { font-size: clamp(44px,3.2vw,64px); line-height: 1; font-weight: 950; letter-spacing: -.035em; }
