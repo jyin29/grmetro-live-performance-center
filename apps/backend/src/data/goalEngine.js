@@ -2,7 +2,9 @@
 
 function resolveGoal(technicianId, kpiId, configuration) {
   const overrides = configuration?.technicians?.[String(technicianId)];
-  return overrides && Object.hasOwn(overrides, kpiId) ? overrides[kpiId] : configuration?.defaults?.[kpiId] ?? null;
+  if (overrides && Object.hasOwn(overrides, kpiId)) return overrides[kpiId];
+  if (configuration?.defaults && Object.hasOwn(configuration.defaults, kpiId)) return configuration.defaults[kpiId];
+  return configuration && Object.hasOwn(configuration, kpiId) ? configuration[kpiId] : null;
 }
 
 function calculateGoal(valueRecord, goal) {
