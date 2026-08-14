@@ -14,90 +14,21 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.home-activity button:active {
-  background: #fff3c9;
-}
+.home-activity button:active { background: #fff3c9; }
+.home-activity button:focus-visible { position: relative; z-index: 1; outline: 3px solid rgba(8, 127, 131, .28); outline-offset: -3px; }
+.home-activity button b { color: #a38a42; font-size: 22px; font-weight: 500; line-height: 1; }
 
-.home-activity button:focus-visible {
-  position: relative;
-  z-index: 1;
-  outline: 3px solid rgba(8, 127, 131, .28);
-  outline-offset: -3px;
-}
-
-.home-activity button b {
-  color: #a38a42;
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.operations-tabs button svg {
-  display: block;
-  margin: 0 auto;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.mobile-search > svg {
-  position: absolute;
-  top: 50%;
-  left: 17px;
-  width: 20px;
-  height: 20px;
-  color: var(--muted);
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.display-direction {
-  min-width: 0;
-}
-
-.display-direction button {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  min-height: 56px;
-  padding: 12px 38px;
-  text-align: center;
-}
-
-.display-direction__arrow {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  line-height: 1;
-  transform: translateY(-50%);
-}
-
-.display-direction__arrow--next {
-  right: 16px;
-  left: auto;
-}
+.operations-tabs button svg { display: block; margin: 0 auto; transform-box: fill-box; transform-origin: center; }
+.mobile-search > svg { position: absolute; top: 50%; left: 17px; width: 20px; height: 20px; color: var(--muted); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transform: translateY(-50%); pointer-events: none; }
+.display-direction { min-width: 0; }
+.display-direction button { position: relative; display: grid; place-items: center; min-width: 0; min-height: 56px; padding: 12px 38px; text-align: center; }
+.display-direction__arrow { position: absolute; left: 16px; top: 50%; line-height: 1; transform: translateY(-50%); }
+.display-direction__arrow--next { right: 16px; left: auto; }
 
 /* Smooth remote motion: quick enough for a control surface, never decorative or blocking. */
-@keyframes remote-content-in {
-  from { opacity: 0; transform: translateY(7px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes remote-card-in {
-  from { opacity: 0; transform: translateY(5px) scale(.992); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes remote-status-pulse {
-  0% { transform: scale(.94); opacity: .72; }
-  55% { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
+@keyframes remote-content-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes remote-card-in { from { opacity: 0; transform: translateY(5px) scale(.992); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes remote-status-pulse { 0% { transform: scale(.94); opacity: .72; } 55% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 
 .operations-console button,
 .operations-console a,
@@ -107,107 +38,140 @@
 .operations-slide-buttons button,
 .home-quick-actions button,
 .home-activity button {
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease,
-    box-shadow 180ms ease, transform 150ms ease, opacity 180ms ease;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 150ms ease, opacity 180ms ease;
 }
 
 .operations-console button:not(:disabled):active,
 .home-quick-actions button:not(:disabled):active,
 .display-picker button:not(:disabled):active,
-.operations-slide-buttons button:not(:disabled):active {
-  transform: scale(.975);
+.operations-slide-buttons button:not(:disabled):active { transform: scale(.975); }
+.operations-console button:disabled { transition-duration: 120ms; }
+
+.operations-mobile__content > *, .mobile-home, .displays-mobile, .technicians-mobile, .settings-mobile, .goal-management, .operations-feed-grid { animation: remote-content-in 220ms cubic-bezier(.22, 1, .36, 1) both; }
+.home-status-card, .home-activity, .refresh-dashboard-button, .home-quick-actions > *, .display-controller, .display-picker > *, .technician-directory > *, .goal-management__grid > *, .operations-feed, .operations-definitions > * { animation: remote-card-in 240ms cubic-bezier(.22, 1, .36, 1) both; }
+.home-quick-actions > *:nth-child(2), .display-picker > *:nth-child(2), .technician-directory > *:nth-child(2), .goal-management__grid > *:nth-child(2) { animation-delay: 25ms; }
+.display-picker > *:nth-child(3), .technician-directory > *:nth-child(3), .goal-management__grid > *:nth-child(3) { animation-delay: 45ms; }
+.display-picker > *:nth-child(4), .technician-directory > *:nth-child(4), .goal-management__grid > *:nth-child(4) { animation-delay: 65ms; }
+.display-picker > *:nth-child(5), .technician-directory > *:nth-child(5), .goal-management__grid > *:nth-child(5) { animation-delay: 85ms; }
+
+.operations-tabs button.is-active svg, .operations-tabs button[aria-current="page"] svg { transform: translateY(-1px) scale(1.06); }
+.operations-tabs button:not(.is-active):not([aria-current="page"]):active svg { transform: scale(.92); }
+.display-picker button.is-selected, .operations-slide-buttons button.is-active, .operations-slide-buttons button[aria-pressed="true"] { transform: translateY(-1px); }
+.operations-status.is-healthy::before, .display-dot { animation: remote-status-pulse 300ms cubic-bezier(.22, 1, .36, 1) both; }
+.refresh-dashboard-button span { display: inline-block; transform-origin: center; }
+.refresh-dashboard-button:disabled span { animation: remote-refresh-spin .8s linear infinite; }
+@keyframes remote-refresh-spin { to { transform: rotate(360deg); } }
+.goal-management input:focus, .mobile-search input:focus { transform: translateY(-1px); }
+
+/* Sliding selection indicators -------------------------------------------------
+   These are single shared highlights. The buttons remain stationary while the
+   highlight glides to the selected item. :has() is supported by current Edge,
+   Chrome and Safari used by the remote. */
+.operations-tabs,
+.display-picker,
+.operations-slide-buttons {
+  position: relative;
+  isolation: isolate;
 }
 
-.operations-console button:disabled {
-  transition-duration: 120ms;
+.operations-tabs::before,
+.display-picker::before,
+.operations-slide-buttons::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  transition: transform 260ms cubic-bezier(.22, 1, .36, 1), width 260ms cubic-bezier(.22, 1, .36, 1), opacity 160ms ease;
+  will-change: transform;
 }
 
-.operations-mobile__content > *,
-.mobile-home,
-.displays-mobile,
-.technicians-mobile,
-.settings-mobile,
-.goal-management,
-.operations-feed-grid {
-  animation: remote-content-in 220ms cubic-bezier(.22, 1, .36, 1) both;
+/* Fixed four-destination bottom navigation. */
+.operations-tabs::before {
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 25%;
+  border-radius: 16px;
+  background: rgba(8, 127, 131, .12);
+  box-shadow: inset 0 0 0 1px rgba(8, 127, 131, .08);
 }
+.operations-tabs:has(> button:nth-child(1).is-active)::before,
+.operations-tabs:has(> button:nth-child(1)[aria-current="page"])::before { transform: translateX(0); }
+.operations-tabs:has(> button:nth-child(2).is-active)::before,
+.operations-tabs:has(> button:nth-child(2)[aria-current="page"])::before { transform: translateX(100%); }
+.operations-tabs:has(> button:nth-child(3).is-active)::before,
+.operations-tabs:has(> button:nth-child(3)[aria-current="page"])::before { transform: translateX(200%); }
+.operations-tabs:has(> button:nth-child(4).is-active)::before,
+.operations-tabs:has(> button:nth-child(4)[aria-current="page"])::before { transform: translateX(300%); }
+.operations-tabs > button { position: relative; z-index: 1; background-color: transparent !important; }
 
-.home-status-card,
-.home-activity,
-.refresh-dashboard-button,
-.home-quick-actions > *,
-.display-controller,
-.display-picker > *,
-.technician-directory > *,
-.goal-management__grid > *,
-.operations-feed,
-.operations-definitions > * {
-  animation: remote-card-in 240ms cubic-bezier(.22, 1, .36, 1) both;
+/* Five registered displays. Keep the display names/buttons intact and move one
+   selection surface behind them instead of flashing individual backgrounds. */
+.display-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border-radius: 14px;
 }
-
-.home-quick-actions > *:nth-child(2),
-.display-picker > *:nth-child(2),
-.technician-directory > *:nth-child(2),
-.goal-management__grid > *:nth-child(2) { animation-delay: 25ms; }
-.display-picker > *:nth-child(3),
-.technician-directory > *:nth-child(3),
-.goal-management__grid > *:nth-child(3) { animation-delay: 45ms; }
-.display-picker > *:nth-child(4),
-.technician-directory > *:nth-child(4),
-.goal-management__grid > *:nth-child(4) { animation-delay: 65ms; }
-.display-picker > *:nth-child(5),
-.technician-directory > *:nth-child(5),
-.goal-management__grid > *:nth-child(5) { animation-delay: 85ms; }
-
-.operations-tabs button.is-active svg,
-.operations-tabs button[aria-current="page"] svg {
-  transform: translateY(-1px) scale(1.06);
+.display-picker::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20%;
+  border-radius: 12px;
+  background: rgba(8, 127, 131, .10);
+  box-shadow: inset 0 0 0 2px rgba(8, 127, 131, .34);
 }
+.display-picker:has(> button:nth-child(1).is-selected)::before { transform: translateX(0); }
+.display-picker:has(> button:nth-child(2).is-selected)::before { transform: translateX(100%); }
+.display-picker:has(> button:nth-child(3).is-selected)::before { transform: translateX(200%); }
+.display-picker:has(> button:nth-child(4).is-selected)::before { transform: translateX(300%); }
+.display-picker:has(> button:nth-child(5).is-selected)::before { transform: translateX(400%); }
+.display-picker > button { position: relative; z-index: 1; min-width: 0; background-color: transparent !important; }
 
-.operations-tabs button:not(.is-active):not([aria-current="page"]):active svg {
-  transform: scale(.92);
+/* Direct Slide 1–5 selector uses the same moving-highlight language. */
+.operations-slide-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border-radius: 14px;
 }
-
-.display-picker button.is-selected,
-.operations-slide-buttons button.is-active,
-.operations-slide-buttons button[aria-pressed="true"] {
-  transform: translateY(-1px);
+.operations-slide-buttons::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 20%;
+  border-radius: 12px;
+  background: rgba(8, 127, 131, .12);
+  box-shadow: inset 0 0 0 2px rgba(8, 127, 131, .30);
 }
+.operations-slide-buttons:has(> button:nth-child(1).is-active)::before,
+.operations-slide-buttons:has(> button:nth-child(1)[aria-pressed="true"])::before { transform: translateX(0); }
+.operations-slide-buttons:has(> button:nth-child(2).is-active)::before,
+.operations-slide-buttons:has(> button:nth-child(2)[aria-pressed="true"])::before { transform: translateX(100%); }
+.operations-slide-buttons:has(> button:nth-child(3).is-active)::before,
+.operations-slide-buttons:has(> button:nth-child(3)[aria-pressed="true"])::before { transform: translateX(200%); }
+.operations-slide-buttons:has(> button:nth-child(4).is-active)::before,
+.operations-slide-buttons:has(> button:nth-child(4)[aria-pressed="true"])::before { transform: translateX(300%); }
+.operations-slide-buttons:has(> button:nth-child(5).is-active)::before,
+.operations-slide-buttons:has(> button:nth-child(5)[aria-pressed="true"])::before { transform: translateX(400%); }
+.operations-slide-buttons > button { position: relative; z-index: 1; background-color: transparent !important; }
 
-.operations-status.is-healthy::before,
-.display-dot {
-  animation: remote-status-pulse 300ms cubic-bezier(.22, 1, .36, 1) both;
-}
-
-.refresh-dashboard-button span {
-  display: inline-block;
-  transform-origin: center;
-}
-
-.refresh-dashboard-button:disabled span {
-  animation: remote-refresh-spin .8s linear infinite;
-}
-
-@keyframes remote-refresh-spin {
-  to { transform: rotate(360deg); }
-}
-
-.goal-management input:focus,
-.mobile-search input:focus {
-  transform: translateY(-1px);
+@media (max-width: 620px) {
+  .display-picker {
+    grid-template-columns: repeat(5, minmax(72px, 1fr));
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .display-picker > button { scroll-snap-align: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .operations-console *,
-  .operations-console *::before,
-  .operations-console *::after,
-  .operations-mobile__content > *,
-  .mobile-home,
-  .displays-mobile,
-  .technicians-mobile,
-  .settings-mobile,
-  .goal-management,
-  .operations-feed-grid {
+  .operations-console *, .operations-console *::before, .operations-console *::after,
+  .operations-mobile__content > *, .mobile-home, .displays-mobile, .technicians-mobile,
+  .settings-mobile, .goal-management, .operations-feed-grid {
     animation: none !important;
     transition-duration: .01ms !important;
     transition-delay: 0ms !important;
