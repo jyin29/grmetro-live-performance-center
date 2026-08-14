@@ -16,24 +16,22 @@
 .technician-performance .technician-metric strong { font-size: clamp(34px,2.25vw,46px); line-height: 1; letter-spacing: -.035em; }
 .technician-performance .performance-card__ranking strong { font-size: clamp(34px,2.25vw,46px); }
 
-/* Slide 4: activity gets more room; economics metrics stack but all five technicians remain visible. */
-.operations-layout-v2 { grid-template-columns: minmax(0,1.95fr) minmax(330px,.82fr); gap: clamp(16px,1.1vw,22px); }
-.operations-layout-v2 .operations-domain__panel { padding: clamp(16px,1.1vw,22px); }
-.operations-layout-v2 .operations-activity-matrix__body,
-.operations-layout-v2 .install-economics-list { height: 100%; align-content: space-evenly; }
-.operations-layout-v2 .operations-activity-matrix__row { min-height: clamp(66px,4.35vw,84px); padding-block: clamp(7px,.5vw,10px); }
-.operations-layout-v2 .operations-activity-matrix__row > strong { font-size: clamp(20px,1.3vw,26px); }
-.operations-layout-v2 .operations-activity-matrix__metric b { font-size: clamp(20px,1.3vw,27px); }
-.operations-layout-v2 .install-economics-list { gap: 3px; padding-top: 6px; }
-.operations-layout-v2 .install-economics-row { min-height: 0; padding: 4px 2px 6px; gap: 3px; }
-.operations-layout-v2 .install-economics-row > strong { font-size: clamp(16px,1vw,20px); line-height: 1; }
-.operations-layout-v2 .install-economics-row__metrics { grid-template-columns: 1fr; gap: 3px; }
-.operations-layout-v2 .install-economics-row__metric { gap: 2px 6px; }
-.operations-layout-v2 .install-economics-row__metric > span { font-size: clamp(10px,.63vw,13px); line-height: 1; }
-.operations-layout-v2 .install-economics-row__metric b { font-size: clamp(17px,1.08vw,22px); line-height: 1; }
-.operations-layout-v2 .install-economics-row__metric i { height: 6px; }
-.operations-layout-v2 .operations-domain__economics .panel__heading { padding-bottom: 7px; }
-.operations-layout-v2 .operations-domain__economics .panel__heading > span { display: none; }
+/* Slide 4: one vertical column per technician, matching the approved mockup direction. */
+.operations-columns-slide { grid-template: auto minmax(0,1fr) / 1fr; gap: clamp(14px,1vw,20px); }
+.operations-columns-panel { min-height: 0; padding: clamp(18px,1.25vw,25px); overflow: hidden; }
+.operations-columns-panel .panel__heading { padding-bottom: clamp(11px,.8vw,16px); }
+.operations-columns-panel .panel__heading h3 { font-size: clamp(27px,1.7vw,34px); }
+.operations-technician-columns { height: calc(100% - 72px); min-height: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: clamp(10px,.85vw,17px); padding-top: clamp(12px,.85vw,17px); }
+.operations-technician-column { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: clamp(13px,.9vw,18px); border: 1px solid var(--border); border-top: 5px solid var(--teal); border-radius: 16px; background: #fff; box-shadow: 0 7px 20px rgba(26,49,61,.06); }
+.operations-technician-column > header { min-height: 48px; display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.operations-technician-column > header strong { overflow: hidden; font-size: clamp(19px,1.25vw,25px); text-overflow: ellipsis; white-space: nowrap; }
+.operations-technician-column__metrics { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(6,minmax(0,1fr)); }
+.operations-column-metric { min-width: 0; display: grid; align-content: center; gap: 3px; padding: clamp(6px,.45vw,9px) 0; border-bottom: 1px solid #edf1f3; }
+.operations-column-metric:last-child { border-bottom: 0; }
+.operations-column-metric > span { overflow: hidden; color: var(--muted); font-size: clamp(11px,.7vw,14px); font-weight: 800; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+.operations-column-metric b { overflow: hidden; color: #14212b; font-size: clamp(25px,1.65vw,33px); font-weight: 900; line-height: 1; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.operations-column-metric i { display: block; height: 7px; margin-top: 3px; overflow: hidden; border-radius: 99px; background: #eef2f4; }
+.operations-column-metric i span { display: block; height: 100%; border-radius: inherit; opacity: .78; }
 
 /* Slide 5: the visible values are spans in the podium markup, so target them directly. */
 .recognition-slide .podium-card > div > span:last-child { color: #14212b; font-size: clamp(38px,2.7vw,54px); font-weight: 950; line-height: 1; letter-spacing: -.035em; }
@@ -45,9 +43,13 @@
   .technician-performance .performance-card__metrics { gap: 5px; padding: 7px 0; }
   .technician-performance .technician-metric span { font-size: 14px; }
   .technician-performance .technician-metric strong { font-size: 30px; }
-  .operations-layout-v2 { grid-template-columns: minmax(0,1.95fr) minmax(310px,.82fr); gap: 11px; }
-  .operations-layout-v2 .operations-domain__panel { padding: 13px 15px; }
-  .operations-layout-v2 .install-economics-list { gap: 1px; padding-top: 3px; }
-  .operations-layout-v2 .install-economics-row { padding: 2px 1px 3px; gap: 2px; }
-  .operations-layout-v2 .install-economics-row__metric i { height: 5px; }
+  .operations-columns-panel { padding: 13px 16px; }
+  .operations-technician-columns { height: calc(100% - 58px); gap: 8px; padding-top: 8px; }
+  .operations-technician-column { padding: 9px 11px; }
+  .operations-technician-column > header { min-height: 36px; padding-bottom: 6px; }
+  .operations-technician-column > header strong { font-size: 18px; }
+  .operations-column-metric { padding: 3px 0; }
+  .operations-column-metric > span { font-size: 10px; }
+  .operations-column-metric b { font-size: 22px; }
+  .operations-column-metric i { height: 5px; margin-top: 1px; }
 }
