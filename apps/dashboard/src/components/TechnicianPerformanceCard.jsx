@@ -42,9 +42,10 @@ export function TechnicianPerformanceCard({ technician, data }) {
       <div className="performance-card__identity">
         <h3>{technician.name}</h3>
         <span>{shownRank.label}</span>
+        {shownRank.source !== "overall" && <small>Overall Rank · {shownRank.overallStatus}</small>}
       </div>
       <div className="performance-card__ranking">
-        <strong>{shownRank.rank ? <>#<AnimatedMetric metric={{ value: shownRank.rank, hasData: true, format: "integer" }} /></> : "—"}</strong>
+        <strong>{shownRank.rankLabel}</strong>
         {history.comparison?.overallRanking?.available
           ? <ComparisonValue comparison={history.comparison.overallRanking} kind="rank" />
           : <span className={`performance-card__movement performance-card__movement--${movement.tone}`} aria-label={movement.label}>{movement.symbol}{movement.tone !== "steady" && Math.abs(technician.overall.rankChange)}</span>}

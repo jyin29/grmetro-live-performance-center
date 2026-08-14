@@ -7,6 +7,7 @@ import { RevenueChart } from "../src/components/RevenueChart";
 import { TechnicianRankingChart } from "../src/components/TechnicianRankingChart";
 import { TechnicianPerformanceCard } from "../src/components/TechnicianPerformanceCard";
 import { SlideDeck } from "../src/components/SlideDeck";
+import { BusinessPerformanceSlide, SalesPipelineMatrix } from "../src/components/slides/BusinessPerformanceSlide";
 import { PRESENTATION_SLIDES } from "../src/config/slideRegistry";
 import { nextSlideIndex, SLIDE_ROTATION_INTERVAL_MS, SLIDE_TRANSITION_DURATION_MS } from "../src/config/slideRotation";
 
@@ -128,6 +129,42 @@ describe("dashboard visualizations", () => {
     const markup = renderToStaticMarkup(<TechnicianPerformanceCard technician={{ id: 101, name: "Sample Technician", initials: "ST", overall: { rank: 1, qualifies: true, rankChange: 0 }, kpis }} data={{}} />);
     for (const label of ["Revenue", "Closing %", "Billable Calls", "Install Revenue", "Average Ticket"]) expect(markup).toContain(label);
     expect(markup).not.toContain("Data status");
+  });
+
+  it("renders Sales as a wide-left shared-row pipeline and narrow-right Closing list with visible zeroes", () => {
+    const metricDefinitions = [
+      ["opportunities", "Opportunities"], ["techLeads", "Tech Leads"],
+      ["marketedLeads", "Marketed Leads"], ["membershipsSold", "Memberships Sold"]
+    ].map(([id, label]) => ({ id, label, color: "#087f83" }));
+    const pipelineRows = ["Alex K", "Charlie E", "Dwight", "Julio Torres", "Shamon Ward"].map((name, index) => ({
+      technicianId: index + 1, name, shortName: name,
+      metrics: metricDefinitions.map(({ id }) => ({ id, value: id === "techLeads" && name === "Dwight" ? 1 : 0, hasData: true, format: "integer", normalizedRatio: id === "techLeads" && name === "Dwight" ? 1 : 0 }))
+    }));
+    const closingRows = pipelineRows.map((row) => ({ ...row, metrics: [{ id: "closingRate", value: 0, hasData: true, format: "percentage", normalizedRatio: 0 }] }));
+    const data = { slides: { activity: { metrics: metricDefinitions, rows: pipelineRows }, performance: { rows: closingRows } } };
+    const markup = renderToStaticMarkup(<BusinessPerformanceSlide data={data} />);
+    expect(markup.indexOf("Pipeline &amp; Lead Activity")).toBeLessThan(markup.indexOf("Closing %"));
+    for (const label of ["Opportunities", "Tech Leads", "Marketed Leads", "Memberships Sold", "Closing %"]) expect(markup).toContain(label);
+    expect(markup.match(/0%/g)).toHaveLength(5);
+    expect(markup).toContain("Tech Leads: 1");
+
+    const pipelineMarkup = renderToStaticMarkup(<SalesPipelineMatrix slide={data.slides.activity} />);
+    for (const name of ["Alex K", "Charlie E", "Dwight", "Julio Torres", "Shamon Ward"]) expect(pipelineMarkup.match(new RegExp(name, "g"))).toHaveLength(1);
+
+    const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+    expect(css).toMatch(/\.business-performance\s*\{[^}]*grid-template:[^}]*2\.08fr[^}]*1fr/);
+  });
+
+  it("labels tied Revenue Rank and unavailable Overall Rank without an unexplained unknown state", () => {
+    const kpis = Object.fromEntries([
+      ["revenue", 0, "currency"], ["closingRate", 0, "percentage"], ["opportunities", 0, "integer"],
+      ["techLeads", 0, "integer"], ["marketedLeads", 0, "integer"]
+    ].map(([id, value, format]) => [id, { id, value, format, hasData: true, dataQuality: "confirmed", rank: 1, rankLabel: id === "revenue" ? "T-1" : "#1" }]));
+    const markup = renderToStaticMarkup(<TechnicianPerformanceCard technician={{ id: 101, name: "Alex K", initials: "AK", overall: { rank: null, qualifies: false, rankChange: null }, kpis }} data={{}} />);
+    expect(markup).toContain("Revenue Rank");
+    expect(markup).toContain("T-1");
+    expect(markup).toContain("Overall Rank · Not qualified");
+    expect(markup).not.toContain("Unknown");
   });
 
   it("uses responsive room-distance typography for technician KPI values", () => {

@@ -20,14 +20,22 @@ function calculateOverallScores(records, config, previousRecords = []) {
     }
     const qualifies = validWeight + 1e-12 >= config.minimumValidWeight;
     return { ...record, overall: { qualifies, status: qualifies ? "qualified" : "insufficient-data", validWeight,
-      score: qualifies ? contribution / validWeight : null, rank: null, previousRank: previousById.get(record.id) ?? null, rankChange: null } };
+      score: qualifies ? contribution / validWeight : null, rank: null, rankLabel: null, tied: false, tieSize: 0,
+      previousRank: previousById.get(record.id) ?? null, rankChange: null } };
   });
   const qualified = scored.filter((record) => record.overall.qualifies).sort((a, b) =>
     b.overall.score - a.overall.score ||
     (b.kpis.revenue?.hasData ? b.kpis.revenue.value : -Infinity) - (a.kpis.revenue?.hasData ? a.kpis.revenue.value : -Infinity) ||
     a.name.localeCompare(b.name) || a.id - b.id);
+  const tieSizes = new Map();
+  qualified.forEach((record) => tieSizes.set(record.overall.score, (tieSizes.get(record.overall.score) || 0) + 1));
+  let rank = 0;
   qualified.forEach((record, index) => {
-    record.overall.rank = index + 1;
+    if (index === 0 || record.overall.score !== qualified[index - 1].overall.score) rank = index + 1;
+    record.overall.rank = rank;
+    record.overall.tieSize = tieSizes.get(record.overall.score);
+    record.overall.tied = record.overall.tieSize > 1;
+    record.overall.rankLabel = record.overall.tied ? `T-${record.overall.rank}` : `#${record.overall.rank}`;
     record.overall.rankChange = record.overall.previousRank === null ? null : record.overall.previousRank - record.overall.rank;
   });
   return scored;

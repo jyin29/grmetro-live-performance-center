@@ -7,7 +7,7 @@ const { validateWeights, calculateOverallScores } = require("../src/data/overall
 
 function records(values) {
   return values.map(([id, name, value, revenue = value], index) => ({ id, name, kpis: {
-    test: { value, hasData: value !== null }, revenue: { value: revenue, hasData: revenue !== null, goal: 100 },
+    test: { value, hasData: value !== null }, revenue: { value: revenue, hasData: revenue !== null, dataQuality: "confirmed", goal: 100 },
     second: { value: 100 - index, hasData: true, goal: 100 }
   } }));
 }
@@ -22,11 +22,40 @@ test("KPI rankings handle unique values, missing data, and prior movement determ
   assert.deepEqual(sortByPrimaryKpi(ranked, "test").map((r) => r.id), [1,2,3,4,5]);
 });
 
-test("KPI ties use revenue and then alphabetical name", () => {
+test("exact KPI ties use competition ranks while revenue and name only stabilize ordering", () => {
   let ranked = rankKpis(records([[1,"Zulu",10,20],[2,"Alpha",10,30],[3,"Beta",9,99]]));
-  assert.deepEqual([...ranked].sort((a,b) => a.kpis.test.rank-b.kpis.test.rank).map((r) => r.id), [2,1,3]);
+  assert.deepEqual(ranked.map((record) => record.kpis.test.rank), [1, 1, 3]);
+  assert.deepEqual(ranked.map((record) => record.kpis.test.rankLabel), ["T-1", "T-1", "#3"]);
+  assert.deepEqual(sortByPrimaryKpi(ranked, "test").map((record) => record.id), [2, 1, 3]);
   ranked = rankKpis(records([[1,"Zulu",10,30],[2,"Alpha",10,30]]));
-  assert.deepEqual([...ranked].sort((a,b) => a.kpis.test.rank-b.kpis.test.rank).map((r) => r.name), ["Alpha","Zulu"]);
+  assert.deepEqual(ranked.map((record) => record.kpis.test.rank), [1, 1]);
+  assert.deepEqual(sortByPrimaryKpi(ranked, "test").map((record) => record.name), ["Alpha","Zulu"]);
+});
+
+test("Revenue uses truthful two-way and three-way competition ties followed by lower values", () => {
+  const twoWay = rankKpis(records([[1,"Alex",0,1000],[2,"Charlie",0,1000],[3,"Dwight",0,500],[4,"Julio",0,200]]));
+  assert.deepEqual(twoWay.map((record) => record.kpis.revenue.rank), [1, 1, 3, 4]);
+  assert.deepEqual(twoWay.map((record) => record.kpis.revenue.rankLabel), ["T-1", "T-1", "#3", "#4"]);
+
+  const threeWay = rankKpis(records([[1,"Alex",0,1000],[2,"Charlie",0,1000],[3,"Dwight",0,1000],[4,"Julio",0,200]]));
+  assert.deepEqual(threeWay.map((record) => record.kpis.revenue.rank), [1, 1, 1, 4]);
+  assert.deepEqual(threeWay.slice(0, 3).map((record) => record.kpis.revenue.tieSize), [3, 3, 3]);
+});
+
+test("all-zero confirmed Revenue ties do not change under deterministic card ordering", () => {
+  const ranked = rankKpis(records([[5,"Shamon",0,0],[4,"Julio",0,0],[3,"Dwight",0,0],[2,"Charlie",0,0],[1,"Alex",0,0]]));
+  assert.deepEqual(ranked.map((record) => record.kpis.revenue.rankLabel), ["T-1", "T-1", "T-1", "T-1", "T-1"]);
+  assert.deepEqual(sortByPrimaryKpi(ranked, "revenue").map((record) => record.name), ["Alex", "Charlie", "Dwight", "Julio", "Shamon"]);
+  assert.deepEqual(sortByPrimaryKpi(ranked, "revenue").map((record) => record.kpis.revenue.rank), [1, 1, 1, 1, 1]);
+});
+
+test("fallback Revenue remains unranked", () => {
+  const input = records([[1,"Alex",0,100],[2,"Charlie",0,50]]);
+  input[0].kpis.revenue.dataQuality = "fallback";
+  const ranked = rankKpis(input);
+  assert.equal(ranked[0].kpis.revenue.rank, null);
+  assert.equal(ranked[0].kpis.revenue.rankLabel, null);
+  assert.equal(ranked[1].kpis.revenue.rank, 1);
 });
 
 test("overall scoring validates weights, caps contributions, redistributes missing weight, and enforces coverage", () => {
@@ -45,5 +74,16 @@ test("overall scoring validates weights, caps contributions, redistributes missi
   const strict = calculateOverallScores(input, { ...config, minimumValidWeight: 0.6 });
   assert.equal(strict[1].overall.qualifies, false);
   assert.equal(strict[1].overall.rank, null);
+  assert.equal(strict[1].overall.rankLabel, null);
   assert.deepEqual(calculateOverallScores(input, config), scored);
+});
+
+test("qualified equal overall scores tie while unqualified technicians remain explicitly unranked", () => {
+  const input = records([[1,"Alex",0,100],[2,"Charlie",0,100],[3,"Dwight",0,null]]);
+  input[1].kpis.second.value = input[0].kpis.second.value;
+  input[2].kpis.second = { value: null, hasData: false, goal: 100 };
+  const scored = calculateOverallScores(input, { weights: { revenue: 0.5, second: 0.5 }, contributionCap: 1.5, minimumValidWeight: 0.6 });
+  assert.deepEqual(scored.slice(0, 2).map((record) => record.overall.rankLabel), ["T-1", "T-1"]);
+  assert.equal(scored[2].overall.qualifies, false);
+  assert.equal(scored[2].overall.rank, null);
 });

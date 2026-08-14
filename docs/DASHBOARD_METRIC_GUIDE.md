@@ -2,7 +2,9 @@
 
 ## Ranking and qualification
 
-**Revenue Rank** is the descending rank of the confirmed Revenue value for the selected day; ties use the ranking engine's stable tie-break. It is a single-KPI rank, not an Overall Rank. **Overall Rank** is the weighted goal-attainment score documented in `shared/overallScore.js`. A technician qualifies only when KPIs with a positive configured goal supply at least 60% of the configured weight. With the production goals previously all `null`, valid weight was zero, so every technician failed qualification. The dashboard now labels and uses Revenue Rank as its recognition and ordering fallback; it never relabels that fallback as Overall Rank.
+**Revenue Rank** is based only on the confirmed Revenue value for the selected day. It uses competition ranking: equal Revenue values receive the same rank and the next lower value receives the position it occupies (`T-1`, `T-1`, `#3`). Deterministic name/ID ordering keeps cards stable but never changes or implies a different business rank. Fallback or unavailable Revenue is not ranked.
+
+**Overall Rank** remains the weighted goal-attainment score documented in `shared/overallScore.js`; it is never replaced and labeled with a different calculation. A technician qualifies only when KPIs with valid data and positive configured goals supply at least the configured 60% minimum valid weight. When goals or data are insufficient, the card explicitly says `Overall Rank · Not qualified` and may separately show the truthful Revenue Rank fallback. The configured weights remain provisional and require management approval before production launch.
 
 ## Displayed KPI numbers
 
@@ -30,7 +32,7 @@
 
 ## Combined visualizations
 
-Sales uses one pipeline panel for Opportunities, Tech Leads, Marketed Leads, and Memberships Sold. Operations uses one throughput panel for Billable Calls, Opportunities, Memberships Sold, and Installs, with Install Revenue and Install Average Ticket sharing Install Economics. Entire unavailable lanes collapse to one mapping notice. These groupings do not create totals or new calculations.
+Sales uses a wide left pipeline panel for Opportunities, Tech Leads, Marketed Leads, and Memberships Sold, plus a narrower right panel with one readable Closing % row per technician. Pipeline technician names are shared across four aligned metric columns rather than repeated in four charts. Each count retains its separate label, value, and backend-prepared scale; the grouping does not stack, total, or otherwise create a new calculation. Operations uses one throughput panel for Billable Calls, Opportunities, Memberships Sold, and Installs, with Install Revenue and Install Average Ticket sharing Install Economics.
 
 ## Refresh and synchronization
 

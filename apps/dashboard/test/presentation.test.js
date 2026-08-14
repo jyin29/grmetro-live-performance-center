@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatMetric, freshness, managementInsights, rankedTechnicians, recognitionPresentation, refreshLabel, summaryMetrics } from "../src/lib/presentation";
+import { displayRank, formatClock, formatMetric, freshness, managementInsights, rankedTechnicians, recognitionPresentation, refreshLabel, summaryMetrics } from "../src/lib/presentation";
 
 describe("dashboard presentation helpers", () => {
   it("keeps zero distinct from unavailable data", () => {
@@ -23,6 +23,20 @@ describe("dashboard presentation helpers", () => {
     expect(rankedTechnicians(technicians).map(({ id }) => id)).toEqual([2, 1]);
     const metric = { value: 10, hasData: true, rank: 1, format: "integer" };
     expect(summaryMetrics({ technicians: [{ shortName: "Alpha", kpis: { revenue: metric } }] })[0]).toMatchObject({ technician: "Alpha", metric });
+  });
+
+  it("keeps deterministic card order separate from tied business rank labels", () => {
+    const technicians = [
+      { id: 2, name: "Charlie", overall: { qualifies: false }, kpis: { revenue: { rank: 1, rankLabel: "T-1" } } },
+      { id: 1, name: "Alex", overall: { qualifies: false }, kpis: { revenue: { rank: 1, rankLabel: "T-1" } } }
+    ];
+    expect(rankedTechnicians(technicians).map(({ name }) => name)).toEqual(["Alex", "Charlie"]);
+    expect(rankedTechnicians(technicians).map(displayRank)).toEqual([
+      expect.objectContaining({ label: "Revenue Rank", rankLabel: "T-1", overallStatus: "Not qualified" }),
+      expect.objectContaining({ label: "Revenue Rank", rankLabel: "T-1", overallStatus: "Not qualified" })
+    ]);
+    expect(displayRank({ overall: { qualifies: true, rank: 2, rankLabel: "#2" } })).toMatchObject({ label: "Overall Rank", rankLabel: "#2", overallStatus: "Qualified" });
+    expect(displayRank({ overall: { qualifies: false }, kpis: { revenue: { rank: null } } })).toMatchObject({ label: "Revenue Rank", rankLabel: "Unavailable", overallStatus: "Not qualified" });
   });
 
   it("builds recognition from backend-prepared ranks and rank movement", () => {
