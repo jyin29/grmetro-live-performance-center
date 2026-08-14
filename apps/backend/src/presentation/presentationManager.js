@@ -69,7 +69,10 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
       case PRESENTATION_COMMANDS.GO_TO_SLIDE: return update(command.displayId, { activeSlideIndex: normalizeIndex(payload.index, slideCount) });
       case PRESENTATION_COMMANDS.PAUSE_ROTATION: return update(command.displayId, { isRunning: false });
       case PRESENTATION_COMMANDS.RESUME_ROTATION: return update(command.displayId, { isRunning: true });
-      case PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER: return update(command.displayId, {});
+      case PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER:
+        // A restart is a full slideshow restart: return to Slide 1, make sure
+        // automatic rotation is running, and give Slide 1 a fresh interval.
+        return update(command.displayId, { activeSlideIndex: 0, isRunning: true });
       default: throw new RangeError("Invalid presentation command.");
     }
   }
