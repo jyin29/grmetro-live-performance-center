@@ -4,27 +4,20 @@
 .home-activity button b { color:#a38a42; font-size:22px; font-weight:500; line-height:1; }
 .operations-tabs button svg { display:block; margin:0 auto; transform-box:fill-box; transform-origin:center; }
 .mobile-search > svg { position:absolute; top:50%; left:17px; width:20px; height:20px; color:var(--muted); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:translateY(-50%); pointer-events:none; }
-
-/* Previous / Next are exact mirrored controls. */
 .display-direction { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-width:0; }
 .display-direction button { position:relative; display:grid; grid-template-columns:24px minmax(0,1fr) 24px; align-items:center; width:100%; min-width:0; min-height:56px; padding:12px 14px; text-align:center; }
 .display-direction button > :not(.display-direction__arrow) { grid-column:2; justify-self:center; }
 .display-direction__arrow { position:static; grid-column:1; width:24px; text-align:center; line-height:1; transform:none; justify-self:center; }
 .display-direction__arrow--next { grid-column:3; justify-self:center; }
 .display-direction button:last-child .display-direction__arrow--next { grid-row:1; }
-
 @keyframes remote-content-in { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
 @keyframes remote-card-in { from { opacity:0; transform:translateY(5px) scale(.992); } to { opacity:1; transform:translateY(0) scale(1); } }
 @keyframes remote-status-pulse { 0% { transform:scale(.94); opacity:.72; } 55% { transform:scale(1.08); opacity:1; } 100% { transform:scale(1); opacity:1; } }
 .operations-console button,.operations-console a,.operations-console input,.operations-tabs button,.display-picker button,.operations-slide-buttons button,.home-quick-actions button,.home-activity button { transition:background-color 180ms ease,border-color 180ms ease,color 180ms ease,box-shadow 180ms ease,transform 150ms ease,opacity 180ms ease; }
-.operations-console button:not(:disabled):active,.home-quick-actions button:not(:disabled):active,.operations-slide-buttons button:not(:disabled):active { transform:scale(.975); }
-/* The display highlight is measured from getBoundingClientRect(). Never transform
-   these buttons on press: measuring a temporarily scaled button gives the
-   highlight a false x/y/width/height and makes the top selector jump/bounce. */
-.display-picker button,.display-picker button:not(:disabled):active { transform:none !important; }
+.operations-console button:not(:disabled):active,.home-quick-actions button:not(:disabled):active,.display-picker button:not(:disabled):active,.operations-slide-buttons button:not(:disabled):active { transform:scale(.975); }
 .operations-console button:disabled { transition-duration:120ms; }
 .operations-mobile__content > *,.mobile-home,.displays-mobile,.technicians-mobile,.settings-mobile,.goal-management,.operations-feed-grid { animation:remote-content-in 220ms cubic-bezier(.22,1,.36,1) both; }
-.home-status-card,.home-activity,.refresh-dashboard-button,.home-quick-actions > *,.display-controller,.display-picker > *,.technician-directory > *,.goal-management__grid > *,.operations-feed,.operations-definitions > *,.dashboard-period-card { animation:remote-card-in 240ms cubic-bezier(.22,1,.36,1) both; }
+.home-status-card,.home-activity,.refresh-dashboard-button,.home-quick-actions > *,.display-controller,.display-picker > button,.technician-directory > *,.goal-management__grid > *,.operations-feed,.operations-definitions > *,.dashboard-period-card { animation:remote-card-in 240ms cubic-bezier(.22,1,.36,1) both; }
 .operations-tabs button.is-active svg,.operations-tabs button[aria-current="page"] svg { transform:translateY(-1px) scale(1.06); }
 .operations-status.is-healthy::before,.display-dot { animation:remote-status-pulse 300ms cubic-bezier(.22,1,.36,1) both; }
 .refresh-dashboard-button span { display:inline-block; flex:0 0 auto; width:20px; height:20px; font-size:0; line-height:0; vertical-align:middle; position:relative; top:-2px; background-color:transparent; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 11a8 8 0 1 0-2.34 5.66'/%3E%3Cpath d='M20 4v7h-7'/%3E%3C/g%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; background-size:20px 20px; transform-origin:10px 10px; }
@@ -41,16 +34,16 @@
 .dashboard-period-toggle { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:12px; background:rgba(8,127,131,.08); }
 .dashboard-period-toggle button { min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--muted); font-weight:700; }
 .dashboard-period-toggle button.is-active { color:var(--primary,#087f83); box-shadow:none; }
-
-/* Measured sliding highlights: JavaScript follows the selected button on both axes. */
 .operations-tabs,.display-picker,.operations-slide-buttons,.dashboard-period-toggle { --highlight-x:0px; --highlight-y:0px; --highlight-width:0px; --highlight-height:0px; position:relative; isolation:isolate; }
 .operations-tabs > button,.display-picker > button,.operations-slide-buttons > button,.dashboard-period-toggle > button { position:relative; z-index:2; background:transparent !important; }
-.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; top:0; left:0; z-index:1; pointer-events:none; box-sizing:border-box; width:var(--highlight-width); height:var(--highlight-height); transform:translate3d(var(--highlight-x),var(--highlight-y),0); opacity:0; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),height 220ms cubic-bezier(.22,1,.36,1),opacity 120ms ease; will-change:transform,width,height; }
-.operations-tabs.has-measured-highlight::before,.display-picker.has-measured-highlight::before,.operations-slide-buttons.has-measured-highlight::before,.dashboard-period-toggle.has-measured-highlight::before { opacity:1; }
+.operations-tabs::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; top:0; left:0; z-index:1; pointer-events:none; box-sizing:border-box; width:var(--highlight-width); height:var(--highlight-height); transform:translate3d(var(--highlight-x),var(--highlight-y),0); opacity:0; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),height 220ms cubic-bezier(.22,1,.36,1),opacity 120ms ease; will-change:transform,width,height; }
+.operations-tabs.has-measured-highlight::before,.operations-slide-buttons.has-measured-highlight::before,.dashboard-period-toggle.has-measured-highlight::before { opacity:1; }
 .operations-tabs::before { border-radius:14px; background:rgba(8,127,131,.12); }
-.display-picker::before { border-radius:12px; background:rgba(8,127,131,.11); }
 .operations-slide-buttons::before { border-radius:10px; background:rgba(8,127,131,.11); }
 .dashboard-period-toggle::before { border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); }
-
+/* The top display selector uses a real DOM layer so its motion is explicit and cannot be restarted by pseudo-element measurement updates. */
+.display-picker::before { content:none !important; display:none !important; }
+.display-picker__sliding-highlight { position:absolute; z-index:1; pointer-events:none; box-sizing:border-box; border-radius:12px; background:rgba(8,127,131,.11); opacity:0; }
+.display-picker__sliding-highlight.is-ready { opacity:1; }
 @media (max-width:760px) { .operations-mobile__content,.operations-content { padding-bottom:calc(92px + env(safe-area-inset-bottom,0px)); } .operations-tabs { padding-bottom:env(safe-area-inset-bottom,0px); } }
 @media (prefers-reduced-motion:reduce) { .operations-console *,.operations-console *::before,.operations-console *::after,.operations-mobile__content > *,.mobile-home,.displays-mobile,.technicians-mobile,.settings-mobile,.goal-management,.operations-feed-grid { animation:none !important; transition-duration:.01ms !important; transition-delay:0ms !important; scroll-behavior:auto !important; } }
