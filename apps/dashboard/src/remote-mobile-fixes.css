@@ -63,109 +63,56 @@
 @keyframes remote-refresh-spin { to { transform: rotate(360deg); } }
 .goal-management input:focus, .mobile-search input:focus { transform: translateY(-1px); }
 
-/* Sliding selection indicators -------------------------------------------------
-   These are single shared highlights. The buttons remain stationary while the
-   highlight glides to the selected item. :has() is supported by current Edge,
-   Chrome and Safari used by the remote. */
-.operations-tabs,
-.display-picker,
-.operations-slide-buttons {
-  position: relative;
-  isolation: isolate;
+/* Keep the primary mobile navigation pinned to the viewport. Do not let selector
+   animation rules alter its layout or attach it to content height. */
+.operations-tabs {
+  position: fixed !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
 }
 
+/* Preserve the existing selector layouts. Active-state transitions animate the
+   highlight/color on the real button instead of imposing a new grid geometry. */
+.operations-tabs > button,
+.display-picker > button,
+.operations-slide-buttons > button {
+  transition: background-color 240ms cubic-bezier(.22, 1, .36, 1),
+    border-color 240ms cubic-bezier(.22, 1, .36, 1),
+    color 200ms ease,
+    box-shadow 240ms cubic-bezier(.22, 1, .36, 1),
+    transform 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
+/* Undo the previous pseudo-element implementation completely. It assumed equal
+   fixed-width cells and broke the responsive display/slide selectors. */
 .operations-tabs::before,
 .display-picker::before,
 .operations-slide-buttons::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  transition: transform 260ms cubic-bezier(.22, 1, .36, 1), width 260ms cubic-bezier(.22, 1, .36, 1), opacity 160ms ease;
-  will-change: transform;
+  content: none !important;
+  display: none !important;
 }
 
-/* Fixed four-destination bottom navigation. */
-.operations-tabs::before {
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 25%;
-  border-radius: 16px;
-  background: rgba(8, 127, 131, .12);
-  box-shadow: inset 0 0 0 1px rgba(8, 127, 131, .08);
+/* Give the selected controls a smooth, stable highlight without changing their
+   dimensions or forcing display buttons into five cramped columns. */
+.operations-tabs > button.is-active,
+.operations-tabs > button[aria-current="page"],
+.display-picker > button.is-selected,
+.operations-slide-buttons > button.is-active,
+.operations-slide-buttons > button[aria-pressed="true"] {
+  box-shadow: 0 4px 14px rgba(8, 127, 131, .12);
 }
-.operations-tabs:has(> button:nth-child(1).is-active)::before,
-.operations-tabs:has(> button:nth-child(1)[aria-current="page"])::before { transform: translateX(0); }
-.operations-tabs:has(> button:nth-child(2).is-active)::before,
-.operations-tabs:has(> button:nth-child(2)[aria-current="page"])::before { transform: translateX(100%); }
-.operations-tabs:has(> button:nth-child(3).is-active)::before,
-.operations-tabs:has(> button:nth-child(3)[aria-current="page"])::before { transform: translateX(200%); }
-.operations-tabs:has(> button:nth-child(4).is-active)::before,
-.operations-tabs:has(> button:nth-child(4)[aria-current="page"])::before { transform: translateX(300%); }
-.operations-tabs > button { position: relative; z-index: 1; background-color: transparent !important; }
 
-/* Five registered displays. Keep the display names/buttons intact and move one
-   selection surface behind them instead of flashing individual backgrounds. */
-.display-picker {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  overflow: hidden;
-  border-radius: 14px;
-}
-.display-picker::before {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 20%;
-  border-radius: 12px;
-  background: rgba(8, 127, 131, .10);
-  box-shadow: inset 0 0 0 2px rgba(8, 127, 131, .34);
-}
-.display-picker:has(> button:nth-child(1).is-selected)::before { transform: translateX(0); }
-.display-picker:has(> button:nth-child(2).is-selected)::before { transform: translateX(100%); }
-.display-picker:has(> button:nth-child(3).is-selected)::before { transform: translateX(200%); }
-.display-picker:has(> button:nth-child(4).is-selected)::before { transform: translateX(300%); }
-.display-picker:has(> button:nth-child(5).is-selected)::before { transform: translateX(400%); }
-.display-picker > button { position: relative; z-index: 1; min-width: 0; background-color: transparent !important; }
-
-/* Direct Slide 1–5 selector uses the same moving-highlight language. */
-.operations-slide-buttons {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  overflow: hidden;
-  border-radius: 14px;
-}
-.operations-slide-buttons::before {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 20%;
-  border-radius: 12px;
-  background: rgba(8, 127, 131, .12);
-  box-shadow: inset 0 0 0 2px rgba(8, 127, 131, .30);
-}
-.operations-slide-buttons:has(> button:nth-child(1).is-active)::before,
-.operations-slide-buttons:has(> button:nth-child(1)[aria-pressed="true"])::before { transform: translateX(0); }
-.operations-slide-buttons:has(> button:nth-child(2).is-active)::before,
-.operations-slide-buttons:has(> button:nth-child(2)[aria-pressed="true"])::before { transform: translateX(100%); }
-.operations-slide-buttons:has(> button:nth-child(3).is-active)::before,
-.operations-slide-buttons:has(> button:nth-child(3)[aria-pressed="true"])::before { transform: translateX(200%); }
-.operations-slide-buttons:has(> button:nth-child(4).is-active)::before,
-.operations-slide-buttons:has(> button:nth-child(4)[aria-pressed="true"])::before { transform: translateX(300%); }
-.operations-slide-buttons:has(> button:nth-child(5).is-active)::before,
-.operations-slide-buttons:has(> button:nth-child(5)[aria-pressed="true"])::before { transform: translateX(400%); }
-.operations-slide-buttons > button { position: relative; z-index: 1; background-color: transparent !important; }
-
-@media (max-width: 620px) {
-  .display-picker {
-    grid-template-columns: repeat(5, minmax(72px, 1fr));
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
+/* Content must remain reachable above the fixed mobile navigation. */
+@media (max-width: 760px) {
+  .operations-mobile__content {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   }
-  .display-picker > button { scroll-snap-align: center; }
+
+  .operations-tabs {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
