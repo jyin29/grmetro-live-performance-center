@@ -54,10 +54,11 @@ function InstallEconomicsRows({ slide }) {
 }
 
 export function OperationsHealthSlide({ data }) {
+  const periodLabel = data.period === "mtd" ? "Month to Date" : "Today";
   return <main className="operations-health dashboard-slide domain-slide operations-layout-v2" aria-labelledby="operations-health-title">
-    <header className="attention-heading"><div><p>Today</p><h2 id="operations-health-title">Operations</h2></div><span>Calls · Installs · Field Activity</span></header>
+    <header className="attention-heading"><div><p>{periodLabel}</p><h2 id="operations-health-title">Operations</h2></div><span>Calls · Installs · Field Activity</span></header>
     <section className="panel operations-domain__panel operations-domain__activity" aria-labelledby="operations-activity-title">
-      <div className="panel__heading"><div><p>Daily throughput</p><h3 id="operations-activity-title">Calls &amp; Activity</h3></div><span>Four separate counts · shared technician rows</span></div>
+      <div className="panel__heading"><div><p>{periodLabel} throughput</p><h3 id="operations-activity-title">Calls &amp; Activity</h3></div><span>Four separate counts · shared technician rows</span></div>
       <OperationsActivityMatrix slide={data.slides.activity} />
     </section>
     <section className="panel operations-domain__panel operations-domain__economics" aria-labelledby="operations-economics-title">
