@@ -4,6 +4,23 @@ const ACTIVE_SELECTOR = ":scope > button.is-selected,:scope > button.is-active,:
 let scheduledFrame = 0;
 let resizeObserver;
 let mutationObserver;
+let lastDisplaySelection = null;
+
+function centerDisplaySelection(group, active) {
+  if (!group.classList.contains("display-picker")) return;
+  if (active === lastDisplaySelection) return;
+  lastDisplaySelection = active;
+
+  const maxScroll = group.scrollWidth - group.clientWidth;
+  if (maxScroll <= 0) return;
+
+  const target = Math.max(
+    0,
+    Math.min(maxScroll, active.offsetLeft + active.offsetWidth / 2 - group.clientWidth / 2),
+  );
+
+  group.scrollTo({ left: target, behavior: "smooth" });
+}
 
 function updateGroup(group) {
   const active = group.querySelector(ACTIVE_SELECTOR);
@@ -12,8 +29,11 @@ function updateGroup(group) {
     return;
   }
 
-  // Measure both axes in the group's actual rendered coordinate system so the
-  // highlight follows the selected button instead of relying on fixed insets.
+  centerDisplaySelection(group, active);
+
+  // Always measure the highlight from the rendered rectangles. During the
+  // display picker's smooth scroll, scroll events repeatedly call this method,
+  // keeping the highlight locked to the selected button while the row moves.
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
   const x = activeRect.left - groupRect.left;
