@@ -40,3 +40,4 @@ research-output/
 # Runtime-managed business configuration
 data/goals.json
 data/goals.json.tmp
+apps/backend/data/goals.json
