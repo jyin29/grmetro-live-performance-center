@@ -39,6 +39,10 @@ function createPresentationWebSocket({ server, manager, commandBus, logger }) {
   });
   return Object.freeze({
     close() { unsubscribe(); server.off("upgrade", upgrade); for (const client of sockets) client.socket.close(); sockets.clear(); wss.close(); },
+    broadcastDashboardUpdate(payload = {}) {
+      const message = { type: "dashboard/update", refreshedAt: payload.refreshedAt || null, period: payload.period || null };
+      for (const client of sockets) send(client.socket, message);
+    },
     get connectionCount() { return sockets.size; },
     getConnectionSummary() {
       const summary = { total: sockets.size, displays: 0, remotes: 0, byDisplay: {} };
