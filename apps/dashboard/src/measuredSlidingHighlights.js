@@ -5,6 +5,25 @@ let scheduledFrame = 0;
 let resizeObserver;
 let mutationObserver;
 
+function neutralizeDisplayButtonSelection(group, active) {
+  if (!group.classList.contains("display-picker")) return;
+
+  // The legacy .is-selected button styling changes immediately when React
+  // switches displays. That creates a second, snapping "highlight" while the
+  // measured ::before indicator is still sliding. Make every display button
+  // visually neutral so the moving indicator is the one and only highlight.
+  const buttons = [...group.querySelectorAll(":scope > button")];
+  const inactive = buttons.find((button) => button !== active);
+  if (!inactive) return;
+
+  const neutral = getComputedStyle(inactive);
+  for (const button of buttons) {
+    button.style.setProperty("background", "transparent", "important");
+    button.style.setProperty("box-shadow", "none", "important");
+    button.style.setProperty("border-color", neutral.borderColor, "important");
+  }
+}
+
 function updateGroup(group) {
   const active = group.querySelector(ACTIVE_SELECTOR);
   if (!active) {
@@ -12,9 +31,9 @@ function updateGroup(group) {
     return;
   }
 
-  // Keep the selector row completely stationary. Only the highlight moves.
-  // The display picker remains manually scrollable when its buttons overflow,
-  // but selecting a display must never recenter or shift the entire row.
+  neutralizeDisplayButtonSelection(group, active);
+
+  // Keep the selector row stationary and move only one visual highlight.
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
   const x = activeRect.left - groupRect.left;
@@ -56,8 +75,6 @@ function startMeasuredHighlights() {
     attributeFilter: ["class", "aria-current", "aria-pressed"],
   });
 
-  // Remeasure when the user manually scrolls an overflowing selector, but do
-  // not initiate any scrolling from selection changes.
   document.addEventListener("scroll", scheduleSync, { passive: true, capture: true });
   window.addEventListener("resize", scheduleSync, { passive: true });
   syncAll();
