@@ -130,7 +130,7 @@ button { font: inherit; }
 .performance-card:nth-child(2) { animation-delay: 45ms; }.performance-card:nth-child(3) { animation-delay: 90ms; }.performance-card:nth-child(4) { animation-delay: 135ms; }.performance-card:nth-child(5) { animation-delay: 180ms; }
 .performance-card__header { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: clamp(14px, 1vw, 20px); padding-bottom: clamp(16px, 1.1vw, 22px); border-bottom: 1px solid var(--border); }
 .performance-card__avatar { display: grid; place-items: center; width: clamp(52px, 3.5vw, 68px); aspect-ratio: 1; border-radius: 50%; color: var(--teal); background: #e5f2f2; font-size: clamp(18px, 1.2vw, 24px); font-weight: 850; }
-.performance-card__identity { min-width: 0; }.performance-card__identity h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(25px, 1.65vw, 34px); }.performance-card__identity span { color: var(--muted); font-size: clamp(14px, .85vw, 17px); }
+.performance-card__identity { min-width: 0; }.performance-card__identity h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(25px, 1.65vw, 34px); }.performance-card__identity span { display: block; color: var(--muted); font-size: clamp(14px, .85vw, 17px); }.performance-card__identity small { display: block; margin-top: 2px; color: #6b777f; font-size: clamp(12px, .72vw, 15px); font-weight: 750; }
 .performance-card__ranking { display: flex; align-items: center; gap: 12px; }.performance-card__ranking strong { color: var(--gold); font-size: clamp(34px, 2.25vw, 46px); }.performance-card__movement { min-width: 34px; color: var(--muted); font-size: clamp(20px, 1.3vw, 26px); font-weight: 850; }.performance-card__movement--up { color: var(--teal); }.performance-card__movement--down { color: #a75d42; }
 .performance-card__metrics { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-content: center; gap: clamp(22px, 1.45vw, 30px) clamp(28px, 1.8vw, 36px); padding: clamp(24px, 1.65vw, 34px) 0; }
 .technician-metric { min-width: 0; }.technician-metric span { display: block; margin-bottom: 7px; color: var(--muted); font-size: clamp(15px, .95vw, 19px); font-weight: 700; }.technician-metric strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(34px, 2.35vw, 48px); line-height: 1; letter-spacing: -.045em; }
@@ -140,24 +140,32 @@ button { font: inherit; }
 .kpi-card.is-updated, .performance-card.is-updated { background-color: #f5fbfa; border-color: rgba(8,127,131,.35); box-shadow: var(--shadow), 0 0 0 3px rgba(8,127,131,.08); }
 .ranking-chart li.is-updated { background-color: #f7fbf9; box-shadow: inset 3px 0 rgba(8,127,131,.35); }
 
-.business-performance { width: 100%; min-height: 0; display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 1.55fr) minmax(430px, .75fr); gap: clamp(18px, 1.25vw, 24px); }
+.business-performance { width: 100%; min-height: 0; display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 2.08fr) minmax(360px, 1fr); gap: clamp(18px, 1.25vw, 24px); }
 .business-performance__heading { grid-column: 1 / -1; display: flex; align-items: end; justify-content: space-between; padding: 0 clamp(8px, .7vw, 14px); }
 .business-performance__heading p { margin: 0 0 5px; color: var(--teal); font-size: clamp(14px, .85vw, 17px); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .business-performance__heading h2 { margin: 0; font-size: clamp(38px, 2.55vw, 52px); letter-spacing: -.04em; }
 .business-performance__heading > span { color: var(--muted); font-size: clamp(18px, 1.1vw, 22px); font-weight: 700; }
 .business-performance__revenue, .business-performance__conversion { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: clamp(28px, 2vw, 40px); animation: card-in 400ms 80ms cubic-bezier(.22,1,.36,1) both; }
 .business-performance .panel__heading h3 { margin: 0; font-size: clamp(30px, 1.9vw, 38px); }
-.business-performance__revenue .chart-wrap { flex: 1; min-height: 0; }
-.business-performance__revenue .revenue-chart { height: calc(100% - 46px); max-height: none; }
 .business-performance__conversion { animation-delay: 140ms; }
-.business-performance__conversion .comparison-chart { flex: 1; grid-template: auto minmax(0, 1fr) / 1fr; align-content: center; gap: clamp(28px, 2vw, 40px); }
-.business-performance__conversion .comparison-chart .chart-legend { flex-direction: row; gap: 14px 24px; }
-.business-performance__conversion .comparison-chart__rows { grid-template-columns: 1fr; gap: clamp(17px, 1.25vw, 24px); }
-.business-performance__conversion .comparison-row { display: grid; grid-template-columns: minmax(130px, .42fr) minmax(0, 1fr); align-items: center; gap: 18px; }
-.business-performance__conversion .comparison-row > strong { margin: 0; font-size: clamp(21px, 1.3vw, 26px); }
-.business-performance__conversion .comparison-row__metrics { gap: 11px; }
-.business-performance__conversion .comparison-bar { height: clamp(34px, 2.25vw, 44px); }
-.business-performance__conversion .comparison-bar b { inset: 0 10px; font-size: clamp(17px, 1vw, 20px); }
+.sales-pipeline { flex: 1; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); padding-top: clamp(16px, 1.2vw, 24px); }
+.sales-pipeline__header,.sales-pipeline__row { display: grid; grid-template-columns: minmax(190px, 1.15fr) repeat(4, minmax(120px, 1fr)); gap: clamp(10px, .8vw, 16px); align-items: center; }
+.sales-pipeline__header { padding: 0 10px 14px; color: var(--muted); font-size: clamp(15px, .9vw, 18px); text-align: center; }
+.sales-pipeline__header strong:first-child { text-align: left; }
+.sales-pipeline__body { min-height: 0; display: grid; grid-template-rows: repeat(5, minmax(0, 1fr)); }
+.sales-pipeline__row { padding: clamp(8px, .65vw, 13px) 10px; border-top: 1px solid var(--border); }
+.sales-pipeline__row > strong { overflow: hidden; color: #25343d; font-size: clamp(24px, 1.55vw, 31px); text-overflow: ellipsis; white-space: nowrap; }
+.sales-pipeline__metric { position: relative; height: clamp(48px, 3.25vw, 64px); display: grid; place-items: center; overflow: hidden; border-radius: 12px; background: #edf1f3; }
+.sales-pipeline__metric > span { position: absolute; inset: 0 auto 0 0; min-width: 0; border-radius: inherit; opacity: .28; transition: width .75s cubic-bezier(.22,1,.36,1); }
+.sales-pipeline__metric b { position: relative; z-index: 1; color: #18242c; font-size: clamp(28px, 1.9vw, 38px); font-variant-numeric: tabular-nums; }
+.closing-list { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(5, minmax(0, 1fr)); padding-top: clamp(14px, 1vw, 20px); }
+.closing-row { min-height: 0; display: grid; align-content: center; gap: 10px; padding: clamp(8px, .7vw, 14px) 2px; border-top: 1px solid var(--border); }
+.closing-row:first-child { border-top: 0; }
+.closing-row > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.closing-row strong { overflow: hidden; font-size: clamp(23px, 1.45vw, 29px); text-overflow: ellipsis; white-space: nowrap; }
+.closing-row b { flex: none; color: var(--gold-dark); font-size: clamp(30px, 2vw, 40px); font-variant-numeric: tabular-nums; }
+.closing-row__bar { height: clamp(22px, 1.55vw, 30px); overflow: hidden; border-radius: 99px; background: #e8edef; }
+.closing-row__bar span { display: block; height: 100%; min-width: 0; border-radius: inherit; background: var(--teal); transition: width .75s cubic-bezier(.22,1,.36,1); }
 
 .recognition-slide { width: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(18px, 1.25vw, 24px); }
 .recognition-hero { min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: clamp(30px, 2.4vw, 48px); text-align: center; background: linear-gradient(145deg, #fff 52%, #fffaf0); border: 1px solid rgba(212,175,55,.36); border-radius: 24px; box-shadow: var(--shadow), 0 16px 50px rgba(212,175,55,.09); animation: card-in 400ms 60ms cubic-bezier(.22,1,.36,1) both; }
@@ -204,7 +212,7 @@ button { font: inherit; }
 @keyframes leaderboard-in { from { opacity: 0; transform: translateY(8px); } }
 @media (min-width: 2500px) { body { font-size: 1.35rem; }.app-shell { max-width: 3600px; margin: auto; }.dashboard-grid { min-height: 1450px; } }
 @media (max-height: 760px) { .app-shell { padding: 14px 24px; gap: 10px; }.header { min-height: 70px; }.header__logo { height: 48px; }.header__status { gap: 14px; }.header__time-block,.header__refresh-block { padding-left: 14px; }.header__refresh-block small { display: none; }.kpi-card { min-height: 96px; padding: 13px 18px; }.dashboard-grid { grid-template-rows: auto minmax(285px, 1fr) auto; }.main-content,.leaderboard { padding: 15px 20px; }.comparison-panel { padding: 13px 20px; }.ranking-chart li { min-height: 48px; }.revenue-chart { max-height: 270px; }.footer { min-height: 20px; }.slide-indicator { bottom: 3px; }.technician-performance { gap: 10px; }.technician-performance__heading h2 { font-size: 30px; }.technician-performance__grid { grid-template-columns: repeat(3, minmax(0,1fr)); }.performance-card { padding: 15px 18px; }.performance-card__header { padding-bottom: 10px; }.performance-card__avatar { width: 44px; }.performance-card__metrics { gap: 8px 18px; padding: 10px 0; }.technician-metric strong { font-size: 24px; }.performance-card__status { padding-top: 8px; } }
-@media (max-height: 760px) { .business-performance { gap: 10px; grid-template-columns: minmax(0,1.5fr) minmax(360px,.8fr); }.business-performance__heading h2 { font-size: 32px; }.business-performance__revenue,.business-performance__conversion { padding: 16px 20px; }.business-performance .panel__heading h3 { font-size: 25px; }.business-performance__conversion .comparison-chart { gap: 16px; }.business-performance__conversion .comparison-chart__rows { gap: 10px; }.business-performance__conversion .comparison-bar { height: 28px; } }
+@media (max-height: 760px) { .business-performance { gap: 10px; grid-template-columns: minmax(0,2fr) minmax(300px,1fr); }.business-performance__heading h2 { font-size: 32px; }.business-performance__revenue,.business-performance__conversion { padding: 12px 16px; }.business-performance .panel__heading h3 { font-size: 25px; }.sales-pipeline { padding-top: 8px; }.sales-pipeline__header,.sales-pipeline__row { grid-template-columns: minmax(130px,1.05fr) repeat(4,minmax(80px,1fr)); gap: 8px; }.sales-pipeline__header { padding-bottom: 6px; font-size: 13px; }.sales-pipeline__row { padding-block: 4px; }.sales-pipeline__row > strong { font-size: 20px; }.sales-pipeline__metric { height: 35px; }.sales-pipeline__metric b { font-size: 24px; }.closing-list { padding-top: 6px; }.closing-row { gap: 5px; padding-block: 4px; }.closing-row strong { font-size: 20px; }.closing-row b { font-size: 28px; }.closing-row__bar { height: 18px; } }
 @media (max-height: 760px) { .recognition-slide { gap: 10px; }.recognition-hero { padding: 18px 28px; }.recognition-hero__eyebrow { margin-bottom: 10px; font-size: 26px; }.recognition-hero__avatar { width: 66px; }.recognition-hero h2 { font-size: 62px; }.recognition-hero__metrics { margin-top: 18px; }.recognition-hero__metrics > div > span + span,.recognition-hero__rank strong { font-size: 42px; }.recognition-list { gap: 10px; }.recognition-card { padding: 12px 16px; }.recognition-card__symbol { width: 40px; }.recognition-card p { font-size: 15px; }.recognition-card strong { font-size: 22px; } }
 @media (max-height: 760px) { .operations-health { grid-template-rows: minmax(150px,.65fr) minmax(0,1.35fr); gap: 10px; }.operations-health__hero { padding: 16px 26px; }.operations-health__signal { width: 76px; }.operations-health__hero h2 { font-size: 48px; }.operations-health__hero div > span { margin-top: 7px; font-size: 17px; }.operations-health__grid { gap: 10px; }.health-card { padding: 16px 22px; border-top-width: 4px; }.health-card p { margin-bottom: 8px; font-size: 17px; }.health-card strong { font-size: 34px; }.health-card > span { margin-top: 8px; font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
@@ -348,26 +356,16 @@ button { font: inherit; }
   .question-slide__heading h2,.top-three-heading h2,.attention-heading h2 { font-size: 52px; }
   .question-slide__heading > span,.top-three-heading > span { font-size: 22px; }
   .business-performance,.technician-performance { gap: 10px; }
-  .business-performance { grid-template-columns: minmax(390px,.68fr) minmax(0,1.55fr); }
+  .business-performance { grid-template-columns: minmax(0,2.08fr) minmax(390px,1fr); }
   .business-performance__heading h2,.technician-performance__heading h2 { font-size: 50px; }
   .business-performance__heading > span,.technician-performance__heading > span { font-size: 21px; }
   .business-performance__revenue,.business-performance__conversion,.operations-domain__panel { padding: 16px 20px; }
   .business-performance .panel__heading { padding-bottom: 12px; }
   .business-performance .panel__heading h3,.operations-domain__panel .panel__heading h3 { font-size: 30px; }
-  .business-performance__conversion .comparison-chart,.operations-domain__panel .comparison-chart { gap: 12px; padding-top: 10px; }
-  .business-performance__conversion .comparison-chart__rows,.operations-domain__panel .comparison-chart__rows { gap: 9px; }
-  .business-performance__conversion .comparison-row { grid-template-columns: minmax(150px,.3fr) minmax(0,1fr); }
-  .business-performance__conversion .comparison-row > strong { font-size: 25px; }
-  .business-performance__conversion .comparison-row__metrics,.operations-domain__panel .comparison-row__metrics { gap: 6px; }
-  .business-performance__conversion .comparison-bar,.operations-domain__panel .comparison-bar { height: 27px; }
-  .business-performance__conversion .comparison-bar b { font-size: 18px; }
-  .business-performance__revenue .comparison-chart { grid-template-columns: 1fr; gap: 14px; }
-  .business-performance__revenue .comparison-chart .chart-legend { flex-direction: row; }
-  .business-performance__revenue .comparison-chart__rows { grid-template-columns: 1fr; gap: 14px; }
-  .business-performance__revenue .comparison-row > strong { font-size: 25px; }
-  .business-performance__revenue .comparison-bar { height: 40px; }
-  .business-performance__revenue .comparison-bar b { font-size: 23px; }
-  .business-performance__revenue .comparison-metric__context { font-size: 16px; }
+  .operations-domain__panel .comparison-chart { gap: 12px; padding-top: 10px; }
+  .operations-domain__panel .comparison-chart__rows { gap: 9px; }
+  .operations-domain__panel .comparison-row__metrics { gap: 6px; }
+  .operations-domain__panel .comparison-bar { height: 27px; }
   .technician-performance__grid { gap: 12px; }
   .performance-card { padding: 14px 17px; }
   .performance-card__header { gap: 12px; padding-bottom: 9px; }

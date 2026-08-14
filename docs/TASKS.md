@@ -2110,3 +2110,18 @@ This is a frontend-only information-architecture and responsive presentation cha
 
 This pass changes only dashboard CSS and presentation documentation. It adds or removes no KPI and changes no
 backend logic, API, calculation, ranking, WebSocket, business rule, or synchronization behavior.
+
+## 2026-08-13 — Sales layout and truthful ranking ties
+
+- [x] Replace ordinal tie-breaking with backend-prepared competition ranks and explicit tied-rank labels.
+- [x] Keep deterministic technician card ordering separate from displayed business rank.
+- [x] Rank Revenue only when its data quality is confirmed and keep fallback Revenue unranked.
+- [x] Distinguish weighted Overall Rank, Revenue Rank fallback, and unqualified Overall Rank on technician cards.
+- [x] Move a consolidated four-metric Sales Pipeline matrix to the wide left side of Slide 2.
+- [x] Move Closing % to a narrower right panel with one readable row per technician.
+- [x] Preserve confirmed zero values and separate meanings for all four pipeline counts.
+- [x] Add focused backend and presentation coverage for ties, qualification, labels, panel order, metrics, names, and zeroes.
+
+The provisional Overall Score weights and 60% minimum valid-weight qualification are unchanged and still require
+management approval. No ServiceTitan, normalization, WebSocket, synchronization, remote, goal, scheduler, event,
+display, or five-slide sequencing architecture changed.

@@ -152,14 +152,21 @@ export function rankedTechnicians(technicians = []) {
   return [...technicians].sort((left, right) => {
     const leftRank = left.overall?.qualifies ? left.overall.rank : left.kpis?.revenue?.rank;
     const rightRank = right.overall?.qualifies ? right.overall.rank : right.kpis?.revenue?.rank;
-    return (leftRank ?? Number.POSITIVE_INFINITY) - (rightRank ?? Number.POSITIVE_INFINITY) || String(left.id).localeCompare(String(right.id));
+    return (leftRank ?? Number.POSITIVE_INFINITY) - (rightRank ?? Number.POSITIVE_INFINITY) ||
+      String(left.name || "").localeCompare(String(right.name || "")) || String(left.id).localeCompare(String(right.id));
   });
 }
 
 export function displayRank(technician) {
-  if (technician?.overall?.qualifies && technician.overall.rank) return { rank: technician.overall.rank, label: "Overall Rank", source: "overall" };
-  if (technician?.kpis?.revenue?.rank) return { rank: technician.kpis.revenue.rank, label: "Revenue Rank", source: "revenue" };
-  return { rank: null, label: "Configured Order", source: "fallback" };
+  if (technician?.overall?.qualifies && technician.overall.rank) return {
+    rank: technician.overall.rank, rankLabel: technician.overall.rankLabel || `#${technician.overall.rank}`,
+    label: "Overall Rank", source: "overall", overallStatus: "Qualified"
+  };
+  if (technician?.kpis?.revenue?.rank) return {
+    rank: technician.kpis.revenue.rank, rankLabel: technician.kpis.revenue.rankLabel || `#${technician.kpis.revenue.rank}`,
+    label: "Revenue Rank", source: "revenue", overallStatus: "Not qualified"
+  };
+  return { rank: null, rankLabel: "Unavailable", label: "Revenue Rank", source: "unavailable", overallStatus: "Not qualified" };
 }
 
 export function summaryMetrics(data) {

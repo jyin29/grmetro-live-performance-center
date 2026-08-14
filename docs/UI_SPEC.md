@@ -2197,9 +2197,18 @@ shorter header and tighter outer gutters so slide titles, technician names, rank
 trend indicators, bar labels, and podium content can render at a larger scale without scrolling. Cards retain clear
 grouping while using reduced padding and gaps.
 
-The Sales slide uses a smaller left Closing % panel and a substantially wider right pipeline panel. Opportunities,
-Tech Leads, Marketed Leads, and Memberships Sold remain compactly grouped in the pipeline panel rather than being
-split into separate cards. The Technicians slide enlarges identity, rank, KPI, and goal-related presentation within
+The Sales slide uses a substantially wider left Sales Pipeline / Lead Activity panel and a narrower right Closing %
+panel. Opportunities, Tech Leads, Marketed Leads, and Memberships Sold use aligned columns on shared technician rows;
+the four counts remain individually labeled and are never stacked into a fabricated total. Closing % uses one named,
+full-width bar row per technician, including confirmed zeroes. The Technicians slide enlarges identity, rank, KPI, and goal-related presentation within
 the existing five-card layout. Operations retains its existing layout with larger typography, and Recognition keeps
 the approved second–first–third podium while enlarging ranks, names, Revenue, Closing %, and supporting text. This is
 presentation-only and changes no KPI, calculation, ranking qualification, API, or synchronization behavior.
+
+## 2026-08-13 — truthful rank ties and Sales information architecture
+
+Revenue Rank uses backend-prepared competition ranks. Equal confirmed Revenue values display the same `T-n` label;
+stable card ordering is presentation order only and must not manufacture different standings. Technician cards label
+Overall Rank and Revenue Rank separately and state `Not qualified` when the weighted Overall Rank lacks its configured
+minimum valid weight. Sales places its consolidated four-metric pipeline matrix on the wide left (approximately 68%)
+and its five vertically separated Closing % rows on the narrower right (approximately 32%).

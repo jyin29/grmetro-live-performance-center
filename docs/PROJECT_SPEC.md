@@ -4559,15 +4559,15 @@ Tie-break order:
 
 Ranks shall use competition ranking or ordinal ranking consistently.
 
-Version 1.0 shall use ordinal ranking:
+Version 1.0 shall use competition ranking:
 
 ```text
-1, 2, 3, 4, 5
+1, 1, 3, 4, 5
 ```
 
-even when values are tied, because deterministic display order is required.
-
-A tied-value indicator may be added later.
+when values are tied. Equal values receive equal business rank and use a clear `T-n` display label. Revenue Rank is
+calculated only from confirmed Revenue. Revenue, technician name, and technician ID may stabilize card ordering, but
+those deterministic ordering keys must not assign different ranks to equal KPI values.
 
 ---
 
