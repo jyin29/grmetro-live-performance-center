@@ -18,7 +18,7 @@
 .home-status-card,.home-activity,.refresh-dashboard-button,.home-quick-actions > *,.display-controller,.display-picker > *,.technician-directory > *,.goal-management__grid > *,.operations-feed,.operations-definitions > *,.dashboard-period-card { animation:remote-card-in 240ms cubic-bezier(.22,1,.36,1) both; }
 .operations-tabs button.is-active svg,.operations-tabs button[aria-current="page"] svg { transform:translateY(-1px) scale(1.06); }
 .operations-status.is-healthy::before,.display-dot { animation:remote-status-pulse 300ms cubic-bezier(.22,1,.36,1) both; }
-.refresh-dashboard-button span { display:inline-grid; place-items:center; width:1.15em; height:1.15em; line-height:1; transform-origin:50% 50%; vertical-align:middle; position:relative; top:-4px; }
+.refresh-dashboard-button span { display:inline-grid; place-items:center; width:1.15em; height:1.15em; line-height:1; transform-origin:50% 50%; vertical-align:middle; position:relative; top:-3px; }
 .refresh-dashboard-button:disabled span { animation:remote-refresh-spin .8s linear infinite; }
 @keyframes remote-refresh-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 .goal-management input:focus,.mobile-search input:focus { transform:translateY(-1px); }
