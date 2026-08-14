@@ -17,7 +17,11 @@
 @keyframes remote-card-in { from { opacity:0; transform:translateY(5px) scale(.992); } to { opacity:1; transform:translateY(0) scale(1); } }
 @keyframes remote-status-pulse { 0% { transform:scale(.94); opacity:.72; } 55% { transform:scale(1.08); opacity:1; } 100% { transform:scale(1); opacity:1; } }
 .operations-console button,.operations-console a,.operations-console input,.operations-tabs button,.display-picker button,.operations-slide-buttons button,.home-quick-actions button,.home-activity button { transition:background-color 180ms ease,border-color 180ms ease,color 180ms ease,box-shadow 180ms ease,transform 150ms ease,opacity 180ms ease; }
-.operations-console button:not(:disabled):active,.home-quick-actions button:not(:disabled):active,.display-picker button:not(:disabled):active,.operations-slide-buttons button:not(:disabled):active { transform:scale(.975); }
+.operations-console button:not(:disabled):active,.home-quick-actions button:not(:disabled):active,.operations-slide-buttons button:not(:disabled):active { transform:scale(.975); }
+/* The display highlight is measured from getBoundingClientRect(). Never transform
+   these buttons on press: measuring a temporarily scaled button gives the
+   highlight a false x/y/width/height and makes the top selector jump/bounce. */
+.display-picker button,.display-picker button:not(:disabled):active { transform:none !important; }
 .operations-console button:disabled { transition-duration:120ms; }
 .operations-mobile__content > *,.mobile-home,.displays-mobile,.technicians-mobile,.settings-mobile,.goal-management,.operations-feed-grid { animation:remote-content-in 220ms cubic-bezier(.22,1,.36,1) both; }
 .home-status-card,.home-activity,.refresh-dashboard-button,.home-quick-actions > *,.display-controller,.display-picker > *,.technician-directory > *,.goal-management__grid > *,.operations-feed,.operations-definitions > *,.dashboard-period-card { animation:remote-card-in 240ms cubic-bezier(.22,1,.36,1) both; }
