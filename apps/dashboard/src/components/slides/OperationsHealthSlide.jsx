@@ -10,9 +10,6 @@ function metricFor(row, metricId) {
 function visualRatio(slide, metricId, metric) {
   if (!metric?.hasData) return 0;
 
-  // When a real goal exists, the goal is the full 100% scale. Otherwise the
-  // current leader is deliberately shown at 80% so lower values remain visible
-  // without making the leading bar look artificially maxed out.
   if (metric.goal > 0) {
     return Math.max(0, Math.min(1, Number(metric.value) / Number(metric.goal)));
   }
