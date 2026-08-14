@@ -4,10 +4,15 @@
 .home-activity button b { color:#a38a42; font-size:22px; font-weight:500; line-height:1; }
 .operations-tabs button svg { display:block; margin:0 auto; transform-box:fill-box; transform-origin:center; }
 .mobile-search > svg { position:absolute; top:50%; left:17px; width:20px; height:20px; color:var(--muted); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transform:translateY(-50%); pointer-events:none; }
-.display-direction { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; min-width:0; }
-.display-direction button { position:relative; display:grid; place-items:center; width:100%; min-width:0; min-height:56px; padding:12px 42px; text-align:center; }
-.display-direction__arrow { position:absolute; left:16px; top:50%; width:20px; text-align:center; line-height:1; transform:translateY(-50%); }
-.display-direction__arrow--next { right:16px; left:auto; }
+
+/* Previous / Next are exact mirrored controls. */
+.display-direction { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; min-width:0; }
+.display-direction button { position:relative; display:grid; grid-template-columns:24px minmax(0,1fr) 24px; align-items:center; width:100%; min-width:0; min-height:56px; padding:12px 14px; text-align:center; }
+.display-direction button > :not(.display-direction__arrow) { grid-column:2; justify-self:center; }
+.display-direction__arrow { position:static; grid-column:1; width:24px; text-align:center; line-height:1; transform:none; justify-self:center; }
+.display-direction__arrow--next { grid-column:3; justify-self:center; }
+.display-direction button:last-child .display-direction__arrow--next { grid-row:1; }
+
 @keyframes remote-content-in { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
 @keyframes remote-card-in { from { opacity:0; transform:translateY(5px) scale(.992); } to { opacity:1; transform:translateY(0) scale(1); } }
 @keyframes remote-status-pulse { 0% { transform:scale(.94); opacity:.72; } 55% { transform:scale(1.08); opacity:1; } 100% { transform:scale(1); opacity:1; } }
@@ -33,36 +38,38 @@
 .dashboard-period-toggle button { min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--muted); font-weight:700; }
 .dashboard-period-toggle button.is-active { color:var(--primary,#087f83); box-shadow:none; }
 
-/* Sliding selection indicators. The indicator is an independent layer, so buttons never move or reflow. */
+/* Sliding selection indicators use the same grid geometry as their buttons. */
 .operations-tabs,.display-picker,.operations-slide-buttons,.dashboard-period-toggle { --slide-index:0; position:relative; isolation:isolate; }
 .operations-tabs > button,.display-picker > button,.operations-slide-buttons > button,.dashboard-period-toggle > button { position:relative; z-index:2; background:transparent !important; }
-.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; z-index:1; pointer-events:none; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1); will-change:transform; }
+.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; z-index:1; pointer-events:none; box-sizing:border-box; transition:transform 320ms cubic-bezier(.22,1,.36,1); will-change:transform; }
 
-/* Fixed bottom navigation: 4 equal destinations; bar remains pinned to the viewport. */
-.operations-tabs::before { top:6px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); left:6px; width:calc((100% - 12px) / 4); border-radius:14px; background:rgba(8,127,131,.12); transform:translateX(calc(var(--slide-index) * 100%)); }
+/* Bottom nav: exactly one quarter of the usable inner width, with the same 6px inset on both ends. */
+.operations-tabs::before { top:6px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); left:6px; width:calc((100% - 12px) / 4); border-radius:14px; background:rgba(8,127,131,.12); transform:translate3d(calc(var(--slide-index) * 100%),0,0); }
 .operations-tabs:has(> :nth-child(1).is-active),.operations-tabs:has(> :nth-child(1)[aria-current="page"]) { --slide-index:0; }
 .operations-tabs:has(> :nth-child(2).is-active),.operations-tabs:has(> :nth-child(2)[aria-current="page"]) { --slide-index:1; }
 .operations-tabs:has(> :nth-child(3).is-active),.operations-tabs:has(> :nth-child(3)[aria-current="page"]) { --slide-index:2; }
 .operations-tabs:has(> :nth-child(4).is-active),.operations-tabs:has(> :nth-child(4)[aria-current="page"]) { --slide-index:3; }
 
-/* Display selector: five equal display destinations. */
-.display-picker::before { top:4px; bottom:4px; left:4px; width:calc((100% - 8px) / 5); border-radius:12px; background:rgba(8,127,131,.11); transform:translateX(calc(var(--slide-index) * 100%)); }
+/* Display picker: account for the real gaps between buttons so the highlight stays centered. */
+.display-picker { --picker-count:5; --picker-gap:8px; }
+.display-picker::before { top:4px; bottom:4px; left:0; width:calc((100% - (var(--picker-gap) * (var(--picker-count) - 1))) / var(--picker-count)); border-radius:12px; background:rgba(8,127,131,.11); transform:translate3d(calc(var(--slide-index) * (100% + var(--picker-gap))),0,0); }
 .display-picker:has(> :nth-child(1).is-selected) { --slide-index:0; }
 .display-picker:has(> :nth-child(2).is-selected) { --slide-index:1; }
 .display-picker:has(> :nth-child(3).is-selected) { --slide-index:2; }
 .display-picker:has(> :nth-child(4).is-selected) { --slide-index:3; }
 .display-picker:has(> :nth-child(5).is-selected) { --slide-index:4; }
 
-/* Direct Slide 1–5 controls. */
-.operations-slide-buttons::before { top:3px; bottom:3px; left:3px; width:calc((100% - 6px) / 5); border-radius:10px; background:rgba(8,127,131,.11); transform:translateX(calc(var(--slide-index) * 100%)); }
+/* Direct Slide 1–5 controls: same gap-aware geometry. */
+.operations-slide-buttons { --slide-count:5; --slide-gap:8px; }
+.operations-slide-buttons::before { top:3px; bottom:3px; left:0; width:calc((100% - (var(--slide-gap) * (var(--slide-count) - 1))) / var(--slide-count)); border-radius:10px; background:rgba(8,127,131,.11); transform:translate3d(calc(var(--slide-index) * (100% + var(--slide-gap))),0,0); }
 .operations-slide-buttons:has(> :nth-child(1).is-active),.operations-slide-buttons:has(> :nth-child(1)[aria-pressed="true"]) { --slide-index:0; }
 .operations-slide-buttons:has(> :nth-child(2).is-active),.operations-slide-buttons:has(> :nth-child(2)[aria-pressed="true"]) { --slide-index:1; }
 .operations-slide-buttons:has(> :nth-child(3).is-active),.operations-slide-buttons:has(> :nth-child(3)[aria-pressed="true"]) { --slide-index:2; }
 .operations-slide-buttons:has(> :nth-child(4).is-active),.operations-slide-buttons:has(> :nth-child(4)[aria-pressed="true"]) { --slide-index:3; }
 .operations-slide-buttons:has(> :nth-child(5).is-active),.operations-slide-buttons:has(> :nth-child(5)[aria-pressed="true"]) { --slide-index:4; }
 
-/* Today / MTD. */
-.dashboard-period-toggle::before { inset:4px auto 4px 4px; width:calc((100% - 8px) / 2); border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); transform:translateX(calc(var(--slide-index) * 100%)); }
+/* Today / MTD: two equal tracks separated by the toggle's 4px gap. */
+.dashboard-period-toggle::before { top:4px; bottom:4px; left:4px; width:calc((100% - 12px) / 2); border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); transform:translate3d(calc(var(--slide-index) * (100% + 4px)),0,0); }
 .dashboard-period-toggle:has(> :nth-child(1).is-active) { --slide-index:0; }
 .dashboard-period-toggle:has(> :nth-child(2).is-active) { --slide-index:1; }
 
