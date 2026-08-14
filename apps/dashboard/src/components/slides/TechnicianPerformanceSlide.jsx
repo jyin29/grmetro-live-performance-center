@@ -2,10 +2,11 @@ import { TechnicianPerformanceCard } from "../TechnicianPerformanceCard";
 import { rankedTechnicians } from "../../lib/presentation";
 
 export function TechnicianPerformanceSlide({ data }) {
+  const periodLabel = data.period === "mtd" ? "Month to Date" : "Today";
   return <main className="technician-performance dashboard-slide" aria-labelledby="technician-performance-title">
     <div className="technician-performance__heading">
       <div>
-        <p>Today by person</p>
+        <p>{periodLabel} by person</p>
         <h2 id="technician-performance-title">Technicians</h2>
       </div>
       <span>Overall rank · Revenue · Closing · Best available field activity</span>
