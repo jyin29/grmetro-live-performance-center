@@ -1,7 +1,7 @@
 import { trendPresentation, trendStreak } from "../lib/historicalPresentation";
 
 export function TrendIndicator({ trend, streakNoun, compact = false }) {
-  if (!trend) return null;
+  if (!trend?.available || trend.trend === "unknown") return null;
   const presentation = trendPresentation(trend);
   const streak = trendStreak(trend, streakNoun);
   return <span className={`trend-indicator trend-indicator--${presentation.tone}`} aria-label={`Trend: ${presentation.label}`}>

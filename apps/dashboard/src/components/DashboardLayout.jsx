@@ -64,6 +64,6 @@ export function DashboardLayout({ data, displayId, error, refreshing, retry, las
     />
     <EventOverlay event={presentation.event} />
     <DiagnosticsOverlay diagnostics={diagnostics} />
-    <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>Presentation · {presentation.connectionState === "connected" ? "synchronized" : "reconnecting"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
+    <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>{presentation.connectionState === "connected" ? "Display connected · Live updates enabled" : "Display reconnecting · Updates will resume automatically"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
   </div>;
 }

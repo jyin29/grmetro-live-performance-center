@@ -58,7 +58,7 @@ export function BusinessPerformanceSlide({ data }) {
       <span>Closing results and pipeline activity</span>
     </header>
     <section className="panel business-performance__conversion" aria-labelledby="business-conversion-title">
-      <div className="panel__heading"><div><p>Sales pipeline</p><h3 id="business-conversion-title">Pipeline &amp; Lead Activity</h3></div><span>Four separate counts · shared technician rows</span></div>
+      <div className="panel__heading"><div><p>Sales pipeline</p><h3 id="business-conversion-title">Pipeline &amp; Lead Activity</h3></div><span>Lead activity by technician</span></div>
       <SalesPipelineMatrix slide={data.slides.activity} />
     </section>
     <section className="panel business-performance__revenue" aria-labelledby="business-revenue-title">
