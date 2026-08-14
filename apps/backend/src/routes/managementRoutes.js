@@ -8,6 +8,17 @@ function createManagementRoutes({ scheduler, goalStore, rateLimiter, clock = () 
   let status = { state: "idle", message: "Ready to refresh", startedAt: null, completedAt: null };
 
   router.get("/refresh", (request, response) => response.json(status));
+  router.get("/period", (request, response) => response.json({ period: scheduler.getPeriod?.() || "today", availablePeriods: ["today", "mtd"] }));
+  router.put("/period", rateLimiter, async (request, response, next) => {
+    try {
+      const period = String(request.body?.period || "").toLowerCase();
+      if (!["today", "mtd"].includes(period)) return response.status(400).json({ message: "Period must be today or mtd." });
+      if (scheduler.active) return response.status(409).json({ message: "A dashboard refresh is already running.", period: scheduler.getPeriod?.() || "today" });
+      const result = await scheduler.setPeriod(period);
+      if (!result?.ok) return response.status(503).json({ message: "Could not change the dashboard period. The previous period remains active.", period: scheduler.getPeriod?.() || "today" });
+      return response.json({ message: period === "mtd" ? "Dashboard changed to Month to Date." : "Dashboard changed to Today.", period, dateRange: result.dateRange || null });
+    } catch (error) { return next(error); }
+  });
   if (goalStore) {
     router.get("/goals", (request, response) => response.json(goalStore.getPublicState()));
     router.put("/goals", rateLimiter, async (request, response, next) => {
@@ -33,7 +44,7 @@ function createManagementRoutes({ scheduler, goalStore, rateLimiter, clock = () 
         return response.status(503).json(status);
       }
       status = { state: "succeeded", message: "Dashboard refresh completed successfully.", startedAt, completedAt };
-      return response.json(status);
+      return response.json({ ...status, period: result.period, dateRange: result.dateRange });
     } catch {
       status = { state: "failed", message: "Dashboard refresh failed. The last successful data remains visible.", startedAt, completedAt: clock().toISOString() };
       return response.status(503).json(status);

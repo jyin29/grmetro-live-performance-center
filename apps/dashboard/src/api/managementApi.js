@@ -4,7 +4,7 @@ export class ManagementApiError extends Error {
 
 async function read(response) {
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new ManagementApiError(body?.message || "Could not refresh the dashboard.", response.status);
+  if (!response.ok) throw new ManagementApiError(body?.message || "Could not update dashboard management settings.", response.status);
   return body;
 }
 
@@ -14,6 +14,14 @@ export async function fetchRefreshStatus(fetchImpl = fetch) {
 
 export async function requestDashboardRefresh(fetchImpl = fetch) {
   return read(await fetchImpl("/api/v1/management/refresh", { method: "POST", headers: { accept: "application/json" } }));
+}
+
+export async function fetchDashboardPeriod(fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/period", { headers: { accept: "application/json" } }));
+}
+
+export async function setDashboardPeriod(period, fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/period", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify({ period }) }));
 }
 
 export async function fetchGoals(fetchImpl = fetch) {

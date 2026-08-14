@@ -21,16 +21,16 @@ class ServiceTitanRefreshProvider {
     if (!config || !browserManager || !executor) throw new TypeError("Live ServiceTitan provider requires configuration, browser manager, and request executor.");
     this.config = config; this.browserManager = browserManager; this.executor = executor; this.logger = logger || { info() {}, warn() {} }; this.technicians = technicianConfiguration; this.classifications = classificationConfiguration; this.concurrency = concurrency; this.goalsProvider = goalsProvider;
   }
-  async refreshTechnician(technician, now) {
+  async refreshTechnician(technician, now, dateRange) {
     const started = Date.now();
     try {
-      const overviewResponse = await this.executor.post(ENDPOINTS.technicianOverview, buildTechnicianOverviewRequest(this.config, technician.id, now));
+      const overviewResponse = await this.executor.post(ENDPOINTS.technicianOverview, buildTechnicianOverviewRequest(this.config, technician.id, now, dateRange));
       validateJsonResponse(overviewResponse, { endpointName: ENDPOINTS.technicianOverview.name, expectedShape: "object" });
-      const datasourceResponse = await this.executor.post(ENDPOINTS.technicianDatasource, buildTechnicianDatasourceRequest(this.config, technician.id, now));
+      const datasourceResponse = await this.executor.post(ENDPOINTS.technicianDatasource, buildTechnicianDatasourceRequest(this.config, technician.id, now, dateRange));
       const rows = validateJsonResponse(datasourceResponse, { endpointName: ENDPOINTS.technicianDatasource.name, expectedShape: "array" });
       const raw = rows.find((row) => Number(row?.TechnicianId) === technician.id);
       if (!raw) throw new ServiceTitanError(ERROR_CODES.EMPTY_RESULT, "ServiceTitan returned no matching technician result.", { endpointName: ENDPOINTS.technicianDatasource.name });
-      const drilldownResponse = await this.executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(this.config, technician.id, new Date(now)));
+      const drilldownResponse = await this.executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(this.config, technician.id, new Date(now), dateRange));
       const drilldownRows = validateJsonResponse(drilldownResponse, { endpointName: ENDPOINTS.technicianJobDrilldown.name, expectedShape: "array" });
       const jobs = sanitizeDrilldownRecords(drilldownRows).records;
       let derivationDiagnostics;
@@ -48,9 +48,9 @@ class ServiceTitanRefreshProvider {
       return result;
     }
   }
-  async refresh({ now = new Date().toISOString(), date, previousPayload } = {}) {
+  async refresh({ now = new Date().toISOString(), date, period = "today", dateRange, previousPayload } = {}) {
     try { this.browserManager.getServiceTitanPage(); } catch (error) { throw new ServiceTitanError(ERROR_CODES.UNAVAILABLE, "The authenticated ServiceTitan browser page is unavailable."); }
-    const results = await mapLimited(this.technicians, this.concurrency, (technician) => this.refreshTechnician(technician, now));
+    const results = await mapLimited(this.technicians, this.concurrency, (technician) => this.refreshTechnician(technician, now, dateRange));
     if (!results.some((result) => result.ok)) throw new ServiceTitanError(ERROR_CODES.UNAVAILABLE, "No ServiceTitan technician refresh succeeded.");
     const previous = new Map((previousPayload?.technicians || []).map((record) => [record.id, record]));
     const records = results.map((result) => {
@@ -61,7 +61,7 @@ class ServiceTitanRefreshProvider {
     });
     const timestamp = new Date(now).toISOString();
     const payload = buildDashboardPayload(records, { now: timestamp, previousPayload, goals: this.goalsProvider?.(), rotationEpoch: previousPayload?.rotationEpoch || timestamp, status: { browser: "connected", serviceTitan: results.every((result) => result.ok) ? "connected" : "partial-failure", cache: "fresh", staleTechnicianCount: results.filter((result) => !result.ok).length } });
-    return { ...payload, provider: "servicetitan", diagnostics: { date: date || null, results: results.map(({ record, ...safe }) => ({ ...safe, stale: !safe.ok })) } };
+    return { ...payload, period, dateRange: dateRange ? { from: dateRange.from, to: dateRange.to } : undefined, provider: "servicetitan", diagnostics: { date: date || null, period, dateRange: dateRange || null, results: results.map(({ record, ...safe }) => ({ ...safe, stale: !safe.ok })) } };
   }
 }
 module.exports = { ServiceTitanRefreshProvider, mapLimited };
