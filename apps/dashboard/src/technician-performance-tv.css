@@ -1,8 +1,11 @@
-/* Slide 3 TV readability: keep the established layout and enlarge only the data values. */
-.technician-metric strong { font-size: clamp(40px, 2.65vw, 54px); }
-.performance-card__ranking strong { font-size: clamp(38px, 2.45vw, 50px); }
+/* Slide 3 TV readability.
+   final-tv-readability.css owns the full Slide 3 layout and sizing.
+   Keep this legacy stylesheet from shrinking KPI values at short TV heights. */
+.technician-performance .technician-metric strong,
+.technician-performance .technician-metric strong > span {
+  font-size: inherit;
+}
 
-@media (max-height: 760px) {
-  .technician-metric strong { font-size: 32px; }
-  .performance-card__ranking strong { font-size: 36px; }
+.technician-performance .performance-card__ranking strong {
+  font-size: inherit;
 }
