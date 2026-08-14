@@ -12,15 +12,17 @@ function updateGroup(group) {
     return;
   }
 
-  // Measure in the group's actual rendered coordinate system. offsetLeft is
-  // relative to offsetParent, which is not guaranteed to be this group and
-  // becomes visibly wrong for scrollable/flex containers.
+  // Measure both axes in the group's actual rendered coordinate system so the
+  // highlight follows the selected button instead of relying on fixed insets.
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
   const x = activeRect.left - groupRect.left;
+  const y = activeRect.top - groupRect.top;
 
   group.style.setProperty("--highlight-x", `${x}px`);
+  group.style.setProperty("--highlight-y", `${y}px`);
   group.style.setProperty("--highlight-width", `${activeRect.width}px`);
+  group.style.setProperty("--highlight-height", `${activeRect.height}px`);
   group.classList.add("has-measured-highlight");
 }
 
@@ -53,8 +55,6 @@ function startMeasuredHighlights() {
     attributeFilter: ["class", "aria-current", "aria-pressed"],
   });
 
-  // Scrollable display/tab rows change the selected button's visual position
-  // without changing its offsetLeft, so remeasure on scroll as well.
   document.addEventListener("scroll", scheduleSync, { passive: true, capture: true });
   window.addEventListener("resize", scheduleSync, { passive: true });
   syncAll();
