@@ -1,5 +1,6 @@
 import { TechnicianPerformanceCard } from "../TechnicianPerformanceCard";
 import { rankedTechnicians } from "../../lib/presentation";
+import "../../technician-performance-tv.css";
 
 export function TechnicianPerformanceSlide({ data }) {
   const periodLabel = data.period === "mtd" ? "Month to Date" : "Today";
