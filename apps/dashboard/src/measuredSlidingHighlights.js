@@ -12,8 +12,15 @@ function updateGroup(group) {
     return;
   }
 
-  group.style.setProperty("--highlight-x", `${active.offsetLeft}px`);
-  group.style.setProperty("--highlight-width", `${active.offsetWidth}px`);
+  // Measure in the group's actual rendered coordinate system. offsetLeft is
+  // relative to offsetParent, which is not guaranteed to be this group and
+  // becomes visibly wrong for scrollable/flex containers.
+  const groupRect = group.getBoundingClientRect();
+  const activeRect = active.getBoundingClientRect();
+  const x = activeRect.left - groupRect.left;
+
+  group.style.setProperty("--highlight-x", `${x}px`);
+  group.style.setProperty("--highlight-width", `${activeRect.width}px`);
   group.classList.add("has-measured-highlight");
 }
 
@@ -46,6 +53,9 @@ function startMeasuredHighlights() {
     attributeFilter: ["class", "aria-current", "aria-pressed"],
   });
 
+  // Scrollable display/tab rows change the selected button's visual position
+  // without changing its offsetLeft, so remeasure on scroll as well.
+  document.addEventListener("scroll", scheduleSync, { passive: true, capture: true });
   window.addEventListener("resize", scheduleSync, { passive: true });
   syncAll();
   requestAnimationFrame(scheduleSync);
