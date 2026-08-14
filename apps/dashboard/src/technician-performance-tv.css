@@ -1,30 +1,8 @@
-.technician-performance__heading p { font-size: clamp(18px, 1.05vw, 22px); }
-.technician-performance__heading h2 { font-size: clamp(44px, 2.8vw, 58px); }
-.technician-performance__heading > span { font-size: clamp(21px, 1.25vw, 25px); }
-.performance-card { padding: clamp(24px, 1.7vw, 34px); }
-.performance-card__avatar { width: clamp(62px, 4vw, 78px); font-size: clamp(22px, 1.4vw, 28px); }
-.performance-card__identity h3 { font-size: clamp(31px, 1.95vw, 40px); }
-.performance-card__identity span { font-size: clamp(18px, 1.05vw, 22px); font-weight: 700; }
-.performance-card__identity small { font-size: clamp(15px, .88vw, 18px); }
-.performance-card__ranking strong { font-size: clamp(42px, 2.7vw, 55px); }
-.performance-card__movement { font-size: clamp(24px, 1.5vw, 30px); }
-.performance-card__metrics { gap: clamp(24px, 1.55vw, 32px) clamp(30px, 1.9vw, 40px); padding: clamp(26px, 1.75vw, 36px) 0; }
-.technician-metric span { margin-bottom: 8px; font-size: clamp(19px, 1.12vw, 23px); font-weight: 750; }
-.technician-metric strong { font-size: clamp(42px, 2.75vw, 56px); }
-.performance-card__status > span { font-size: clamp(18px, 1.05vw, 21px); }
-.performance-card__status .status-badge { font-size: clamp(14px, .82vw, 17px); }
+/* Slide 3 TV readability: keep the established layout and enlarge only the data values. */
+.technician-metric strong { font-size: clamp(40px, 2.65vw, 54px); }
+.performance-card__ranking strong { font-size: clamp(38px, 2.45vw, 50px); }
 
 @media (max-height: 760px) {
-  .technician-performance__heading h2 { font-size: 36px; }
-  .technician-performance__heading p { font-size: 15px; }
-  .technician-performance__heading > span { font-size: 17px; }
-  .performance-card { padding: 15px 18px; }
-  .performance-card__avatar { width: 50px; font-size: 18px; }
-  .performance-card__identity h3 { font-size: 25px; }
-  .performance-card__identity span { font-size: 15px; }
-  .performance-card__identity small { font-size: 13px; }
-  .performance-card__ranking strong { font-size: 34px; }
-  .performance-card__metrics { gap: 10px 18px; padding: 10px 0; }
-  .technician-metric span { font-size: 15px; }
-  .technician-metric strong { font-size: 28px; }
+  .technician-metric strong { font-size: 32px; }
+  .performance-card__ranking strong { font-size: 36px; }
 }
