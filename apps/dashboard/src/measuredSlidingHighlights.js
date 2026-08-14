@@ -4,23 +4,6 @@ const ACTIVE_SELECTOR = ":scope > button.is-selected,:scope > button.is-active,:
 let scheduledFrame = 0;
 let resizeObserver;
 let mutationObserver;
-let lastDisplaySelection = null;
-
-function centerDisplaySelection(group, active) {
-  if (!group.classList.contains("display-picker")) return;
-  if (active === lastDisplaySelection) return;
-  lastDisplaySelection = active;
-
-  const maxScroll = group.scrollWidth - group.clientWidth;
-  if (maxScroll <= 0) return;
-
-  const target = Math.max(
-    0,
-    Math.min(maxScroll, active.offsetLeft + active.offsetWidth / 2 - group.clientWidth / 2),
-  );
-
-  group.scrollTo({ left: target, behavior: "smooth" });
-}
 
 function updateGroup(group) {
   const active = group.querySelector(ACTIVE_SELECTOR);
@@ -29,11 +12,9 @@ function updateGroup(group) {
     return;
   }
 
-  centerDisplaySelection(group, active);
-
-  // Always measure the highlight from the rendered rectangles. During the
-  // display picker's smooth scroll, scroll events repeatedly call this method,
-  // keeping the highlight locked to the selected button while the row moves.
+  // Keep the selector row completely stationary. Only the highlight moves.
+  // The display picker remains manually scrollable when its buttons overflow,
+  // but selecting a display must never recenter or shift the entire row.
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
   const x = activeRect.left - groupRect.left;
@@ -75,6 +56,8 @@ function startMeasuredHighlights() {
     attributeFilter: ["class", "aria-current", "aria-pressed"],
   });
 
+  // Remeasure when the user manually scrolls an overflowing selector, but do
+  // not initiate any scrolling from selection changes.
   document.addEventListener("scroll", scheduleSync, { passive: true, capture: true });
   window.addEventListener("resize", scheduleSync, { passive: true });
   syncAll();
