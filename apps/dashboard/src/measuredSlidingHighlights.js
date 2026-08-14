@@ -21,13 +21,17 @@ function neutralizeDisplayButtonSelection(group, active) {
 function layoutRect(group, button) {
   const groupRect = group.getBoundingClientRect();
   const rect = button.getBoundingClientRect();
-  // Preserve the button press-scale UI, but measure its normal layout box.
-  // A centered scale changes the rendered edges, so expand back to offset size.
   const width = button.offsetWidth || rect.width;
   const height = button.offsetHeight || rect.height;
+
+  // The indicator is absolutely positioned in the display picker's SCROLLING
+  // content coordinate system. getBoundingClientRect() is viewport-relative,
+  // so once portrait mode makes this row horizontally scrollable we must add
+  // the current scroll offsets back. Without this, every scroll makes the
+  // indicator appear to jump/drift by exactly the amount the row has scrolled.
   return {
-    x: rect.left - groupRect.left - (width - rect.width) / 2,
-    y: rect.top - groupRect.top - (height - rect.height) / 2,
+    x: rect.left - groupRect.left + group.scrollLeft - (width - rect.width) / 2,
+    y: rect.top - groupRect.top + group.scrollTop - (height - rect.height) / 2,
     width,
     height,
   };
