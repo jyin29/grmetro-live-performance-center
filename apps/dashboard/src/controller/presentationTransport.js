@@ -1,5 +1,6 @@
 const RECONNECT_MINIMUM_MS = 500;
 const RECONNECT_MAXIMUM_MS = 10000;
+const DASHBOARD_UPDATE_EVENT = "grmetro:dashboard-update";
 
 export function createWebSocketPresentationTransport({ displayId, clientType, onState, onConnectionChange, onReconnectAttempt,
   WebSocketImpl = WebSocket, location = window.location, schedule = setTimeout, cancel = clearTimeout,
@@ -22,6 +23,7 @@ export function createWebSocketPresentationTransport({ displayId, clientType, on
       let message;
       try { message = JSON.parse(event.data); } catch { return; }
       if (message.type === "presentation/state" && message.state?.displayId === displayId) onState(message.state);
+      if (message.type === "dashboard/update") window.dispatchEvent(new CustomEvent(DASHBOARD_UPDATE_EVENT, { detail: message }));
     });
     currentSocket.addEventListener("close", () => {
       if (socketToReplace === currentSocket) { socketToReplace = null; return; }
