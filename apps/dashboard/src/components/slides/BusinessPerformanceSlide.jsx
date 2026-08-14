@@ -6,6 +6,14 @@ function metricFor(row, metricId) {
   return row.metrics?.find((metric) => metric.id === metricId);
 }
 
+function pipelineBarRatio(slide, metricId, metric) {
+  if (!metric?.hasData) return 0;
+  if (metric.goal > 0) return Math.max(0, Math.min(1, metric.value / metric.goal));
+  const values = slide.rows.map((row) => metricFor(row, metricId)).filter((item) => item?.hasData).map((item) => Number(item.value) || 0);
+  const maximum = Math.max(0, ...values);
+  return maximum > 0 ? Math.max(0, Math.min(.8, (Number(metric.value) || 0) / maximum * .8)) : 0;
+}
+
 export function SalesPipelineMatrix({ slide }) {
   const metrics = PIPELINE_METRICS.map((id) => slide?.metrics?.find((metric) => metric.id === id)).filter(Boolean);
   if (!slide?.rows?.length || !metrics.length) return <p className="chart-empty">Sales pipeline data is not available yet.</p>;
@@ -20,7 +28,7 @@ export function SalesPipelineMatrix({ slide }) {
         {metrics.map((definition) => {
           const metric = metricFor(row, definition.id);
           return <div className="sales-pipeline__metric" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}>
-            <span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%`, backgroundColor: definition.color }} />
+            <span style={{ width: `${pipelineBarRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} />
             <b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b>
           </div>;
         })}
