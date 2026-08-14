@@ -4,6 +4,7 @@ import App from "./App";
 import { PresentationControllerProvider } from "./controller/PresentationController";
 import "./styles.css";
 import "./remote-mobile-fixes.css";
+import "./operations-slide-fixes.css";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(
