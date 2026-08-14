@@ -43,9 +43,10 @@ export function ClosingRateRows({ slide }) {
 }
 
 export function BusinessPerformanceSlide({ data }) {
+  const periodLabel = data.period === "mtd" ? "Month to Date" : "Today";
   return <main className="business-performance dashboard-slide domain-slide" aria-labelledby="business-performance-title">
     <header className="business-performance__heading">
-      <div><p>Today</p><h2 id="business-performance-title">Sales</h2></div>
+      <div><p>{periodLabel}</p><h2 id="business-performance-title">Sales</h2></div>
       <span>Closing results and pipeline activity</span>
     </header>
     <section className="panel business-performance__conversion" aria-labelledby="business-conversion-title">
