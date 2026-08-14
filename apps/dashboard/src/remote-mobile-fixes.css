@@ -23,8 +23,7 @@
 @keyframes remote-refresh-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 .goal-management input:focus,.mobile-search input:focus { transform:translateY(-1px); }
 .operations-tabs { position:fixed !important; left:0; right:0; bottom:0; z-index:1000; }
-.operations-tabs > button,.display-picker > button,.operations-slide-buttons > button { transition:background-color 240ms cubic-bezier(.22,1,.36,1),border-color 240ms cubic-bezier(.22,1,.36,1),color 200ms ease,box-shadow 240ms cubic-bezier(.22,1,.36,1),transform 180ms cubic-bezier(.22,1,.36,1); }
-.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before { content:none !important; display:none !important; }
+.operations-tabs > button,.display-picker > button,.operations-slide-buttons > button { transition:border-color 240ms cubic-bezier(.22,1,.36,1),color 200ms ease,box-shadow 240ms cubic-bezier(.22,1,.36,1),transform 180ms cubic-bezier(.22,1,.36,1); }
 .operations-tabs > button.is-active,.operations-tabs > button[aria-current="page"],.display-picker > button.is-selected,.operations-slide-buttons > button.is-active,.operations-slide-buttons > button[aria-pressed="true"] { box-shadow:0 4px 14px rgba(8,127,131,.12); }
 .dashboard-period-card { display:grid; gap:10px; padding:14px; border:1px solid rgba(8,127,131,.14); border-radius:16px; background:#fff; }
 .dashboard-period-card > div:first-child { display:flex; align-items:end; justify-content:space-between; gap:12px; }
@@ -32,6 +31,40 @@
 .dashboard-period-card > small { color:var(--muted); }
 .dashboard-period-toggle { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; border-radius:12px; background:rgba(8,127,131,.08); }
 .dashboard-period-toggle button { min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--muted); font-weight:700; }
-.dashboard-period-toggle button.is-active { background:#fff; color:var(--primary,#087f83); box-shadow:0 2px 8px rgba(8,127,131,.14); }
+.dashboard-period-toggle button.is-active { color:var(--primary,#087f83); box-shadow:none; }
+
+/* Sliding selection indicators. The indicator is an independent layer, so buttons never move or reflow. */
+.operations-tabs,.display-picker,.operations-slide-buttons,.dashboard-period-toggle { --slide-index:0; position:relative; isolation:isolate; }
+.operations-tabs > button,.display-picker > button,.operations-slide-buttons > button,.dashboard-period-toggle > button { position:relative; z-index:2; background:transparent !important; }
+.operations-tabs::before,.display-picker::before,.operations-slide-buttons::before,.dashboard-period-toggle::before { content:"" !important; display:block !important; position:absolute; z-index:1; pointer-events:none; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1); will-change:transform; }
+
+/* Fixed bottom navigation: 4 equal destinations; bar remains pinned to the viewport. */
+.operations-tabs::before { top:6px; bottom:calc(6px + env(safe-area-inset-bottom,0px)); left:6px; width:calc((100% - 12px) / 4); border-radius:14px; background:rgba(8,127,131,.12); transform:translateX(calc(var(--slide-index) * 100%)); }
+.operations-tabs:has(> :nth-child(1).is-active),.operations-tabs:has(> :nth-child(1)[aria-current="page"]) { --slide-index:0; }
+.operations-tabs:has(> :nth-child(2).is-active),.operations-tabs:has(> :nth-child(2)[aria-current="page"]) { --slide-index:1; }
+.operations-tabs:has(> :nth-child(3).is-active),.operations-tabs:has(> :nth-child(3)[aria-current="page"]) { --slide-index:2; }
+.operations-tabs:has(> :nth-child(4).is-active),.operations-tabs:has(> :nth-child(4)[aria-current="page"]) { --slide-index:3; }
+
+/* Display selector: five equal display destinations. */
+.display-picker::before { top:4px; bottom:4px; left:4px; width:calc((100% - 8px) / 5); border-radius:12px; background:rgba(8,127,131,.11); transform:translateX(calc(var(--slide-index) * 100%)); }
+.display-picker:has(> :nth-child(1).is-selected) { --slide-index:0; }
+.display-picker:has(> :nth-child(2).is-selected) { --slide-index:1; }
+.display-picker:has(> :nth-child(3).is-selected) { --slide-index:2; }
+.display-picker:has(> :nth-child(4).is-selected) { --slide-index:3; }
+.display-picker:has(> :nth-child(5).is-selected) { --slide-index:4; }
+
+/* Direct Slide 1–5 controls. */
+.operations-slide-buttons::before { top:3px; bottom:3px; left:3px; width:calc((100% - 6px) / 5); border-radius:10px; background:rgba(8,127,131,.11); transform:translateX(calc(var(--slide-index) * 100%)); }
+.operations-slide-buttons:has(> :nth-child(1).is-active),.operations-slide-buttons:has(> :nth-child(1)[aria-pressed="true"]) { --slide-index:0; }
+.operations-slide-buttons:has(> :nth-child(2).is-active),.operations-slide-buttons:has(> :nth-child(2)[aria-pressed="true"]) { --slide-index:1; }
+.operations-slide-buttons:has(> :nth-child(3).is-active),.operations-slide-buttons:has(> :nth-child(3)[aria-pressed="true"]) { --slide-index:2; }
+.operations-slide-buttons:has(> :nth-child(4).is-active),.operations-slide-buttons:has(> :nth-child(4)[aria-pressed="true"]) { --slide-index:3; }
+.operations-slide-buttons:has(> :nth-child(5).is-active),.operations-slide-buttons:has(> :nth-child(5)[aria-pressed="true"]) { --slide-index:4; }
+
+/* Today / MTD. */
+.dashboard-period-toggle::before { inset:4px auto 4px 4px; width:calc((100% - 8px) / 2); border-radius:9px; background:#fff; box-shadow:0 2px 8px rgba(8,127,131,.14); transform:translateX(calc(var(--slide-index) * 100%)); }
+.dashboard-period-toggle:has(> :nth-child(1).is-active) { --slide-index:0; }
+.dashboard-period-toggle:has(> :nth-child(2).is-active) { --slide-index:1; }
+
 @media (max-width:760px) { .operations-mobile__content,.operations-content { padding-bottom:calc(92px + env(safe-area-inset-bottom,0px)); } .operations-tabs { padding-bottom:env(safe-area-inset-bottom,0px); } }
 @media (prefers-reduced-motion:reduce) { .operations-console *,.operations-console *::before,.operations-console *::after,.operations-mobile__content > *,.mobile-home,.displays-mobile,.technicians-mobile,.settings-mobile,.goal-management,.operations-feed-grid { animation:none !important; transition-duration:.01ms !important; transition-delay:0ms !important; scroll-behavior:auto !important; } }
