@@ -38,15 +38,18 @@ function start() {
   const presentationManager = createPresentationManager({ displays: PRESENTATION_DISPLAYS,
     slideCount: PRESENTATION_SLIDE_COUNT, rotationMilliseconds: PRESENTATION_ROTATION_MILLISECONDS, eventEngine });
   const presentationCommandBus = createPresentationCommandBus({ handleCommand: presentationManager.handleCommand });
+  let presentationWebSocket;
   const scheduler = provider ? new RefreshScheduler({
     provider, cache, logger,
     intervalMilliseconds: config.refreshIntervalSeconds * 1000,
-    timeZone: config.timeZone, onSuccessfulPayload: (payload) => eventEngine.process(payload)
+    timeZone: config.timeZone, onSuccessfulPayload: (payload) => {
+      eventEngine.process(payload);
+      presentationWebSocket?.broadcastDashboardUpdate(payload);
+    }
   }) : null;
   const mockBrowserStatus = () => ({ connected: false, connecting: false, serviceTitanPageFound: false,
     inactiveReason: "mock-mode", lastConnectedAt: null, lastDisconnectedAt: null, reconnectAttempt: 0,
     lastErrorCode: null, lastErrorMessage: null });
-  let presentationWebSocket;
   const app = createApp({ config, logger, cache, tvManager, scheduler, applicationVersion: packageJson.version,
     buildVersion: process.env.BUILD_VERSION || null,
     browserStatusProvider: browserManager ? () => browserManager.getStatus() : mockBrowserStatus,
