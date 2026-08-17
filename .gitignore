@@ -41,3 +41,6 @@ research-output/
 data/goals.json
 data/goals.json.tmp
 apps/backend/data/goals.json
+data/display-settings.json
+data/display-settings.json.tmp
+apps/backend/data/display-settings.json

@@ -2,7 +2,7 @@
 
 const express = require("express");
 
-function createManagementRoutes({ scheduler, goalStore, rateLimiter, clock = () => new Date() } = {}) {
+function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, rateLimiter, clock = () => new Date() } = {}) {
   if (!scheduler?.refresh) throw new TypeError("Management routes require the dashboard refresh scheduler.");
   const router = express.Router();
   let status = { state: "idle", message: "Ready to refresh", startedAt: null, completedAt: null };
@@ -27,6 +27,15 @@ function createManagementRoutes({ scheduler, goalStore, rateLimiter, clock = () 
         const refresh = await scheduler.refresh("goal-update");
         if (!refresh?.ok) return response.status(503).json({ message: "Goals were saved, but the dashboard refresh failed.", ...result });
         return response.json({ message: "Goals saved and synchronized.", ...result });
+      } catch (error) { return next(error); }
+    });
+  }
+  if (displaySettingsStore) {
+    router.get("/display-settings", (request, response) => response.json(displaySettingsStore.getPublicState()));
+    router.put("/display-settings", rateLimiter, (request, response, next) => {
+      try {
+        const result = displaySettingsStore.save(request.body);
+        return response.json({ message: "Display settings saved.", ...result });
       } catch (error) { return next(error); }
     });
   }

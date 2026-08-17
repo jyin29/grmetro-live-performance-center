@@ -31,3 +31,11 @@ export async function fetchGoals(fetchImpl = fetch) {
 export async function saveGoals(goals, fetchImpl = fetch) {
   return read(await fetchImpl("/api/v1/management/goals", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(goals) }));
 }
+
+export async function fetchDisplaySettings(fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/display-settings", { headers: { accept: "application/json" } }));
+}
+
+export async function saveDisplaySettings(settings, fetchImpl = fetch) {
+  return read(await fetchImpl("/api/v1/management/display-settings", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(settings) }));
+}
