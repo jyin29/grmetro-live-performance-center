@@ -5,11 +5,13 @@ import { Header } from "./components/Header";
 import { LoadingView } from "./components/LoadingView";
 import { RemoteControlPage } from "./components/RemoteControlPage";
 import { useDashboard } from "./hooks/useDashboard";
+import { useDisplaySettings } from "./hooks/useDisplaySettings";
 import { AdminPage } from "./components/admin/AdminPage";
 import { resolveApplicationRoute } from "./config/applicationRoutes";
 
 function DashboardPage({ displayId }) {
   const { data, error, loading, refreshing, retry, lastSuccessfulRefresh } = useDashboard();
+  const displaySettings = useDisplaySettings();
 
   if (loading) {
     return <div className="app-shell">
@@ -32,7 +34,7 @@ function DashboardPage({ displayId }) {
     </div>;
   }
 
-  return <DashboardLayout data={data} displayId={displayId} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} />;
+  return <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} />;
 }
 
 export default function App() {
