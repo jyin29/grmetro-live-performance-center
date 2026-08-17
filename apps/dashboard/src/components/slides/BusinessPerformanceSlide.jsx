@@ -14,6 +14,19 @@ function pipelineBarRatio(slide, metricId, metric) {
   return maximum > 0 ? Math.max(0, Math.min(.8, (Number(metric.value) || 0) / maximum * .8)) : 0;
 }
 
+function goalProgress(metric) {
+  const goal = Number(metric?.goal) || 0;
+  if (!metric?.hasData || goal <= 0) return null;
+  const value = Number(metric.value) || 0;
+  return { goal, percentage: Math.max(0, Math.round((value / goal) * 100)) };
+}
+
+function GoalProgress({ metric }) {
+  const progress = goalProgress(metric);
+  if (!progress) return null;
+  return <small className="metric-goal-progress">Goal {progress.goal.toLocaleString()} · {progress.percentage}%</small>;
+}
+
 export function SalesPipelineMatrix({ slide }) {
   const metrics = PIPELINE_METRICS.map((id) => slide?.metrics?.find((metric) => metric.id === id)).filter(Boolean);
   if (!slide?.rows?.length || !metrics.length) return <p className="chart-empty">Sales pipeline data is not available yet.</p>;
@@ -29,7 +42,7 @@ export function SalesPipelineMatrix({ slide }) {
           const metric = metricFor(row, definition.id);
           return <div className="sales-pipeline__metric" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}>
             <span style={{ width: `${pipelineBarRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} />
-            <b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b>
+            <div className="metric-value-with-goal"><b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b><GoalProgress metric={metric} /></div>
           </div>;
         })}
       </div>)}
@@ -43,7 +56,7 @@ export function ClosingRateRows({ slide }) {
     {slide.rows.map((row) => {
       const metric = metricFor(row, "closingRate");
       return <div className="closing-row" key={row.technicianId}>
-        <div><strong>{row.shortName || row.name}</strong><b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "No data"}</b></div>
+        <div><strong>{row.shortName || row.name}</strong><div className="metric-value-with-goal metric-value-with-goal--right"><b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "No data"}</b><GoalProgress metric={metric} /></div></div>
         <div className="closing-row__bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%` }} /></div>
       </div>;
     })}
