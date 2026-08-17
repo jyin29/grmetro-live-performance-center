@@ -24,9 +24,18 @@ function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, ra
     router.put("/goals", rateLimiter, async (request, response, next) => {
       try {
         const result = goalStore.save(request.body);
-        const refresh = await scheduler.refresh("goal-update");
-        if (!refresh?.ok) return response.status(503).json({ message: "Goals were saved, but the dashboard refresh failed.", ...result });
-        return response.json({ message: "Goals saved and synchronized.", ...result });
+        // Saving a goal must never look like it failed just because a scheduled refresh
+        // happened to already be running. If busy, queue one retry immediately after it.
+        let refresh = await scheduler.refresh("goal-update");
+        if (refresh?.skipped && refresh?.code === "REFRESH_IN_PROGRESS") {
+          const deadline = Date.now() + 15_000;
+          while (scheduler.active && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 250));
+          if (!scheduler.active) refresh = await scheduler.refresh("goal-update-queued");
+        }
+        if (!refresh?.ok) {
+          return response.json({ message: "Goals saved. Dashboard data will apply them on the next successful refresh.", refreshPending: true, ...result });
+        }
+        return response.json({ message: "Goals saved and synchronized.", refreshPending: false, ...result });
       } catch (error) { return next(error); }
     });
   }

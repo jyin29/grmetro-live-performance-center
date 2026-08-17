@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchDashboard } from "../api/dashboardApi";
 
-const POLL_INTERVAL_MS = 60_000;
+// Keep live displays close to management changes. ServiceTitan refreshes are still
+// controlled by the backend; this lightweight poll only reads the cached dashboard.
+const POLL_INTERVAL_MS = 5_000;
 export const DASHBOARD_UPDATE_EVENT = "grmetro:dashboard-update";
 
 export function useDashboard() {
@@ -12,7 +14,7 @@ export function useDashboard() {
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
-    setState((current) => ({ ...current, error: null, loading: !current.data && !background, refreshing: Boolean(current.data) }));
+    setState((current) => ({ ...current, error: null, loading: !current.data && !background, refreshing: Boolean(current.data) && !background }));
     try {
       const data = await fetchDashboard({ signal: controller.signal });
       const refreshTime = new Date(data.refreshedAt).getTime();
