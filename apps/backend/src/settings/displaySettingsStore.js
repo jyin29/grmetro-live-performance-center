@@ -4,20 +4,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const METRIC_CATALOG = Object.freeze({
-  slide1: ["revenue", "closingRate"],
   slide2: ["opportunities", "techLeads", "marketedLeads", "membershipsSold", "closingRate"],
   slide3: ["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold"],
-  slide4: ["billableServiceCalls", "opportunities", "membershipsSold", "installs", "installAverageTicket", "installRevenue"],
-  slide5: ["revenue", "closingRate"]
+  slide4: ["billableServiceCalls", "opportunities", "membershipsSold", "installs", "installAverageTicket", "installRevenue"]
 });
 
 const DEFAULT_SETTINGS = Object.freeze({
   metrics: Object.fromEntries(Object.entries(METRIC_CATALOG).map(([slideId, metrics]) => [slideId, Object.fromEntries(metrics.map((id) => [id, true]))]))
 });
 
-function cloneDefaults() {
-  return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-}
+function cloneDefaults() { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
 
 function validateSettings(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new TypeError("Display settings must be an object.");
@@ -25,7 +21,6 @@ function validateSettings(input) {
   const metrics = input.metrics;
   if (metrics === undefined) return result;
   if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) throw new TypeError("metrics must be an object.");
-
   for (const [slideId, values] of Object.entries(metrics)) {
     if (!METRIC_CATALOG[slideId]) throw new TypeError(`Unknown slide settings: ${slideId}.`);
     if (!values || typeof values !== "object" || Array.isArray(values)) throw new TypeError(`${slideId} metric settings must be an object.`);
@@ -45,19 +40,11 @@ class DisplaySettingsStore {
     this.settings = cloneDefaults();
     this.load();
   }
-
   load() {
-    try {
-      this.settings = validateSettings(JSON.parse(this.fs.readFileSync(this.filePath, "utf8")));
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
+    try { this.settings = validateSettings(JSON.parse(this.fs.readFileSync(this.filePath, "utf8"))); }
+    catch (error) { if (error.code !== "ENOENT") throw error; }
   }
-
-  getPublicState() {
-    return { settings: JSON.parse(JSON.stringify(this.settings)), metricCatalog: METRIC_CATALOG };
-  }
-
+  getPublicState() { return { settings: JSON.parse(JSON.stringify(this.settings)), metricCatalog: METRIC_CATALOG }; }
   save(input) {
     this.settings = validateSettings(input);
     this.fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
