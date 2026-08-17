@@ -9,7 +9,8 @@ import { displayRank } from "../lib/presentation";
 const preferredMetrics = [
   ["revenue", "Revenue"], ["closingRate", "Closing %"], ["billableServiceCalls", "Billable Calls"],
   ["installRevenue", "Install Revenue"], ["installAverageTicket", "Average Ticket"], ["opportunities", "Opportunities"],
-  ["techLeads", "Tech Leads"], ["marketedLeads", "Marketed Leads"], ["membershipsSold", "Memberships"]
+  ["techLeads", "Tech Leads"], ["marketedLeads", "Marketed Leads"], ["membershipsSold", "Memberships"],
+  ["serviceRevenue", "Service Revenue"], ["leadConversionRate", "Lead Conversion %"], ["installs", "Installs"]
 ];
 function rankMovement(change) { if (change > 0) return { label: `Up ${change}`, symbol: "↑", tone: "up" }; if (change < 0) return { label: `Down ${Math.abs(change)}`, symbol: "↓", tone: "down" }; return { label: "No movement", symbol: "—", tone: "steady" }; }
 
