@@ -21,10 +21,11 @@ function goalProgress(metric) {
   return { goal, percentage: Math.max(0, Math.round((value / goal) * 100)) };
 }
 
-function GoalProgress({ metric }) {
+function MetricValue({ metric, unavailable = "—" }) {
+  if (!metric?.hasData) return <b>{unavailable}</b>;
   const progress = goalProgress(metric);
-  if (!progress) return null;
-  return <small className="metric-goal-progress">Goal {progress.goal.toLocaleString()} · {progress.percentage}%</small>;
+  if (!progress) return <b><AnimatedMetric metric={metric} /></b>;
+  return <div className="metric-goal-inline"><b><AnimatedMetric metric={metric} /></b><span>/</span><strong>{progress.goal.toLocaleString()}</strong><em>{progress.percentage}%</em></div>;
 }
 
 export function SalesPipelineMatrix({ slide }) {
@@ -42,7 +43,7 @@ export function SalesPipelineMatrix({ slide }) {
           const metric = metricFor(row, definition.id);
           return <div className="sales-pipeline__metric" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}>
             <span style={{ width: `${pipelineBarRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} />
-            <div className="metric-value-with-goal"><b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "—"}</b><GoalProgress metric={metric} /></div>
+            <MetricValue metric={metric} />
           </div>;
         })}
       </div>)}
@@ -56,7 +57,7 @@ export function ClosingRateRows({ slide }) {
     {slide.rows.map((row) => {
       const metric = metricFor(row, "closingRate");
       return <div className="closing-row" key={row.technicianId}>
-        <div><strong>{row.shortName || row.name}</strong><div className="metric-value-with-goal metric-value-with-goal--right"><b>{metric?.hasData ? <AnimatedMetric metric={metric} /> : "No data"}</b><GoalProgress metric={metric} /></div></div>
+        <div><strong>{row.shortName || row.name}</strong><MetricValue metric={metric} unavailable="No data" /></div>
         <div className="closing-row__bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%` }} /></div>
       </div>;
     })}
