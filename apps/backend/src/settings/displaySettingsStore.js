@@ -5,12 +5,19 @@ const path = require("node:path");
 
 const METRIC_CATALOG = Object.freeze({
   slide2: ["opportunities", "techLeads", "marketedLeads", "membershipsSold", "closingRate"],
-  slide3: ["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold"],
+  slide3: ["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "serviceRevenue", "leadConversionRate", "installs"],
   slide4: ["billableServiceCalls", "opportunities", "membershipsSold", "installs", "installAverageTicket", "installRevenue"]
 });
 
+const DEFAULT_ENABLED = Object.freeze({
+  slide2: new Set(METRIC_CATALOG.slide2),
+  slide3: new Set(["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold"]),
+  slide4: new Set(METRIC_CATALOG.slide4)
+});
+
 const DEFAULT_SETTINGS = Object.freeze({
-  metrics: Object.fromEntries(Object.entries(METRIC_CATALOG).map(([slideId, metrics]) => [slideId, Object.fromEntries(metrics.map((id) => [id, true]))]))
+  metrics: Object.fromEntries(Object.entries(METRIC_CATALOG).map(([slideId, metrics]) => [slideId,
+    Object.fromEntries(metrics.map((id) => [id, DEFAULT_ENABLED[slideId].has(id)]))]))
 });
 
 function cloneDefaults() { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
