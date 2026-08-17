@@ -18,6 +18,7 @@ const { createPresentationCommandBus } = require("./presentation/presentationCom
 const { createPresentationWebSocket } = require("./presentation/presentationWebSocket");
 const { createEventEngine } = require("./events/eventEngine");
 const { GoalStore } = require("./goals/goalStore");
+const { DisplaySettingsStore } = require("./settings/displaySettingsStore");
 
 function start() {
   const startedAt = new Date();
@@ -26,6 +27,7 @@ function start() {
   const browserManager = createBrowserManagerForConfig(config, logger);
   const serviceTitanClient = browserManager ? createServiceTitanClient({ config, browserManager, logger }) : null;
   const goalStore = new GoalStore();
+  const displaySettingsStore = new DisplaySettingsStore();
   const provider = createRefreshProvider({ config, browserManager, executor: serviceTitanClient?.executor, logger, goalsProvider: () => goalStore.getGoals() });
   const cache = new DashboardCache({ snapshotRetentionLimit: config.snapshotRetentionLimit,
     trendMinimumHistory: config.trendMinimumHistory });
@@ -54,7 +56,7 @@ function start() {
     buildVersion: process.env.BUILD_VERSION || null,
     browserStatusProvider: browserManager ? () => browserManager.getStatus() : mockBrowserStatus,
     serviceTitanStatusProvider: serviceTitanClient ? () => serviceTitanClient.getStatus() : () => ({ status: "bypassed" }), serviceTitanClient,
-    goalStore, adminRuntime: { presentationManager, eventEngine, startedAt,
+    goalStore, displaySettingsStore, adminRuntime: { presentationManager, eventEngine, startedAt,
       connectionStatusProvider: () => presentationWebSocket?.getConnectionSummary() || { total: 0, displays: 0, remotes: 0 } } });
   const server = app.listen(config.port, config.host, () => logger.info("Backend application started", {
     application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv,
@@ -66,7 +68,7 @@ function start() {
   browserManager?.start();
   scheduler.start();
   return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient,
-    presentationManager, presentationWebSocket, eventEngine };
+    presentationManager, presentationWebSocket, eventEngine, displaySettingsStore };
 }
 
 if (require.main === module) start();
