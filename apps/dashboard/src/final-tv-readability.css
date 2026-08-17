@@ -4,7 +4,16 @@
 .revenue-chart .chart-name,
 .revenue-chart text.chart-name { font-size:19px !important; font-weight:850; }
 
-/* Slide 3: five columns with a balanced hierarchy: technician > label, KPI value remains dominant. */
+/* Slide 2 + 4: optional goal context. This is display-only and does not change bar scaling behavior. */
+.metric-value-with-goal { position:relative; z-index:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; line-height:1; }
+.metric-value-with-goal--right { align-items:flex-end; }
+.metric-goal-progress { display:block; color:#53636d; font-size:clamp(10px,.62vw,12px); font-weight:800; line-height:1.05; white-space:nowrap; }
+.sales-pipeline__metric .metric-value-with-goal b,
+.operations-activity-matrix__metric .metric-value-with-goal b { position:static; z-index:auto; }
+.closing-row .metric-value-with-goal b,
+.install-economics-row__metric .metric-value-with-goal b { flex:none; }
+
+/* Slide 3 */
 .technician-performance__grid { grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:1fr; gap:clamp(8px,.6vw,12px); }
 .technician-performance .performance-card { min-width:0; min-height:0; padding:clamp(10px,.72vw,15px); }
 .technician-performance .performance-card__header { gap:8px; padding-bottom:6px; }
@@ -21,7 +30,7 @@
 .technician-performance .performance-card__ranking span { font-size:clamp(14px,.88vw,17px); }
 .technician-performance .performance-card__ranking strong { font-size:clamp(38px,2.4vw,49px); line-height:1.08; }
 
-/* Slide 4: comfortable split layout. */
+/* Slide 4 */
 .operations-layout-v2 { grid-template-columns:minmax(0,1.7fr) minmax(390px,1fr); gap:clamp(18px,1.3vw,26px); }
 .operations-layout-v2 .operations-domain__panel { padding:clamp(18px,1.25vw,25px); }
 .operations-layout-v2 .operations-activity-matrix__body,
@@ -45,6 +54,7 @@
 .recognition-slide .podium-card__place { font-size:clamp(40px,2.9vw,58px); }
 
 @media (max-height:800px) {
+  .metric-goal-progress { font-size:9px; }
   .technician-performance__grid { gap:6px; }
   .technician-performance .performance-card { padding:7px 8px; }
   .technician-performance .performance-card__header { padding-bottom:3px; }
