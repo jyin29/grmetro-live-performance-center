@@ -2,7 +2,7 @@
 
 const express = require("express");
 
-function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, rateLimiter, clock = () => new Date() } = {}) {
+function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock = () => new Date() } = {}) {
   if (!scheduler?.refresh) throw new TypeError("Management routes require the dashboard refresh scheduler.");
   const router = express.Router();
   let status = { state: "idle", message: "Ready to refresh", startedAt: null, completedAt: null };
@@ -24,17 +24,13 @@ function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, ra
     router.put("/goals", rateLimiter, async (request, response, next) => {
       try {
         const result = goalStore.save(request.body);
-        // Saving a goal must never look like it failed just because a scheduled refresh
-        // happened to already be running. If busy, queue one retry immediately after it.
         let refresh = await scheduler.refresh("goal-update");
         if (refresh?.skipped && refresh?.code === "REFRESH_IN_PROGRESS") {
           const deadline = Date.now() + 15_000;
           while (scheduler.active && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 250));
           if (!scheduler.active) refresh = await scheduler.refresh("goal-update-queued");
         }
-        if (!refresh?.ok) {
-          return response.json({ message: "Goals saved. Dashboard data will apply them on the next successful refresh.", refreshPending: true, ...result });
-        }
+        if (!refresh?.ok) return response.json({ message: "Goals saved. Dashboard data will apply them on the next successful refresh.", refreshPending: true, ...result });
         return response.json({ message: "Goals saved and synchronized.", refreshPending: false, ...result });
       } catch (error) { return next(error); }
     });
@@ -42,25 +38,27 @@ function createManagementRoutes({ scheduler, goalStore, displaySettingsStore, ra
   if (displaySettingsStore) {
     router.get("/display-settings", (request, response) => response.json(displaySettingsStore.getPublicState()));
     router.put("/display-settings", rateLimiter, (request, response, next) => {
-      try {
-        const result = displaySettingsStore.save(request.body);
-        return response.json({ message: "Display settings saved.", ...result });
-      } catch (error) { return next(error); }
+      try { return response.json({ message: "Display settings saved.", ...displaySettingsStore.save(request.body) }); }
+      catch (error) { return next(error); }
+    });
+  }
+  if (spreadsheetSlideStore) {
+    router.get("/spreadsheet-slide", (request, response) => response.json(spreadsheetSlideStore.getPublicState()));
+    router.put("/spreadsheet-slide", rateLimiter, (request, response, next) => {
+      try { return response.json({ message: "Spreadsheet slide saved.", ...spreadsheetSlideStore.save(request.body) }); }
+      catch (error) { return next(error); }
+    });
+    router.delete("/spreadsheet-slide", rateLimiter, (request, response, next) => {
+      try { return response.json({ message: "Spreadsheet slide removed.", ...spreadsheetSlideStore.clear() }); }
+      catch (error) { return next(error); }
     });
   }
   router.post("/refresh", rateLimiter, async (request, response) => {
-    if (status.state === "refreshing" || scheduler.active) {
-      return response.status(409).json({ ...status, state: "refreshing", message: "A dashboard refresh is already running." });
-    }
-    const startedAt = clock().toISOString();
-    status = { state: "refreshing", message: "Refreshing dashboard data…", startedAt, completedAt: null };
+    if (status.state === "refreshing" || scheduler.active) return response.status(409).json({ ...status, state: "refreshing", message: "A dashboard refresh is already running." });
+    const startedAt = clock().toISOString(); status = { state: "refreshing", message: "Refreshing dashboard data…", startedAt, completedAt: null };
     try {
-      const result = await scheduler.refresh("remote-management");
-      const completedAt = clock().toISOString();
-      if (!result?.ok) {
-        status = { state: "failed", message: "Dashboard refresh failed. The last successful data remains visible.", startedAt, completedAt };
-        return response.status(503).json(status);
-      }
+      const result = await scheduler.refresh("remote-management"); const completedAt = clock().toISOString();
+      if (!result?.ok) { status = { state: "failed", message: "Dashboard refresh failed. The last successful data remains visible.", startedAt, completedAt }; return response.status(503).json(status); }
       status = { state: "succeeded", message: "Dashboard refresh completed successfully.", startedAt, completedAt };
       return response.json({ ...status, period: result.period, dateRange: result.dateRange });
     } catch {
