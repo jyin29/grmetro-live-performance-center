@@ -11,40 +11,20 @@ const CONFIRMED_DIRECT_FIELDS = Object.freeze({
   techLeads: Object.freeze({ field: "TechLeadJobs" }),
   marketedLeads: Object.freeze({ field: "MarketingLeadJobs" }),
   membershipsSold: Object.freeze({ field: "MembershipsSold" }),
-  closingRate: Object.freeze({ field: "CloseRate", convert: ratioToPercentage }),
-  // ServiceTitan's home/overview Lead Generation table exposes Leads Set per technician row.
-  // Its Conv Rate is the ratio of Leads Set to # Opps, so derive the display KPI only
-  // when both source fields are present instead of using the unavailable technician-page field.
-  leadConversionRate: Object.freeze({ derive(raw) {
-    const opportunities = Number(raw?.Opportunity);
-    const leadsSet = Number(raw?.LeadsSet);
-    if (!Number.isFinite(opportunities) || !Number.isFinite(leadsSet) || opportunities <= 0) return null;
-    return (leadsSet / opportunities) * 100;
-  } })
+  closingRate: Object.freeze({ field: "CloseRate", convert: ratioToPercentage })
 });
 
 function metricRecord(kpiId, value, quality) {
   const normalized = normalizeValue(value);
-  return {
-    id: kpiId, label: kpis[kpiId].label, shortLabel: kpis[kpiId].shortLabel,
-    ...normalized, dataQuality: dataQualityFor(normalized.hasData, quality),
-    format: kpis[kpiId].format, unit: kpis[kpiId].unit
-  };
+  return { id: kpiId, label: kpis[kpiId].label, shortLabel: kpis[kpiId].shortLabel, ...normalized, dataQuality: dataQualityFor(normalized.hasData, quality), format: kpis[kpiId].format, unit: kpis[kpiId].unit };
 }
-
 function normalizeKpis(raw = {}, { mockValues = null } = {}) {
   const result = {};
   for (const kpiId of Object.keys(kpis)) {
-    if (mockValues && Object.hasOwn(mockValues, kpiId)) {
-      result[kpiId] = metricRecord(kpiId, mockValues[kpiId], DATA_QUALITY.FALLBACK);
-      continue;
-    }
-    const mapping = CONFIRMED_DIRECT_FIELDS[kpiId];
-    const sourceValue = mapping?.derive ? mapping.derive(raw) : mapping ? raw[mapping.field] : null;
-    const value = mapping?.convert ? mapping.convert(sourceValue) : sourceValue;
+    if (mockValues && Object.hasOwn(mockValues, kpiId)) { result[kpiId] = metricRecord(kpiId, mockValues[kpiId], DATA_QUALITY.FALLBACK); continue; }
+    const mapping = CONFIRMED_DIRECT_FIELDS[kpiId]; const sourceValue = mapping ? raw[mapping.field] : null; const value = mapping?.convert ? mapping.convert(sourceValue) : sourceValue;
     result[kpiId] = metricRecord(kpiId, value, DATA_QUALITY.CONFIRMED);
   }
   return result;
 }
-
 module.exports = { CONFIRMED_DIRECT_FIELDS, normalizeKpis };
