@@ -6,11 +6,11 @@ const SLIDES = [
   ["slide3", "Slide 3 · Technicians", {
     revenue: "Revenue", closingRate: "Closing %", billableServiceCalls: "Billable Calls", installRevenue: "Install Revenue",
     installAverageTicket: "Average Ticket", opportunities: "Opportunities", techLeads: "Tech Leads", marketedLeads: "Marketed Leads",
-    membershipsSold: "Memberships", serviceRevenue: "Service Revenue", leadConversionRate: "Lead Conversion %", installs: "Installs"
+    membershipsSold: "Memberships", serviceRevenue: "Service Revenue", installs: "Installs"
   }],
   ["slide4", "Slide 4 · Operations", { billableServiceCalls: "Billable Calls", opportunities: "Opportunities", membershipsSold: "Memberships Sold", installs: "Installs", installAverageTicket: "Average Ticket", installRevenue: "Install Revenue" }]
 ];
-const EXTRA_SERVICETITAN_KPIS = new Set(["serviceRevenue", "leadConversionRate", "installs"]);
+const EXTRA_SERVICETITAN_KPIS = new Set(["serviceRevenue", "installs"]);
 
 export function MetricCustomization() {
   const [state, setState] = useState({ loading: true, settings: null, saved: null, status: "", error: false });

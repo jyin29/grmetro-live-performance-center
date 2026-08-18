@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const METRIC_CATALOG = Object.freeze({
   slide2: ["opportunities", "techLeads", "marketedLeads", "membershipsSold", "closingRate"],
-  slide3: ["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "serviceRevenue", "leadConversionRate", "installs"],
+  slide3: ["revenue", "closingRate", "billableServiceCalls", "installRevenue", "installAverageTicket", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "serviceRevenue", "installs"],
   slide4: ["billableServiceCalls", "opportunities", "membershipsSold", "installs", "installAverageTicket", "installRevenue"]
 });
 
@@ -32,7 +32,8 @@ function validateSettings(input) {
     if (!METRIC_CATALOG[slideId]) throw new TypeError(`Unknown slide settings: ${slideId}.`);
     if (!values || typeof values !== "object" || Array.isArray(values)) throw new TypeError(`${slideId} metric settings must be an object.`);
     for (const [metricId, enabled] of Object.entries(values)) {
-      if (!METRIC_CATALOG[slideId].includes(metricId)) throw new TypeError(`Unknown metric ${metricId} for ${slideId}.`);
+      // Ignore retired metrics from older local settings files instead of breaking startup.
+      if (!METRIC_CATALOG[slideId].includes(metricId)) continue;
       if (typeof enabled !== "boolean") throw new TypeError(`${slideId}.${metricId} must be true or false.`);
       result.metrics[slideId][metricId] = enabled;
     }
