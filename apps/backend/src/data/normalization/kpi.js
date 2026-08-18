@@ -11,7 +11,16 @@ const CONFIRMED_DIRECT_FIELDS = Object.freeze({
   techLeads: Object.freeze({ field: "TechLeadJobs" }),
   marketedLeads: Object.freeze({ field: "MarketingLeadJobs" }),
   membershipsSold: Object.freeze({ field: "MembershipsSold" }),
-  closingRate: Object.freeze({ field: "CloseRate", convert: ratioToPercentage })
+  closingRate: Object.freeze({ field: "CloseRate", convert: ratioToPercentage }),
+  // ServiceTitan's home/overview Lead Generation table exposes Leads Set per technician row.
+  // Its Conv Rate is the ratio of Leads Set to # Opps, so derive the display KPI only
+  // when both source fields are present instead of using the unavailable technician-page field.
+  leadConversionRate: Object.freeze({ derive(raw) {
+    const opportunities = Number(raw?.Opportunity);
+    const leadsSet = Number(raw?.LeadsSet);
+    if (!Number.isFinite(opportunities) || !Number.isFinite(leadsSet) || opportunities <= 0) return null;
+    return (leadsSet / opportunities) * 100;
+  } })
 });
 
 function metricRecord(kpiId, value, quality) {
@@ -31,7 +40,7 @@ function normalizeKpis(raw = {}, { mockValues = null } = {}) {
       continue;
     }
     const mapping = CONFIRMED_DIRECT_FIELDS[kpiId];
-    const sourceValue = mapping ? raw[mapping.field] : null;
+    const sourceValue = mapping?.derive ? mapping.derive(raw) : mapping ? raw[mapping.field] : null;
     const value = mapping?.convert ? mapping.convert(sourceValue) : sourceValue;
     result[kpiId] = metricRecord(kpiId, value, DATA_QUALITY.CONFIRMED);
   }
