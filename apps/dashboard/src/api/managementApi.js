@@ -8,34 +8,14 @@ async function read(response) {
   return body;
 }
 
-export async function fetchRefreshStatus(fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/refresh", { headers: { accept: "application/json" } }));
-}
-
-export async function requestDashboardRefresh(fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/refresh", { method: "POST", headers: { accept: "application/json" } }));
-}
-
-export async function fetchDashboardPeriod(fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/period", { headers: { accept: "application/json" } }));
-}
-
-export async function setDashboardPeriod(period, fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/period", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify({ period }) }));
-}
-
-export async function fetchGoals(fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/goals", { headers: { accept: "application/json" } }));
-}
-
-export async function saveGoals(goals, fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/goals", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(goals) }));
-}
-
-export async function fetchDisplaySettings(fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/display-settings", { headers: { accept: "application/json" } }));
-}
-
-export async function saveDisplaySettings(settings, fetchImpl = fetch) {
-  return read(await fetchImpl("/api/v1/management/display-settings", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(settings) }));
-}
+export async function fetchRefreshStatus(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/refresh", { headers: { accept: "application/json" } })); }
+export async function requestDashboardRefresh(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/refresh", { method: "POST", headers: { accept: "application/json" } })); }
+export async function fetchDashboardPeriod(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/period", { headers: { accept: "application/json" } })); }
+export async function setDashboardPeriod(period, fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/period", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify({ period }) })); }
+export async function fetchGoals(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/goals", { headers: { accept: "application/json" } })); }
+export async function saveGoals(goals, fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/goals", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(goals) })); }
+export async function fetchDisplaySettings(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/display-settings", { headers: { accept: "application/json" } })); }
+export async function saveDisplaySettings(settings, fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/display-settings", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(settings) })); }
+export async function fetchSpreadsheetSlide(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/spreadsheet-slide", { headers: { accept: "application/json" } })); }
+export async function saveSpreadsheetSlide(slide, fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/spreadsheet-slide", { method: "PUT", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify(slide) })); }
+export async function removeSpreadsheetSlide(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/spreadsheet-slide", { method: "DELETE", headers: { accept: "application/json" } })); }
