@@ -14,6 +14,6 @@
     "RESUME_ROTATION": "presentation/resume-rotation",
     "RESTART_ROTATION_TIMER": "presentation/restart-rotation-timer"
   },
-  "slideCount": 5,
+  "slideCount": 6,
   "rotationMilliseconds": 30000
 }
