@@ -1,14 +1,14 @@
 # ServiceTitan Lead Generation KPI source
 
-Lead Conversion is not sourced from the individual technician detail page.
+Confirmed request: `POST /app/api/reporting/modulardashboard/GetAllScorecard` with `{ from, to, businessUnitIds, reloadKey, timeZone }`.
 
-The confirmed ServiceTitan UI source is the company/home performance overview under **Lead Generation**, which presents rows by employee/technician with these columns:
+Technician scorecard rows are read from `items` / `originalItems` and matched by numeric `id`.
 
-- `# Opps`
-- `Leads Set`
-- `Conv Rate`
-- `Avg Sale`
+Customizable Slide 3 fields sourced from `item.leadGeneration.all`:
 
-`Conv Rate` is therefore employee-row data exposed from the overview dataset, even though it is not present on each technician's detail page.
+- `leadsSet` → Leads Set
+- `convRate` → Lead Conversion %
+- `avgSale` → Lead Average Sale
+- `sold` → Lead Sales
 
-The dashboard should only expose Lead Conversion after the backend has a confirmed mapping to this Lead Generation overview dataset. Do not substitute the technician-detail `leadConversionRate` placeholder or invent a value from unrelated fields.
+These are company/home overview scorecard values broken out by employee. They are not sourced from the individual technician detail page and should not be derived from the separate Technicians custom-report datasource.
