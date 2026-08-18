@@ -1,1 +1,0 @@
-Lead Generation fields are mapped from GetAllScorecard item.leadGeneration.all and exposed as optional Slide 3 metrics.
