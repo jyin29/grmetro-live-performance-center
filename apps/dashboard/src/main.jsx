@@ -10,8 +10,6 @@ import "./final-tv-readability.css";
 import "./metric-customization.css";
 import "./spreadsheet-slide.css";
 import "./measuredSlidingHighlights";
-import "./remote-polish";
-import "./remote-period-dropdown";
 import "./remote-layout-hotfix.css";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
