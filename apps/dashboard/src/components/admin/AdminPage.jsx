@@ -7,7 +7,7 @@ import logoUrl from "../../../../../assets/branding/grmetro-logo.png";
 
 export function AdminContent({ data, runtimeSettings = RUNTIME_SETTINGS }) {
   return <main className="admin-main">
-    <AdminSection id="displays" title="Display Management" description="Registered screens and authoritative presentation state.">
+    <AdminSection id="displays" title="Display Management" description="Registered screens and authoritative presentation state." expandable>
       <div className="admin-display-grid">{data.displays.map((display) => <article className="admin-card" key={display.displayId}>
         <div className="admin-card__heading"><div><p className="admin-id">{display.displayId}</p><h3>{display.displayName}</h3></div><StatusPill value={display.connectedClients.total ? "Connected" : "Idle"} /></div>
         <DefinitionGrid items={[{ label: "Profile", value: display.presentationProfile }, { label: "Current slide", value: display.currentSlide?.label }, { label: "Rotation", value: display.isRunning ? "Running" : "Paused" }, { label: "Next rotation", value: display.nextRotationAt ? new Date(display.nextRotationAt).toLocaleTimeString() : "Paused" }, { label: "Display clients", value: display.connectedClients.displays }, { label: "Remote clients", value: display.connectedClients.remotes }]} />
