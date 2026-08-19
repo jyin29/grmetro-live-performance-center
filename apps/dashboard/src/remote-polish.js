@@ -1,18 +1,8 @@
-function addCustomizeShortcut() {
-  if (window.location.pathname !== "/remote") return;
-  const actions = document.querySelector(".home-quick-actions");
-  if (!actions || actions.querySelector("[data-customize-shortcut]")) return;
-  const button = document.createElement("button");
-  button.type = "button";
-  button.dataset.customizeShortcut = "true";
-  button.className = "remote-customize-shortcut";
-  button.setAttribute("aria-label", "Customize dashboard");
-  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10 M18 7h2 M4 17h2 M10 17h10 M14 4v6 M6 14v6"/></svg><span><strong>Customize</strong><small>Metrics, goals &amp; data slides</small></span><b>›</b>';
-  button.addEventListener("click", () => { window.location.assign("/customize"); });
-  actions.appendChild(button);
-}
-if (typeof window !== "undefined") {
-  const observer = new MutationObserver(addCustomizeShortcut);
-  const start = () => { addCustomizeShortcut(); observer.observe(document.body, { childList: true, subtree: true }); };
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true }); else start();
-}
+const customizeMarkup='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10 M18 7h2 M4 17h2 M10 17h10 M14 4v6 M6 14v6"/></svg><span><strong>Customize</strong><small>Metrics, goals &amp; data slides</small></span><b>›</b>';
+function makeCustomizeButton(){const button=document.createElement("button");button.type="button";button.dataset.customizeShortcut="true";button.className="remote-customize-shortcut";button.setAttribute("aria-label","Customize dashboard");button.innerHTML=customizeMarkup;button.addEventListener("click",()=>window.location.assign("/customize"));return button;}
+function addCustomizeShortcuts(){if(window.location.pathname!=="/remote")return;const home=document.querySelector(".home-quick-actions");if(home&&!home.querySelector("[data-customize-shortcut]"))home.appendChild(makeCustomizeButton());for(const root of document.querySelectorAll(".displays-mobile,.settings-mobile")){if(root.querySelector("[data-customize-shortcut]"))continue;const wrap=document.createElement("div");wrap.className="remote-section-shortcut home-quick-actions";wrap.appendChild(makeCustomizeButton());const title=root.querySelector(".settings-title");if(title)title.insertAdjacentElement("afterend",wrap);else root.prepend(wrap);}}
+function fixUnknownSlides(){document.querySelectorAll(".display-picker button").forEach(button=>{const small=button.querySelector("small");if(!small||!/unknown slide/i.test(small.textContent))return;const selected=button.matches(".is-selected,[aria-pressed='true']");const active=document.querySelector(".operations-slide-buttons button.is-active,.operations-slide-buttons button[aria-pressed='true']");const label=active?.querySelector("span")?.textContent?.trim();if(selected&&label)small.textContent=label;else if(selected)small.textContent="Slide 6";});}
+function enhanceAdminTables(){document.querySelectorAll(".operations-admin .admin-section").forEach(section=>{const table=section.querySelector(".admin-table-wrap");if(!table||section.querySelector("[data-expand-table]"))return;const button=document.createElement("button");button.type="button";button.dataset.expandTable="true";button.className="admin-table-expand";button.textContent="View full table";button.addEventListener("click",()=>{const expanded=section.classList.toggle("is-table-expanded");button.textContent=expanded?"Close full table":"View full table";});table.insertAdjacentElement("beforebegin",button);});}
+let taps=[];function secretTap(event){const logo=event.target.closest?.(".mobile-app-header img");if(!logo)return;const now=Date.now();taps=taps.filter(t=>now-t<2400);taps.push(now);if(taps.length<7)return;taps=[];const existing=document.querySelector(".boss-easter-egg");if(existing)return;const egg=document.createElement("div");egg.className="boss-easter-egg";egg.setAttribute("aria-hidden","true");document.body.appendChild(egg);window.setTimeout(()=>egg.remove(),3900);}
+function polish(){addCustomizeShortcuts();fixUnknownSlides();enhanceAdminTables();}
+if(typeof window!=="undefined"){const observer=new MutationObserver(polish);const start=()=>{polish();document.addEventListener("click",secretTap);observer.observe(document.body,{childList:true,subtree:true,characterData:true});};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();}
