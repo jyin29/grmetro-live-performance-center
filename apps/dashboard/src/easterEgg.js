@@ -29,7 +29,7 @@ function celebrate() {
   layer.className = "boss-easter-egg boss-easter-egg--deluxe";
   layer.setAttribute("aria-hidden", "true");
   const particles = Array.from({ length: 28 }, (_, index) => `<i style="--i:${index};--x:${((index * 37) % 100) - 50};--delay:${(index % 9) * 0.07}s">${index % 4 === 0 ? "★" : index % 3 === 0 ? "✦" : "✧"}</i>`).join("");
-  layer.innerHTML = `<div class="boss-easter-egg__aurora"></div><div class="boss-easter-egg__rings"><span></span><span></span><span></span></div><div class="boss-easter-egg__particles">${particles}</div><div class="boss-easter-egg__message"><small>GRMETRO</small><strong>LET'S GO</strong><span>Performance Center</span><em>Built to perform.</em></div><div class="boss-easter-egg__sweep"></div>`;
+  layer.innerHTML = `<div class="boss-easter-egg__aurora"></div><div class="boss-easter-egg__rings"><span></span><span></span><span></span></div><div class="boss-easter-egg__particles">${particles}</div><div class="boss-easter-egg__message"><small>GRMETRO</small><strong>WELL, YOU FOUND IT.</strong><span>Management has been notified.</span><em>(probably)</em></div><div class="boss-easter-egg__sweep"></div>`;
   document.body.appendChild(layer);
   window.setTimeout(() => { layer.classList.add("is-leaving"); }, CELEBRATION_MS - 700);
   window.setTimeout(() => { layer.remove(); active = false; }, CELEBRATION_MS);
