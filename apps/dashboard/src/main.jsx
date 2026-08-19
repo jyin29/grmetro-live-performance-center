@@ -9,8 +9,11 @@ import "./operations-slide-fixes.css";
 import "./final-tv-readability.css";
 import "./metric-customization.css";
 import "./spreadsheet-slide.css";
+import "./remote-layout-hotfix.css";
 import "./measuredSlidingHighlights";
 import "./remote-polish";
+import "./remote-period-dropdown";
+import "./remote-customize-shortcut";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(<StrictMode><DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary></StrictMode>);
