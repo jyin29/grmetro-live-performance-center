@@ -1,9 +1,12 @@
 "use strict";
 
+// Keep backend/admin slide metadata in the exact same order as the dashboard
+// presentation registry. The admin API indexes this array by activeSlideIndex.
 module.exports = [
   { id: "revenue", label: "Revenue", durationSeconds: 15 },
-  { id: "activity", label: "Activity", durationSeconds: 15 },
-  { id: "performance", label: "Performance", durationSeconds: 15 },
-  { id: "average-ticket", label: "Average Ticket", durationSeconds: 15 },
-  { id: "top-three", label: "Top 3", durationSeconds: 25 }
+  { id: "sales", label: "Sales", durationSeconds: 15 },
+  { id: "technicians", label: "Technicians", durationSeconds: 15 },
+  { id: "operations", label: "Operations", durationSeconds: 15 },
+  { id: "recognition", label: "Recognition", durationSeconds: 25 },
+  { id: "spreadsheet", label: "Spreadsheet", durationSeconds: 15 },
 ];
