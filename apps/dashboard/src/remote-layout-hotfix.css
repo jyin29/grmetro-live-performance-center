@@ -1,0 +1,51 @@
+/* Restore the original quick-action appearance. Only Customize gets the blue icon treatment. */
+.home-quick-actions button > svg,.home-quick-actions button > .quick-action-icon { width:auto; height:auto; padding:0; border-radius:0; background:transparent; color:inherit; }
+.home-quick-actions .customize-action > svg,.home-quick-actions .customize-action > .quick-action-icon { width:42px; height:42px; padding:10px; box-sizing:border-box; border-radius:12px; background:#e8f4ff; color:#1769a7; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+
+.dashboard-period-select { display:grid; gap:6px; width:100%; min-width:0; }
+.dashboard-period-select > span { color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.dashboard-period-select select { width:100%; min-width:0; min-height:46px; padding:0 42px 0 14px; border:1px solid rgba(8,127,131,.2); border-radius:12px; background:#fff; color:inherit; font:inherit; font-weight:700; }
+.dashboard-period-toggle[hidden] { display:none !important; }
+
+/* Keep every remote/customize surface inside the viewport. */
+html,body,#root { max-width:100%; overflow-x:hidden; }
+.operations-console,.operations-content,.operations-content > *,.customization-page,.metric-customization,.metric-customization__slides,.metric-customization__slide,.technician-goal-customization,.technician-goal-list,.spreadsheet-customization,.settings-mobile,.settings-mobile > div,.advanced-card,.operations-admin,.admin-main,.admin-section,.admin-table-wrap,.admin-definition-grid,.operations-section,.operations-feed-grid,.goal-management { width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+.customization-page { overflow-x:hidden; padding-left:clamp(12px,4vw,28px); padding-right:clamp(12px,4vw,28px); }
+.customization-page > * { max-width:100%; min-width:0; }
+.metric-customization__slides { grid-template-columns:minmax(0,1fr) !important; }
+.metric-customization__slide { overflow:hidden; }
+.metric-customization__slide label,.technician-goal-grid label { min-width:0; }
+.metric-customization__slide label > span,.technician-goal-grid label > span { min-width:0; overflow-wrap:anywhere; }
+
+/* Advanced settings: real admin classes, not guessed class-name fragments. */
+.advanced-card { margin:0 0 14px; overflow:hidden; border-radius:16px; }
+.advanced-card > summary { padding:16px 18px; }
+.advanced-card > .operations-section,.advanced-card > .operations-admin { margin:0; padding:16px !important; }
+.operations-admin { overflow:hidden; }
+.operations-admin .admin-main { display:grid; gap:16px; padding:0 !important; margin:0 !important; }
+.operations-admin .admin-section { margin:0 !important; padding:16px !important; border-radius:14px; overflow:hidden; }
+.operations-admin .admin-section__header { display:grid; gap:8px; margin:0 0 14px; padding:0; }
+.operations-admin .admin-section__header > * { min-width:0; margin-left:0; margin-right:0; }
+.operations-admin .admin-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; }
+.operations-admin .admin-table { min-width:720px; }
+.operations-admin .admin-definition-grid { grid-template-columns:minmax(0,1fr) !important; gap:10px; }
+.operations-admin .admin-definition-grid > div { min-width:0; padding:12px; overflow-wrap:anywhere; }
+
+/* Panels revealed after a tap should never be flush against the viewport. */
+.settings-mobile + *, .mobile-back + .goal-management,.mobile-back + .operations-feed-grid,.mobile-back + .advanced-card { margin-top:12px; }
+.operations-content > div:has(> .mobile-back) { width:100%; max-width:100%; min-width:0; padding-left:2px; padding-right:2px; box-sizing:border-box; }
+
+@media (max-width:760px) {
+  .operations-content { width:100%; max-width:100vw; padding-left:14px !important; padding-right:14px !important; overflow-x:hidden !important; }
+  .customization-page { width:100%; max-width:100vw; padding:14px !important; overflow-x:hidden !important; }
+  .metric-customization,.technician-goal-customization,.spreadsheet-customization { width:100% !important; max-width:100% !important; margin-left:0 !important; margin-right:0 !important; }
+  .metric-customization__slide,.technician-goal-list details,.spreadsheet-customization > * { width:100%; max-width:100%; box-sizing:border-box; }
+  .technician-goal-grid { grid-template-columns:minmax(0,1fr) !important; }
+  .operations-admin .admin-section { padding:14px !important; }
+  .operations-admin .admin-section__header { grid-template-columns:minmax(0,1fr) !important; }
+}
+@media (max-width:390px) {
+  .operations-content,.customization-page { padding-left:10px !important; padding-right:10px !important; }
+  .advanced-card > summary,.advanced-card > .operations-section,.advanced-card > .operations-admin { padding-left:12px !important; padding-right:12px !important; }
+  .operations-admin .admin-section { padding:12px !important; }
+}
