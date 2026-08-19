@@ -6,6 +6,7 @@ import { LoadingView } from "./components/LoadingView";
 import { RemoteControlPage } from "./components/RemoteControlPage";
 import { MetricCustomization } from "./components/MetricCustomization";
 import { SpreadsheetCustomization } from "./components/SpreadsheetCustomization";
+import { TechnicianGoalCustomization } from "./components/TechnicianGoalCustomization";
 import { useDashboard } from "./hooks/useDashboard";
 import { useDisplaySettings } from "./hooks/useDisplaySettings";
 import { AdminPage } from "./components/admin/AdminPage";
@@ -18,5 +19,5 @@ function DashboardPage({ displayId }) {
   if (!data?.technicians?.length) return <div className="app-shell"><Header refreshedAt={data?.refreshedAt} /><EmptyState /></div>;
   return <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} />;
 }
-function CustomizePage() { return <main className="customization-page"><a className="customization-page__back" href="/remote">← Back to Remote</a><MetricCustomization /><SpreadsheetCustomization /></main>; }
+function CustomizePage() { return <main className="customization-page"><a className="customization-page__back" href="/remote">← Back to Remote</a><MetricCustomization /><TechnicianGoalCustomization /><SpreadsheetCustomization /></main>; }
 export default function App() { const route = resolveApplicationRoute(window.location.pathname); if (route.type === "admin") return <AdminPage />; if (route.type === "remote") return <RemoteControlPage />; if (route.type === "customize") return <CustomizePage />; return <DashboardPage displayId={route.displayId} />; }
