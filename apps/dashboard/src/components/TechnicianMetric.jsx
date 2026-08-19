@@ -1,8 +1,9 @@
 import { AnimatedMetric } from "./AnimatedMetric";
 
 export function TechnicianMetric({ label, metric }) {
-  return <div className="technician-metric">
+  const unavailable=!metric?.hasData;
+  return <div className={`technician-metric${unavailable?" is-unavailable":""}`}>
     <span>{label}</span>
-    <strong><AnimatedMetric metric={metric} /></strong>
+    <strong>{unavailable?<span className="metric-unavailable" aria-label={`${label} unavailable`}>— <small>Unavailable</small></span>:<AnimatedMetric metric={metric} />}</strong>
   </div>;
 }
