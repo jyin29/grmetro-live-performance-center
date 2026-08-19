@@ -1,33 +1,83 @@
-/* This file loads last and fixes the actual mobile constraints from the base TV stylesheet. */
+/* Loaded last. Mobile Remote/Customize must use normal document scrolling. */
 @media (max-width: 900px) {
-  html, body, #root { width:100%; max-width:100%; min-width:0 !important; }
-  html { overflow-x:hidden !important; overflow-y:auto !important; }
-  body { min-width:0 !important; overflow-x:hidden !important; overflow-y:auto !important; height:auto !important; min-height:100vh; }
-  #root { overflow-x:hidden !important; overflow-y:visible !important; height:auto !important; min-height:100vh; }
-  .operations-console,.operations-content,.operations-content>*,.customization-page,.customization-page>*,.metric-customization,.metric-customization__slides,.metric-customization__slide,.technician-goal-customization,.technician-goal-list,.spreadsheet-customization,.settings-mobile,.operations-admin,.admin-main,.admin-section,.admin-definition-grid,.goal-management { width:100% !important; max-width:100% !important; min-width:0 !important; box-sizing:border-box !important; }
-  .operations-console,.operations-content,.customization-page { height:auto !important; min-height:100vh; overflow-y:visible !important; }
-  .operations-content { padding-left:14px !important; padding-right:14px !important; overflow-x:hidden !important; }
-  .customization-page { margin:0 !important; padding:14px !important; overflow-x:hidden !important; }
-  .metric-customization__slides,.technician-goal-grid,.goal-management__grid { grid-template-columns:minmax(0,1fr) !important; }
-  .metric-customization__slide,.technician-goal-list details,.spreadsheet-customization>* { max-width:100% !important; overflow-x:hidden; }
-  .metric-customization__slide label,.technician-goal-grid label { min-width:0 !important; }
-  .metric-customization__slide label>span,.technician-goal-grid label>span { min-width:0; overflow-wrap:anywhere; }
-  .operations-admin { padding:0 !important; overflow-x:hidden !important; overflow-y:visible !important; }
-  .operations-admin .admin-main { display:grid !important; gap:16px !important; padding:14px !important; margin:0 !important; overflow:visible !important; }
-  .operations-admin .admin-section { margin:0 !important; padding:16px !important; border-radius:14px; overflow:hidden; }
+  html { width:100%; min-width:0 !important; max-width:100%; height:auto !important; min-height:100%; overflow-x:clip !important; overflow-y:scroll !important; }
+  body { width:100%; min-width:0 !important; max-width:100%; height:auto !important; min-height:100vh; overflow:visible !important; }
+  #root { width:100%; min-width:0 !important; max-width:100%; height:auto !important; min-height:100vh; overflow:visible !important; }
+
+  .operations-console,
+  .operations-content,
+  .customization-page,
+  .metric-customization,
+  .metric-customization__slides,
+  .metric-customization__slide,
+  .technician-goal-customization,
+  .technician-goal-list,
+  .spreadsheet-customization,
+  .settings-mobile,
+  .operations-admin,
+  .admin-main,
+  .admin-section,
+  .admin-definition-grid,
+  .goal-management {
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    height:auto !important;
+    max-height:none !important;
+    box-sizing:border-box !important;
+  }
+
+  .operations-console,
+  .operations-content,
+  .customization-page,
+  .settings-mobile,
+  .operations-admin,
+  .admin-main {
+    overflow:visible !important;
+  }
+
+  .operations-content { padding-left:14px !important; padding-right:14px !important; padding-bottom:110px !important; }
+  .customization-page { margin:0 !important; padding:14px !important; }
+
+  .metric-customization__slides,
+  .technician-goal-grid,
+  .goal-management__grid { grid-template-columns:minmax(0,1fr) !important; }
+
+  .metric-customization__slide,
+  .technician-goal-list details,
+  .spreadsheet-customization > * { max-width:100% !important; min-width:0 !important; }
+  .metric-customization__slide label,
+  .technician-goal-grid label { min-width:0 !important; }
+  .metric-customization__slide label > span,
+  .technician-goal-grid label > span { min-width:0; overflow-wrap:anywhere; }
+
+  .operations-admin { padding:0 !important; }
+  .operations-admin .admin-main { display:grid !important; gap:16px !important; padding:14px !important; margin:0 !important; }
+  .operations-admin .admin-section { margin:0 !important; padding:16px !important; border-radius:14px; overflow:hidden !important; }
   .operations-admin .admin-section__header { display:grid !important; grid-template-columns:minmax(0,1fr) !important; gap:8px !important; margin:0 0 14px !important; padding:0 !important; }
-  .operations-admin .admin-section__header>* { min-width:0; margin-left:0 !important; margin-right:0 !important; }
-  .operations-admin .admin-table-wrap { width:100%; max-width:100%; overflow-x:auto !important; overflow-y:visible; -webkit-overflow-scrolling:touch; }
+  .operations-admin .admin-section__header > * { min-width:0; margin-left:0 !important; margin-right:0 !important; }
+
+  /* Only genuinely wide inner tables scroll sideways. The page itself never becomes the scroll container. */
+  .operations-admin .admin-table-wrap { width:100%; max-width:100%; overflow-x:auto !important; overflow-y:hidden !important; -webkit-overflow-scrolling:touch; }
   .operations-admin .admin-table { min-width:720px; }
   .operations-admin .admin-definition-grid { grid-template-columns:minmax(0,1fr) !important; gap:10px !important; }
-  .operations-admin .admin-definition-grid>div { min-width:0; padding:12px !important; overflow-wrap:anywhere; }
-  .advanced-card { width:100%; max-width:100%; overflow:hidden; margin:0 0 14px !important; }
-  .advanced-card>summary { padding:16px !important; }
-  .advanced-card>.operations-section,.advanced-card>.operations-admin { margin:0 !important; padding:14px !important; }
+  .operations-admin .admin-definition-grid > div { min-width:0; padding:12px !important; overflow-wrap:anywhere; }
+
+  .advanced-card { width:100%; max-width:100%; margin:0 0 14px !important; overflow:visible !important; }
+  .advanced-card > summary { padding:16px !important; }
+  .advanced-card > .operations-section,
+  .advanced-card > .operations-admin { margin:0 !important; padding:14px !important; }
 }
+
 .dashboard-period-select { display:grid; gap:6px; width:100%; min-width:0; }
-.dashboard-period-select>span { color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.dashboard-period-select > span { color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
 .dashboard-period-select select { width:100%; min-width:0; min-height:46px; padding:0 42px 0 14px; border:1px solid rgba(8,127,131,.2); border-radius:12px; background:#fff; color:inherit; font:inherit; font-weight:700; }
-/* Undo the accidental global blue icon restyle: all three quick actions use the same existing theme. */
-.home-quick-actions button>svg { width:24px !important; height:24px !important; padding:0 !important; border-radius:0 !important; background:transparent !important; color:inherit !important; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-@media (max-width:390px) { .operations-content,.customization-page { padding-left:10px !important; padding-right:10px !important; } .operations-admin .admin-main { padding:10px !important; } .operations-admin .admin-section { padding:12px !important; } }
+
+/* All quick actions use the same existing theme. */
+.home-quick-actions button > svg { width:24px !important; height:24px !important; padding:0 !important; border-radius:0 !important; background:transparent !important; color:inherit !important; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+@media (max-width:390px) {
+  .operations-content,.customization-page { padding-left:10px !important; padding-right:10px !important; }
+  .operations-admin .admin-main { padding:10px !important; }
+  .operations-admin .admin-section { padding:12px !important; }
+}
