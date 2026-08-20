@@ -15,15 +15,31 @@ function redact(value, seen = new WeakSet()) {
   ]));
 }
 
-function createLogger({ level = "info", destination = process.stdout, clock = () => new Date() } = {}) {
+function readableValue(value) {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value);
+}
+
+function readableEntry({ timestamp, level, message, metadata }) {
+  const time = new Date(timestamp).toLocaleTimeString("en-US", { hour12: false });
+  const heading = `[${time}] ${level.toUpperCase().padEnd(5)} ${message}`;
+  if (!metadata || typeof metadata !== "object" || !Object.keys(metadata).length) return `${heading}\n`;
+  const lines = Object.entries(metadata).map(([key, value]) => `    ${key}: ${readableValue(value)}`);
+  return `${heading}\n${lines.join("\n")}\n`;
+}
+
+function createLogger({ level = "info", destination = process.stdout, clock = () => new Date(), json = process.env.LOG_FORMAT === "json" || process.env.NODE_ENV === "production" } = {}) {
   if (!Object.hasOwn(LEVELS, level)) throw new Error(`Unknown log level: ${level}.`);
   const write = (name, message, metadata) => {
     if (LEVELS[name] < LEVELS[level]) return;
     const entry = { timestamp: clock().toISOString(), level: name, message: String(message) };
     if (metadata !== undefined) entry.metadata = redact(metadata);
-    destination.write(`${JSON.stringify(entry)}\n`);
+    destination.write(json ? `${JSON.stringify(entry)}\n` : readableEntry(entry));
   };
   return Object.freeze(Object.fromEntries(Object.keys(LEVELS).map((name) => [name, (message, metadata) => write(name, message, metadata)])));
 }
 
-module.exports = { createLogger, redact };
+module.exports = { createLogger, redact, readableEntry };
