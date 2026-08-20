@@ -20,43 +20,37 @@ function appearsUnauthenticated(url) {
   return UNAUTHENTICATED_PATH.test(`${url.pathname}${url.hash}${url.search}`);
 }
 
-function dashboardRoute(url) {
-  // ServiceTitan is a hash-routed SPA, so the useful application route normally
-  // lives in url.hash (for example #/new/dashboards/modular-dashboard).
-  return `${url.hash || ""}${url.pathname || ""}${url.search || ""}`.toLowerCase();
+function serviceTitanRoute(url) {
+  // ServiceTitan is hash-routed. URL.hash includes the leading '#', so strip it
+  // before comparing with routes such as /new/dashboards/modular-dashboard.
+  const hash = String(url.hash || "").replace(/^#/, "");
+  return (hash || `${url.pathname || ""}${url.search || ""}`).toLowerCase();
 }
 
 function dashboardKind(url) {
-  const route = dashboardRoute(url);
-  if (route.includes(TECHNICIAN_SCORECARD_ROUTE)) return "technician-scorecard";
-  if (route.includes(MODULAR_DASHBOARD_ROUTE)) return "modular-dashboard";
+  const route = serviceTitanRoute(url);
+  if (route.startsWith(TECHNICIAN_SCORECARD_ROUTE)) return "technician-scorecard";
+  if (route.startsWith(MODULAR_DASHBOARD_ROUTE)) return "modular-dashboard";
   return null;
 }
 
 function findServiceTitanPage(browser) {
   const candidates = [];
   let sawUnauthenticated = false;
-  let sawOtherServiceTitanPage = false;
   for (const context of browser?.contexts?.() || []) {
     for (const page of context.pages?.() || []) {
       const url = pageUrl(page);
       if (!url || !isServiceTitan(url)) continue;
       if (appearsUnauthenticated(url)) { sawUnauthenticated = true; continue; }
       const kind = dashboardKind(url);
-      if (!kind) { sawOtherServiceTitanPage = true; continue; }
+      if (!kind) continue;
       candidates.push({ page, kind });
     }
   }
-  // Prefer an individual technician scorecard when one is open because it is
-  // the most specific authenticated dashboard page. Otherwise use the modular dashboard.
   const selected = candidates.find(({ kind }) => kind === "technician-scorecard")
     || candidates.find(({ kind }) => kind === "modular-dashboard");
   if (selected && !(typeof selected.page.isClosed === "function" && selected.page.isClosed())) return selected.page;
-  // Deliberately do NOT fall back to arbitrary go.servicetitan.com tabs. Pages
-  // such as dispatch, settings, login helpers, etc. are not valid data sources.
-  throw new BrowserManagerError(sawUnauthenticated
-    ? "SERVICE_TITAN_AUTH_REQUIRED"
-    : "SERVICE_TITAN_PAGE_NOT_FOUND", sawOtherServiceTitanPage ? { reason: "NO_SUPPORTED_DASHBOARD_PAGE" } : undefined);
+  throw new BrowserManagerError(sawUnauthenticated ? "SERVICE_TITAN_AUTH_REQUIRED" : "SERVICE_TITAN_PAGE_NOT_FOUND");
 }
 
-module.exports = { SERVICE_TITAN_HOST, MODULAR_DASHBOARD_ROUTE, TECHNICIAN_SCORECARD_ROUTE, appearsUnauthenticated, dashboardKind, findServiceTitanPage };
+module.exports = { SERVICE_TITAN_HOST, MODULAR_DASHBOARD_ROUTE, TECHNICIAN_SCORECARD_ROUTE, appearsUnauthenticated, serviceTitanRoute, dashboardKind, findServiceTitanPage };
