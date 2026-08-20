@@ -3,7 +3,7 @@ export class ManagementApiError extends Error {
 }
 const REPORTING_PERIODS = ["today","yesterday","wtd","last-week","mtd","last-month","qtd","last-quarter","ytd","last-year","last-7-days","last-30-days"];
 const REPORTING_PERIOD_LABELS = { today:"Today", yesterday:"Yesterday", wtd:"Week to Date", "last-week":"Last Week", mtd:"Month to Date", "last-month":"Last Month", qtd:"Quarter to Date", "last-quarter":"Last Quarter", ytd:"Year to Date", "last-year":"Last Year", "last-7-days":"Last 7 Days", "last-30-days":"Last 30 Days" };
-async function read(response) { const body = await response.json().catch(() => null); if (!response.ok) throw new ManagementApiError(body?.message || "Could not update dashboard management settings.", response.status); return body; }
+async function read(response) { const body = await response.json().catch(() => null); if (!response.ok) throw new ManagementApiError(body?.message || body?.error?.message || `Management request failed (${response.status}).`, response.status); return body; }
 export async function fetchRefreshStatus(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/refresh", { headers: { accept: "application/json" } })); }
 export async function requestDashboardRefresh(fetchImpl = fetch) { return read(await fetchImpl("/api/v1/management/refresh", { method: "POST", headers: { accept: "application/json" } })); }
 export async function fetchDashboardPeriod(fetchImpl = fetch) { const result=await read(await fetchImpl("/api/v1/management/period", { headers: { accept: "application/json" } })); return {...result,availablePeriods:REPORTING_PERIODS,periodLabels:{...REPORTING_PERIOD_LABELS,...(result.periodLabels||{})}}; }

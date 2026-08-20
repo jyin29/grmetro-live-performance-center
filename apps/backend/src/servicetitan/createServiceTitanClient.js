@@ -8,7 +8,7 @@ const { sanitizeDrilldownRecords } = require("./drilldownSanitizer");
 const { ServiceTitanResearchObserver } = require("./researchObserver");
 function createServiceTitanClient({ config, browserManager, logger }) {
   const csrfTokenProvider = new CsrfTokenProvider({ browserManager, baseUrl: config.serviceTitanBaseUrl, timeoutMilliseconds: config.serviceTitanCsrfTimeoutMilliseconds, logger });
-  const executor = new ServiceTitanRequestExecutor({ browserManager, csrfTokenProvider, baseUrl: config.serviceTitanBaseUrl, timeoutMilliseconds: config.serviceTitanRequestTimeoutMilliseconds });
+  const executor = new ServiceTitanRequestExecutor({ browserManager, csrfTokenProvider, baseUrl: config.serviceTitanBaseUrl, timeoutMilliseconds: config.serviceTitanRequestTimeoutMilliseconds, logger });
   const researchObserver = new ServiceTitanResearchObserver({ browserManager, logger });
   return { csrfTokenProvider, executor, researchObserver, async fetchTechnicianJobDrilldown({ technicianId, date }) {
     const response = await executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(config, technicianId, new Date(`${date}T12:00:00Z`)));

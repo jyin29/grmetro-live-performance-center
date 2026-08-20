@@ -21,7 +21,7 @@ export function SpreadsheetSlide({ spreadsheetSlide }) {
   const columns = displayColumns(slide); const rows = slide.rows.slice(0, 30);
   return <main className="spreadsheet-slide dashboard-slide" aria-labelledby="spreadsheet-slide-title">
     <header className="spreadsheet-slide__heading"><div><p>Custom data · {slide.metrics?.length || 0} metrics detected</p><h2 id="spreadsheet-slide-title">{slide.title}</h2></div><span>{slide.subtitle}</span></header>
-    <section className="spreadsheet-slide__table-wrap"><table className="spreadsheet-slide__table"><thead><tr>{columns.map((column) => <th key={column.id}>{column.label}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{columns.map((column) => <td key={column.id} className={column.type !== "text" ? "is-numeric" : ""}>{formatCell(row[column.id], column.type)}</td>)}</tr>)}</tbody></table></section>
+    <section className="spreadsheet-slide__table-wrap"><table className="spreadsheet-slide__table"><thead><tr>{columns.map((column) => <th key={column.id} className={column.type !== "text" ? "is-numeric" : ""}>{column.label}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{columns.map((column) => <td key={column.id} className={column.type !== "text" ? "is-numeric" : ""}>{formatCell(row[column.id], column.type)}</td>)}</tr>)}</tbody></table></section>
     <footer className="spreadsheet-slide__meta">Showing {rows.length} of {slide.rows.length.toLocaleString()} imported rows{slide.sourceRowCount > slide.rows.length ? ` · ${slide.sourceRowCount.toLocaleString()} source rows` : ""} · {slide.columns.length} columns</footer>
   </main>;
 }
