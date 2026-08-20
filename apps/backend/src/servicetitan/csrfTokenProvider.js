@@ -3,229 +3,30 @@
 const { ENDPOINTS } = require("./endpoints");
 const { ERROR_CODES, ServiceTitanError } = require("./errors");
 
-const SAFE_GLOBAL_PATHS = Object.freeze([
-  ["ServiceTitan", "csrfToken"],
-  ["ServiceTitan", "antiForgeryToken"],
-  ["ServiceTitan", "security", "csrfToken"],
-  ["__SERVICE_TITAN__", "csrfToken"],
-  ["__ST_APP_STATE__", "csrfToken"]
-]);
-const CSRF_HEADER_NAMES = Object.freeze(["x-csrf-token", "x-xsrf-token", "requestverificationtoken", "x-request-verification-token"]);
-const CSRF_COOKIE_NAMES = Object.freeze(["xsrf-token", "x-xsrf-token", "csrf-token", "csrftoken", "__requestverificationtoken", "requestverificationtoken"]);
-const CSRF_STORAGE_KEYS = Object.freeze(["csrfToken", "csrf-token", "xsrfToken", "xsrf-token", "XSRF-TOKEN", "__RequestVerificationToken"]);
-
-function csrfError() {
-  return new ServiceTitanError(ERROR_CODES.CSRF, "No usable ServiceTitan CSRF token is currently available. The backend will retry automatically.");
-}
-function headerToken(headers) {
-  if (!headers || typeof headers !== "object") return null;
-  const entry = Object.entries(headers).find(([name]) => CSRF_HEADER_NAMES.includes(String(name).toLowerCase()));
-  return typeof entry?.[1] === "string" && entry[1] ? entry[1] : null;
-}
-
-class CsrfTokenProvider {
-  constructor({ browserManager, baseUrl = "https://go.servicetitan.com", timeoutMilliseconds = 10000,
-    acquisitionEndpoint = ENDPOINTS.technicianMetadata, logger, setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout } = {}) {
-    if (!browserManager) throw new TypeError("CSRF token provider requires a browser manager.");
-    this.browserManager = browserManager;
-    this.baseUrl = baseUrl;
-    this.timeoutMilliseconds = timeoutMilliseconds;
-    this.acquisitionEndpoint = acquisitionEndpoint;
-    this.logger = logger || { debug() {}, info() {}, warn() {} };
-    this.setTimeoutFn = setTimeoutFn;
-    this.clearTimeoutFn = clearTimeoutFn;
-    this.page = null;
-    this.token = null;
-    this.acquisitionPromise = null;
-    this.acquisitionTimer = null;
-    this.acquisitionResolve = null;
-    this.acquisitionReject = null;
-    this.acquisitionStage = null;
-    this.stopped = false;
-    this.requestHandler = (request) => this.observeRequest(request);
-    this.responseHandler = (response) => this.observeResponse(response);
-    this.unsubscribe = browserManager.subscribe?.((event) => {
-      this.clear(event?.type === "disconnected" ? "browser disconnect" : "page replacement");
-      this.attachToCurrentPage();
-    }) || null;
-  }
-
-  attachToCurrentPage() {
-    if (this.stopped) return;
-    let page;
-    try { page = this.browserManager.getServiceTitanPage(); } catch { page = null; }
-    this.attach(page);
-  }
-
-  attach(page) {
-    if (page === this.page) return;
-    this.detach();
-    this.clear("page replacement");
-    this.page = page || null;
-    if (this.page) {
-      this.page.on?.("request", this.requestHandler);
-      this.page.on?.("response", this.responseHandler);
-      this.logger.info("CSRF observer attached");
-    }
-  }
-
-  detach() {
-    this.page?.off?.("request", this.requestHandler);
-    this.page?.off?.("response", this.responseHandler);
-    this.page = null;
-  }
-
-  async observeRequest(request) {
-    try {
-      const headers = await request.allHeaders?.() || request.headers?.() || {};
-      const token = headerToken(headers);
-      if (token) this.set(token, "authenticated request");
-    } catch { /* observation is best effort and never logs secrets */ }
-  }
-
-  async observeResponse(response) {
-    try {
-      const status = response.status?.();
-      if (status < 200 || status >= 400) return;
-      const token = headerToken(await response.request?.().allHeaders?.() || response.request?.().headers?.() || {});
-      if (token) this.set(token, "authenticated response request");
-    } catch { /* observation is best effort and never logs secrets */ }
-  }
-
-  set(token, source = "browser session") {
-    if (typeof token !== "string" || !token) return;
-    this.token = token;
-    this.logger.info("CSRF token acquired", { source });
-    this.acquisitionResolve?.(token);
-  }
-
-  clear(reason = "explicit CSRF rejection") {
-    if (this.token) this.logger.warn("CSRF token cleared", { reason });
-    this.token = null;
-  }
-
-  getSafeStatus() { return Object.freeze({ available: Boolean(this.token), observing: Boolean(this.page), acquiring: Boolean(this.acquisitionPromise) }); }
-
-  async cookieLookup(page) {
-    try {
-      const cookies = await page.context?.().cookies?.(this.baseUrl) || [];
-      const match = cookies.find((cookie) => CSRF_COOKIE_NAMES.includes(String(cookie.name || "").toLowerCase()));
-      if (match?.value) {
-        const token = decodeURIComponent(match.value);
-        this.set(token, "browser cookie");
-        return token;
-      }
-    } catch { /* cookies are best effort */ }
-    return null;
-  }
-
-  async passiveLookup(page) {
-    this.logger.info("Passive CSRF token lookup attempted");
-    const cookieToken = await this.cookieLookup(page);
-    if (cookieToken) return cookieToken;
-    const token = await page.evaluate(({ globalPaths, storageKeys, cookieNames }) => {
-      const fromMeta = ["csrf-token", "csrfToken", "x-csrf-token", "x-xsrf-token", "X-CSRF-Token", "__RequestVerificationToken"]
-        .map((name) => document.querySelector(`meta[name="${name}"], meta[name="${name.toLowerCase()}"]`)?.getAttribute("content"))
-        .find((value) => typeof value === "string" && value.length > 0);
-      if (fromMeta) return fromMeta;
-      const cookies = String(document.cookie || "").split(";").map((part) => part.trim()).filter(Boolean);
-      for (const part of cookies) {
-        const index = part.indexOf("=");
-        if (index < 0) continue;
-        const name = part.slice(0, index).trim().toLowerCase();
-        if (!cookieNames.includes(name)) continue;
-        const value = part.slice(index + 1);
-        if (value) { try { return decodeURIComponent(value); } catch { return value; } }
-      }
-      for (const storage of [window.sessionStorage, window.localStorage]) {
-        for (const key of storageKeys) {
-          try { const value = storage.getItem(key); if (typeof value === "string" && value.length > 0) return value; } catch {}
-        }
-      }
-      const readPath = (root, path) => path.reduce((value, key) => value && typeof value === "object" ? value[key] : undefined, root);
-      for (const path of globalPaths) {
-        const value = readPath(window, path);
-        if (typeof value === "string" && value.length > 0) return value;
-      }
-      return null;
-    }, { globalPaths: SAFE_GLOBAL_PATHS, storageKeys: CSRF_STORAGE_KEYS, cookieNames: CSRF_COOKIE_NAMES });
-    if (token) this.set(token, "page state");
-    return token;
-  }
-
-  async safeAcquisitionRequest(page) {
-    this.logger.info("Safe CSRF acquisition request attempted", { endpointName: this.acquisitionEndpoint.name, method: this.acquisitionEndpoint.method });
-    if (this.acquisitionEndpoint.method !== "GET") throw csrfError();
-    const url = new URL(this.acquisitionEndpoint.path, this.baseUrl).href;
-    const result = await page.evaluate(async ({ url, timeoutMilliseconds }) => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMilliseconds);
-      try {
-        const response = await fetch(url, { method: "GET", credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } });
-        return { status: response.status, csrfToken: response.headers.get("x-csrf-token") || response.headers.get("x-xsrf-token") || response.headers.get("X-CSRF-Token") || null };
-      } finally { clearTimeout(timer); }
-    }, { url, timeoutMilliseconds: this.timeoutMilliseconds });
-    this.handleStatus(result.status);
-    if (result.csrfToken) this.set(result.csrfToken, "safe acquisition response");
-    return this.token;
-  }
-
-  acquireToken(timeoutMilliseconds = this.timeoutMilliseconds) {
-    if (this.token) return Promise.resolve(this.token);
-    if (this.acquisitionPromise) return this.acquisitionPromise;
-    this.attachToCurrentPage();
-    if (!this.page) return Promise.reject(csrfError());
-    const page = this.page;
-    this.acquisitionPromise = new Promise((resolve, reject) => {
-      this.acquisitionResolve = resolve;
-      this.acquisitionReject = reject;
-      this.acquisitionStage = "passive-lookup";
-      this.acquisitionTimer = this.setTimeoutFn(() => {
-        this.logger.warn("CSRF token acquisition timed out", { code: ERROR_CODES.CSRF, stage: this.acquisitionStage, waitingFor: "browser-session-token" });
-        reject(csrfError());
-      }, timeoutMilliseconds);
-      Promise.resolve()
-        .then(() => this.passiveLookup(page))
-        .then((token) => {
-          if (token) return token;
-          this.acquisitionStage = "metadata-request";
-          return this.safeAcquisitionRequest(page);
-        })
-        .then((token) => token ? resolve(token) : reject(csrfError()), reject);
-    }).catch((error) => {
-      if (error?.code !== ERROR_CODES.CSRF) this.logger.warn("CSRF token acquisition failed", { code: error?.code || ERROR_CODES.CSRF, stage: this.acquisitionStage });
-      throw error instanceof ServiceTitanError ? error : csrfError();
-    }).finally(() => {
-      if (this.acquisitionTimer) this.clearTimeoutFn(this.acquisitionTimer);
-      this.acquisitionTimer = null;
-      this.acquisitionResolve = null;
-      this.acquisitionReject = null;
-      this.acquisitionStage = null;
-      this.acquisitionPromise = null;
-    });
-    return this.acquisitionPromise;
-  }
-
-  waitForToken(timeoutMilliseconds = this.timeoutMilliseconds) { return this.acquireToken(timeoutMilliseconds); }
-
-  handleStatus(status) {
-    if (status === 401) this.clear("401");
-    if (status === 403) this.clear("403");
-  }
-
-  stop() {
-    if (this.stopped) return;
-    this.stopped = true;
-    this.detach();
-    this.clear("shutdown");
-    this.unsubscribe?.();
-    if (this.acquisitionTimer) this.clearTimeoutFn(this.acquisitionTimer);
-    this.acquisitionTimer = null;
-    this.acquisitionReject?.(csrfError());
-    this.acquisitionResolve = null;
-    this.acquisitionReject = null;
-    this.acquisitionStage = null;
-    this.acquisitionPromise = null;
-  }
-}
-module.exports = { CsrfTokenProvider, SAFE_GLOBAL_PATHS, CSRF_HEADER_NAMES, CSRF_COOKIE_NAMES, CSRF_STORAGE_KEYS };
+const SAFE_GLOBAL_PATHS = Object.freeze([["ServiceTitan","csrfToken"],["ServiceTitan","antiForgeryToken"],["ServiceTitan","security","csrfToken"],["__SERVICE_TITAN__","csrfToken"],["__ST_APP_STATE__","csrfToken"]]);
+const CSRF_HEADER_NAMES = Object.freeze(["x-csrf-token","x-xsrf-token","requestverificationtoken","x-request-verification-token"]);
+const CSRF_COOKIE_NAMES = Object.freeze(["xsrf-token","x-xsrf-token","csrf-token","csrftoken","__requestverificationtoken","requestverificationtoken"]);
+const CSRF_STORAGE_KEYS = Object.freeze(["csrfToken","csrf-token","xsrfToken","xsrf-token","XSRF-TOKEN","__RequestVerificationToken"]);
+const SERVICE_TITAN_API_PREFIX = "https://go.servicetitan.com/app/api/";
+function csrfError(){return new ServiceTitanError(ERROR_CODES.CSRF,"No usable ServiceTitan CSRF token is currently available. The backend will retry automatically.");}
+function headerToken(headers){if(!headers||typeof headers!=="object")return null;const entry=Object.entries(headers).find(([name])=>CSRF_HEADER_NAMES.includes(String(name).toLowerCase()));return typeof entry?.[1]==="string"&&entry[1]?entry[1]:null;}
+function isServiceTitanApiRequest(request){try{return String(request?.url?.()||"").toLowerCase().startsWith(SERVICE_TITAN_API_PREFIX);}catch{return false;}}
+function belongsToLockedPage(request,page){if(!page||request?.frame?.()?.page?.()!==page)return false;return isServiceTitanApiRequest(request);}
+class CsrfTokenProvider{
+constructor({browserManager,baseUrl="https://go.servicetitan.com",timeoutMilliseconds=10000,acquisitionEndpoint=ENDPOINTS.technicianMetadata,logger,setTimeoutFn=setTimeout,clearTimeoutFn=clearTimeout}={}){if(!browserManager)throw new TypeError("CSRF token provider requires a browser manager.");Object.assign(this,{browserManager,baseUrl,timeoutMilliseconds,acquisitionEndpoint,logger:logger||{debug(){},info(){},warn(){}},setTimeoutFn,clearTimeoutFn});this.page=null;this.token=null;this.acquisitionPromise=null;this.acquisitionTimer=null;this.acquisitionResolve=null;this.acquisitionReject=null;this.acquisitionStage=null;this.stopped=false;this.requestHandler=(r)=>this.observeRequest(r);this.responseHandler=(r)=>this.observeResponse(r);this.unsubscribe=browserManager.subscribe?.((event)=>{this.clear(event?.type==="disconnected"?"browser disconnect":"page replacement");this.attachToCurrentPage();})||null;}
+attachToCurrentPage(){if(this.stopped)return;let page;try{page=this.browserManager.getServiceTitanPage();}catch{page=null;}this.attach(page);}
+attach(page){if(page===this.page)return;this.detach();this.clear("page replacement");this.page=page||null;if(this.page){this.page.on?.("request",this.requestHandler);this.page.on?.("response",this.responseHandler);this.logger.info("CSRF observer attached to locked dashboard page",{pageUrl:this.page.url?.()||null});}}
+detach(){this.page?.off?.("request",this.requestHandler);this.page?.off?.("response",this.responseHandler);this.page=null;}
+async observeRequest(request){try{if(!belongsToLockedPage(request,this.page))return;const headers=await request.allHeaders?.()||request.headers?.()||{};const token=headerToken(headers);if(token&&!this.token)this.set(token,"locked dashboard API request");}catch{}}
+async observeResponse(response){try{const request=response.request?.();if(!belongsToLockedPage(request,this.page))return;const status=response.status?.();if(status<200||status>=400)return;const token=headerToken(await request.allHeaders?.()||request.headers?.()||{});if(token&&!this.token)this.set(token,"locked dashboard API response request");}catch{}}
+set(token,source="browser session"){if(typeof token!=="string"||!token)return;if(this.token===token)return;if(this.token)return;this.token=token;this.logger.info("CSRF token acquired",{source});this.acquisitionResolve?.(token);}
+clear(reason="explicit CSRF rejection"){if(this.token)this.logger.warn("CSRF token cleared",{reason});this.token=null;}
+getSafeStatus(){return Object.freeze({available:Boolean(this.token),observing:Boolean(this.page),acquiring:Boolean(this.acquisitionPromise)});}
+async cookieLookup(page){try{const cookies=await page.context?.().cookies?.(this.baseUrl)||[];const match=cookies.find(c=>CSRF_COOKIE_NAMES.includes(String(c.name||"").toLowerCase()));if(match?.value){const token=decodeURIComponent(match.value);this.set(token,"locked dashboard browser cookie");return token;}}catch{}return null;}
+async passiveLookup(page){this.logger.info("Passive CSRF token lookup attempted",{pageUrl:page.url?.()||null});const cookieToken=await this.cookieLookup(page);if(cookieToken)return cookieToken;const token=await page.evaluate(({globalPaths,storageKeys,cookieNames})=>{const fromMeta=["csrf-token","csrfToken","x-csrf-token","x-xsrf-token","X-CSRF-Token","__RequestVerificationToken"].map(name=>document.querySelector(`meta[name="${name}"], meta[name="${name.toLowerCase()}"]`)?.getAttribute("content")).find(v=>typeof v==="string"&&v.length>0);if(fromMeta)return fromMeta;const cookies=String(document.cookie||"").split(";").map(p=>p.trim()).filter(Boolean);for(const part of cookies){const i=part.indexOf("=");if(i<0)continue;const name=part.slice(0,i).trim().toLowerCase();if(!cookieNames.includes(name))continue;const value=part.slice(i+1);if(value){try{return decodeURIComponent(value);}catch{return value;}}}for(const storage of[window.sessionStorage,window.localStorage])for(const key of storageKeys){try{const value=storage.getItem(key);if(typeof value==="string"&&value.length>0)return value;}catch{}}const readPath=(root,path)=>path.reduce((value,key)=>value&&typeof value==="object"?value[key]:undefined,root);for(const path of globalPaths){const value=readPath(window,path);if(typeof value==="string"&&value.length>0)return value;}return null;},{globalPaths:SAFE_GLOBAL_PATHS,storageKeys:CSRF_STORAGE_KEYS,cookieNames:CSRF_COOKIE_NAMES});if(token)this.set(token,"locked dashboard page state");return token;}
+async safeAcquisitionRequest(page){this.logger.info("Safe CSRF acquisition request attempted",{endpointName:this.acquisitionEndpoint.name,method:this.acquisitionEndpoint.method,pageUrl:page.url?.()||null});if(this.acquisitionEndpoint.method!=="GET")throw csrfError();const url=new URL(this.acquisitionEndpoint.path,this.baseUrl).href;const result=await page.evaluate(async({url,timeoutMilliseconds})=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMilliseconds);try{const response=await fetch(url,{method:"GET",credentials:"include",signal:controller.signal,headers:{Accept:"application/json","X-Requested-With":"XMLHttpRequest"}});return{status:response.status,csrfToken:response.headers.get("x-csrf-token")||response.headers.get("x-xsrf-token")||response.headers.get("X-CSRF-Token")||null};}finally{clearTimeout(timer);}},{url,timeoutMilliseconds:this.timeoutMilliseconds});this.handleStatus(result.status);if(result.csrfToken)this.set(result.csrfToken,"locked dashboard safe acquisition response");return this.token;}
+acquireToken(timeoutMilliseconds=this.timeoutMilliseconds){if(this.token)return Promise.resolve(this.token);if(this.acquisitionPromise)return this.acquisitionPromise;this.attachToCurrentPage();if(!this.page)return Promise.reject(csrfError());const page=this.page;this.acquisitionPromise=new Promise((resolve,reject)=>{this.acquisitionResolve=resolve;this.acquisitionReject=reject;this.acquisitionStage="passive-lookup";this.acquisitionTimer=this.setTimeoutFn(()=>{this.logger.warn("CSRF token acquisition timed out",{code:ERROR_CODES.CSRF,stage:this.acquisitionStage,waitingFor:"locked-dashboard-session-token"});reject(csrfError());},timeoutMilliseconds);Promise.resolve().then(()=>this.passiveLookup(page)).then(token=>{if(token)return token;this.acquisitionStage="metadata-request";return this.safeAcquisitionRequest(page);}).then(token=>token?resolve(token):reject(csrfError()),reject);}).catch(error=>{if(error?.code!==ERROR_CODES.CSRF)this.logger.warn("CSRF token acquisition failed",{code:error?.code||ERROR_CODES.CSRF,stage:this.acquisitionStage});throw error instanceof ServiceTitanError?error:csrfError();}).finally(()=>{if(this.acquisitionTimer)this.clearTimeoutFn(this.acquisitionTimer);this.acquisitionTimer=null;this.acquisitionResolve=null;this.acquisitionReject=null;this.acquisitionStage=null;this.acquisitionPromise=null;});return this.acquisitionPromise;}
+waitForToken(timeoutMilliseconds=this.timeoutMilliseconds){return this.acquireToken(timeoutMilliseconds);}
+handleStatus(status){if(status===401)this.clear("401");if(status===403)this.clear("403");}
+stop(){if(this.stopped)return;this.stopped=true;this.detach();this.clear("shutdown");this.unsubscribe?.();if(this.acquisitionTimer)this.clearTimeoutFn(this.acquisitionTimer);this.acquisitionTimer=null;this.acquisitionReject?.(csrfError());this.acquisitionResolve=null;this.acquisitionReject=null;this.acquisitionStage=null;this.acquisitionPromise=null;}}
+module.exports={CsrfTokenProvider,SAFE_GLOBAL_PATHS,CSRF_HEADER_NAMES,CSRF_COOKIE_NAMES,CSRF_STORAGE_KEYS,SERVICE_TITAN_API_PREFIX,belongsToLockedPage};
