@@ -10,9 +10,17 @@ const SAFE_GLOBAL_PATHS = Object.freeze([
   ["__SERVICE_TITAN__", "csrfToken"],
   ["__ST_APP_STATE__", "csrfToken"]
 ]);
+const CSRF_HEADER_NAMES = Object.freeze(["x-csrf-token", "x-xsrf-token", "requestverificationtoken", "x-request-verification-token"]);
+const CSRF_COOKIE_NAMES = Object.freeze(["xsrf-token", "x-xsrf-token", "csrf-token", "csrftoken", "__requestverificationtoken", "requestverificationtoken"]);
+const CSRF_STORAGE_KEYS = Object.freeze(["csrfToken", "csrf-token", "xsrfToken", "xsrf-token", "XSRF-TOKEN", "__RequestVerificationToken"]);
 
 function csrfError() {
   return new ServiceTitanError(ERROR_CODES.CSRF, "No usable ServiceTitan CSRF token is currently available. The backend will retry automatically.");
+}
+function headerToken(headers) {
+  if (!headers || typeof headers !== "object") return null;
+  const entry = Object.entries(headers).find(([name]) => CSRF_HEADER_NAMES.includes(String(name).toLowerCase()));
+  return typeof entry?.[1] === "string" && entry[1] ? entry[1] : null;
 }
 
 class CsrfTokenProvider {
@@ -34,6 +42,7 @@ class CsrfTokenProvider {
     this.acquisitionReject = null;
     this.acquisitionStage = null;
     this.stopped = false;
+    this.requestHandler = (request) => this.observeRequest(request);
     this.responseHandler = (response) => this.observeResponse(response);
     this.unsubscribe = browserManager.subscribe?.((event) => {
       this.clear(event?.type === "disconnected" ? "browser disconnect" : "page replacement");
@@ -54,27 +63,39 @@ class CsrfTokenProvider {
     this.clear("page replacement");
     this.page = page || null;
     if (this.page) {
+      this.page.on?.("request", this.requestHandler);
       this.page.on?.("response", this.responseHandler);
       this.logger.info("CSRF observer attached");
     }
   }
 
-  detach() { this.page?.off?.("response", this.responseHandler); this.page = null; }
+  detach() {
+    this.page?.off?.("request", this.requestHandler);
+    this.page?.off?.("response", this.responseHandler);
+    this.page = null;
+  }
+
+  async observeRequest(request) {
+    try {
+      const headers = await request.allHeaders?.() || request.headers?.() || {};
+      const token = headerToken(headers);
+      if (token) this.set(token, "authenticated request");
+    } catch { /* observation is best effort and never logs secrets */ }
+  }
 
   async observeResponse(response) {
     try {
       const status = response.status?.();
       if (status < 200 || status >= 400) return;
-      const headers = await response.request?.().allHeaders?.() || response.request?.().headers?.() || {};
-      const entry = Object.entries(headers).find(([name]) => name.toLowerCase() === "x-csrf-token");
-      if (entry?.[1]) this.set(entry[1]);
+      const token = headerToken(await response.request?.().allHeaders?.() || response.request?.().headers?.() || {});
+      if (token) this.set(token, "authenticated response request");
     } catch { /* observation is best effort and never logs secrets */ }
   }
 
-  set(token) {
+  set(token, source = "browser session") {
     if (typeof token !== "string" || !token) return;
     this.token = token;
-    this.logger.info("CSRF token acquired");
+    this.logger.info("CSRF token acquired", { source });
     this.acquisitionResolve?.(token);
   }
 
@@ -85,21 +106,50 @@ class CsrfTokenProvider {
 
   getSafeStatus() { return Object.freeze({ available: Boolean(this.token), observing: Boolean(this.page), acquiring: Boolean(this.acquisitionPromise) }); }
 
+  async cookieLookup(page) {
+    try {
+      const cookies = await page.context?.().cookies?.(this.baseUrl) || [];
+      const match = cookies.find((cookie) => CSRF_COOKIE_NAMES.includes(String(cookie.name || "").toLowerCase()));
+      if (match?.value) {
+        const token = decodeURIComponent(match.value);
+        this.set(token, "browser cookie");
+        return token;
+      }
+    } catch { /* cookies are best effort */ }
+    return null;
+  }
+
   async passiveLookup(page) {
     this.logger.info("Passive CSRF token lookup attempted");
-    const token = await page.evaluate((globalPaths) => {
-      const fromMeta = ["csrf-token", "csrfToken", "x-csrf-token", "X-CSRF-Token", "__RequestVerificationToken"]
+    const cookieToken = await this.cookieLookup(page);
+    if (cookieToken) return cookieToken;
+    const token = await page.evaluate(({ globalPaths, storageKeys, cookieNames }) => {
+      const fromMeta = ["csrf-token", "csrfToken", "x-csrf-token", "x-xsrf-token", "X-CSRF-Token", "__RequestVerificationToken"]
         .map((name) => document.querySelector(`meta[name="${name}"], meta[name="${name.toLowerCase()}"]`)?.getAttribute("content"))
         .find((value) => typeof value === "string" && value.length > 0);
       if (fromMeta) return fromMeta;
+      const cookies = String(document.cookie || "").split(";").map((part) => part.trim()).filter(Boolean);
+      for (const part of cookies) {
+        const index = part.indexOf("=");
+        if (index < 0) continue;
+        const name = part.slice(0, index).trim().toLowerCase();
+        if (!cookieNames.includes(name)) continue;
+        const value = part.slice(index + 1);
+        if (value) { try { return decodeURIComponent(value); } catch { return value; } }
+      }
+      for (const storage of [window.sessionStorage, window.localStorage]) {
+        for (const key of storageKeys) {
+          try { const value = storage.getItem(key); if (typeof value === "string" && value.length > 0) return value; } catch {}
+        }
+      }
       const readPath = (root, path) => path.reduce((value, key) => value && typeof value === "object" ? value[key] : undefined, root);
       for (const path of globalPaths) {
         const value = readPath(window, path);
         if (typeof value === "string" && value.length > 0) return value;
       }
       return null;
-    }, SAFE_GLOBAL_PATHS);
-    if (token) this.set(token);
+    }, { globalPaths: SAFE_GLOBAL_PATHS, storageKeys: CSRF_STORAGE_KEYS, cookieNames: CSRF_COOKIE_NAMES });
+    if (token) this.set(token, "page state");
     return token;
   }
 
@@ -112,11 +162,11 @@ class CsrfTokenProvider {
       const timer = setTimeout(() => controller.abort(), timeoutMilliseconds);
       try {
         const response = await fetch(url, { method: "GET", credentials: "include", signal: controller.signal, headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } });
-        return { status: response.status, csrfToken: response.headers.get("x-csrf-token") || response.headers.get("X-CSRF-Token") || null };
+        return { status: response.status, csrfToken: response.headers.get("x-csrf-token") || response.headers.get("x-xsrf-token") || response.headers.get("X-CSRF-Token") || null };
       } finally { clearTimeout(timer); }
     }, { url, timeoutMilliseconds: this.timeoutMilliseconds });
     this.handleStatus(result.status);
-    if (result.csrfToken) this.set(result.csrfToken);
+    if (result.csrfToken) this.set(result.csrfToken, "safe acquisition response");
     return this.token;
   }
 
@@ -131,11 +181,7 @@ class CsrfTokenProvider {
       this.acquisitionReject = reject;
       this.acquisitionStage = "passive-lookup";
       this.acquisitionTimer = this.setTimeoutFn(() => {
-        this.logger.warn("CSRF token acquisition timed out", {
-          code: ERROR_CODES.CSRF,
-          stage: this.acquisitionStage,
-          waitingFor: "browser-evaluation-or-token-observer"
-        });
+        this.logger.warn("CSRF token acquisition timed out", { code: ERROR_CODES.CSRF, stage: this.acquisitionStage, waitingFor: "browser-session-token" });
         reject(csrfError());
       }, timeoutMilliseconds);
       Promise.resolve()
@@ -147,9 +193,7 @@ class CsrfTokenProvider {
         })
         .then((token) => token ? resolve(token) : reject(csrfError()), reject);
     }).catch((error) => {
-      if (error?.code !== ERROR_CODES.CSRF) {
-        this.logger.warn("CSRF token acquisition failed", { code: error?.code || ERROR_CODES.CSRF, stage: this.acquisitionStage });
-      }
+      if (error?.code !== ERROR_CODES.CSRF) this.logger.warn("CSRF token acquisition failed", { code: error?.code || ERROR_CODES.CSRF, stage: this.acquisitionStage });
       throw error instanceof ServiceTitanError ? error : csrfError();
     }).finally(() => {
       if (this.acquisitionTimer) this.clearTimeoutFn(this.acquisitionTimer);
@@ -184,4 +228,4 @@ class CsrfTokenProvider {
     this.acquisitionPromise = null;
   }
 }
-module.exports = { CsrfTokenProvider, SAFE_GLOBAL_PATHS };
+module.exports = { CsrfTokenProvider, SAFE_GLOBAL_PATHS, CSRF_HEADER_NAMES, CSRF_COOKIE_NAMES, CSRF_STORAGE_KEYS };
