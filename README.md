@@ -253,7 +253,7 @@ NODE_ENV=production
 HOST=0.0.0.0
 PORT=3000
 
-EDGE_DEBUG_URL=http://127.0.0.1:9222
+EDGE_DEBUG_URL=http://127.0.0.1:9223
 SERVICETITAN_BASE_URL=https://go.servicetitan.com
 
 TIMEZONE=America/New_York
@@ -310,7 +310,7 @@ After Edge opens:
 Open:
 
 ```text
-http://127.0.0.1:9222/json/version
+http://127.0.0.1:9223/json/version
 ```
 
 A successful response contains a browser name and WebSocket debugger URL.
@@ -878,7 +878,7 @@ EDGE_DEBUG_URL uses 127.0.0.1
 Test:
 
 ```text
-http://127.0.0.1:9222/json/version
+http://127.0.0.1:9223/json/version
 ```
 
 ---

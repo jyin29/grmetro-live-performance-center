@@ -87,7 +87,7 @@ Do not append API paths to the hash route.
 Default debugging address:
 
 ```text
-http://127.0.0.1:9222
+http://127.0.0.1:9223
 ```
 
 Use `127.0.0.1` rather than `localhost`.
@@ -101,7 +101,7 @@ This avoids connection failures caused by resolving `localhost` to:
 Recommended environment variable:
 
 ```env
-EDGE_DEBUG_URL=http://127.0.0.1:9222
+EDGE_DEBUG_URL=http://127.0.0.1:9223
 ```
 
 ---
@@ -134,7 +134,7 @@ Do not use the employee's ordinary Edge profile unless necessary.
 Open:
 
 ```text
-http://127.0.0.1:9222/json/version
+http://127.0.0.1:9223/json/version
 ```
 
 A valid response should include fields similar to:
@@ -744,7 +744,7 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:3000/api/v1/dev/servicetit
 
 Live research workflow:
 
-1. Start the manually authenticated Edge profile with CDP on `http://127.0.0.1:9222`.
+1. Start the manually authenticated Edge profile with CDP on `http://127.0.0.1:9223`.
 2. Sign in to ServiceTitan manually; do not store credentials, cookies, session IDs, CSRF tokens, or MFA codes.
 3. Start the backend with `MOCK_MODE=false`, `ENABLE_DEVELOPMENT_ROUTES=true`, and a non-production `NODE_ENV`.
 4. Run the PowerShell command above for a selected configured technician and date.

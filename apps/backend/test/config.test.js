@@ -6,7 +6,7 @@ const { loadConfig } = require("../src/config");
 
 const valid = {
   NODE_ENV: "development", HOST: "127.0.0.1", PORT: "3000",
-  EDGE_DEBUG_URL: "http://127.0.0.1:9222", SERVICETITAN_BASE_URL: "https://go.servicetitan.com",
+  EDGE_DEBUG_URL: "http://127.0.0.1:9223", SERVICETITAN_BASE_URL: "https://go.servicetitan.com",
   TIMEZONE: "America/New_York", REFRESH_INTERVAL_SECONDS: "60", REMOTE_OVERRIDE_SECONDS: "120",
   RETURN_TRANSITION_MILLISECONDS: "1000", STALE_WARNING_SECONDS: "180", STALE_CRITICAL_SECONDS: "600",
   MOCK_MODE: "true", ENABLE_DEVELOPMENT_ROUTES: "true"

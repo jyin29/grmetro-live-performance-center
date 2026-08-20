@@ -170,7 +170,7 @@ Connect to the user-launched Edge instance through CDP.
 Default:
 
 ```text
-http://127.0.0.1:9222
+http://127.0.0.1:9223
 ```
 
 Prefer `127.0.0.1` over `localhost`.

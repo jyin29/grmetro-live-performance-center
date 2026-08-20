@@ -2179,7 +2179,7 @@ Example:
 PORT=3000
 HOST=0.0.0.0
 
-EDGE_DEBUG_URL=http://127.0.0.1:9222
+EDGE_DEBUG_URL=http://127.0.0.1:9223
 EDGE_CONNECTION_TIMEOUT_MILLISECONDS=30000
 SERVICETITAN_BASE_URL=https://go.servicetitan.com
 
@@ -3641,7 +3641,7 @@ The Edge window must remain open while the backend is operating.
 Default CDP endpoint:
 
 ```text
-http://127.0.0.1:9222
+http://127.0.0.1:9223
 ```
 
 Use `127.0.0.1` rather than `localhost` to avoid IPv6 resolution issues involving `::1`.
@@ -3649,7 +3649,7 @@ Use `127.0.0.1` rather than `localhost` to avoid IPv6 resolution issues involvin
 The value shall remain configurable through:
 
 ```env
-EDGE_DEBUG_URL=http://127.0.0.1:9222
+EDGE_DEBUG_URL=http://127.0.0.1:9223
 ```
 
 ---
@@ -10222,7 +10222,7 @@ NODE_ENV=production
 HOST=0.0.0.0
 PORT=3000
 
-EDGE_DEBUG_URL=http://127.0.0.1:9222
+EDGE_DEBUG_URL=http://127.0.0.1:9223
 SERVICETITAN_BASE_URL=https://go.servicetitan.com
 
 TIMEZONE=America/New_York
@@ -11237,7 +11237,7 @@ EDGE_DEBUG_URL uses 127.0.0.1
 Diagnostic URL:
 
 ```text
-http://127.0.0.1:9222/json/version
+http://127.0.0.1:9223/json/version
 ```
 
 A valid response should include a browser description and WebSocket debugger URL.
