@@ -53,9 +53,12 @@ function buildDashboardPayload(normalizedRecords, options = {}) {
     initials: record.initials, ...publicOverall(record.overall), kpis: Object.fromEntries(["revenue", "billableServiceCalls", "closingRate", "leadConversionRate", "installs", "installAverageTicket"].map((id) => [id, record.kpis[id]])) }));
   while (entries.length < 3) entries.push({ placeholder: true, status: "insufficient-data" });
   generatedSlides["top-three"] = { ...slides[4], entries };
-  const ruleResult = evaluateBusinessRules({ rules: (options.businessRules || businessRules).rules,
+  const configuredBusinessRules = options.businessRules || businessRules;
+  const configuredRules = Array.isArray(configuredBusinessRules?.rules) ? configuredBusinessRules.rules : businessRules.rules;
+  const configuredSettings = { ...businessRules.settings, ...(configuredBusinessRules?.settings || {}) };
+  const ruleResult = evaluateBusinessRules({ rules: configuredRules,
     current: records, previous, now: timestamp,
-    eventDurationMilliseconds: (options.businessRules || businessRules).settings.eventDurationMilliseconds });
+    eventDurationMilliseconds: configuredSettings.eventDurationMilliseconds });
   const newEvents = ruleResult.events;
   const events = activeEvents([...(options.previousPayload?.events || []), ...newEvents], timestamp);
   return {
@@ -63,7 +66,7 @@ function buildDashboardPayload(normalizedRecords, options = {}) {
     rotationEpoch: options.rotationEpoch || timestamp, status: options.status || { cache: "fresh" },
     technicians: records.map((record) => ({ ...record, overall: publicOverall(record.overall) })),
     slides: generatedSlides, overallTopThree: entries, events,
-    managementInsights: ruleResult.managementInsights.slice(0, (options.businessRules || businessRules).settings.maximumAttentionItems)
+    managementInsights: ruleResult.managementInsights.slice(0, configuredSettings.maximumAttentionItems)
   };
 }
 
