@@ -5,6 +5,13 @@ function isTypingTarget(target) {
   return tagName === "input" || tagName === "textarea" || tagName === "select" || target?.isContentEditable;
 }
 
+function ControlIcon({ name }) {
+  if (name === "pause") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1.5" /><rect x="14" y="4" width="4" height="16" rx="1.5" /></svg>;
+  if (name === "play") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>;
+  if (name === "previous") return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 5.5 9 12l6.5 6.5" /></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 5.5 6.5 6.5-6.5 6.5" /></svg>;
+}
+
 export function LocalDashboardControls({ controller }) {
   const [open, setOpen] = useState(false);
   const trayRef = useRef(null);
@@ -15,11 +22,12 @@ export function LocalDashboardControls({ controller }) {
       if (event.key.toLowerCase() === "c") {
         event.preventDefault();
         setOpen((value) => !value);
+        return;
       }
       if (!open) return;
       if (event.key === "Escape") setOpen(false);
-      if (event.key === "ArrowLeft") controller.previousSlide();
-      if (event.key === "ArrowRight") controller.nextSlide();
+      if (event.key === "ArrowLeft") { event.preventDefault(); controller.previousSlide(); }
+      if (event.key === "ArrowRight") { event.preventDefault(); controller.nextSlide(); }
       if (event.key === " ") {
         event.preventDefault();
         controller.isRunning ? controller.pauseRotation() : controller.resumeRotation();
@@ -52,11 +60,11 @@ export function LocalDashboardControls({ controller }) {
     </div>
 
     <div className="local-dashboard-controls__primary">
-      <button type="button" onClick={controller.previousSlide}><span aria-hidden="true">←</span><small>Previous</small></button>
+      <button type="button" onClick={controller.previousSlide}><ControlIcon name="previous" /><small>Previous</small></button>
       <button className="is-primary" type="button" onClick={controller.isRunning ? controller.pauseRotation : controller.resumeRotation}>
-        <span aria-hidden="true">{controller.isRunning ? "Ⅱ" : "▶"}</span><small>{controller.isRunning ? "Pause" : "Resume"}</small>
+        <ControlIcon name={controller.isRunning ? "pause" : "play"} /><small>{controller.isRunning ? "Pause" : "Resume"}</small>
       </button>
-      <button type="button" onClick={controller.nextSlide}><span aria-hidden="true">→</span><small>Next</small></button>
+      <button type="button" onClick={controller.nextSlide}><ControlIcon name="next" /><small>Next</small></button>
     </div>
 
     <div className="local-dashboard-controls__slides" aria-label="Choose slide">
