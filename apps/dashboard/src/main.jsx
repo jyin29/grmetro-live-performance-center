@@ -12,6 +12,7 @@ import "./spreadsheet-slide.css";
 import "./measuredSlidingHighlights";
 import "./remote-layout-hotfix.css";
 import "./remote-stability.css";
+import "./local-dashboard-controls.css";
 import "./easterEgg";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
