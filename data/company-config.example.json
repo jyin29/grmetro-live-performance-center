@@ -1,0 +1,57 @@
+{
+  "company": {
+    "name": "Example HVAC Company",
+    "shortName": "Example"
+  },
+  "serviceTitan": {
+    "businessUnitIds": []
+  },
+  "technicians": [
+    {
+      "id": 1001,
+      "name": "Technician One",
+      "shortName": "Tech One",
+      "initials": "T1"
+    }
+  ],
+  "goals": {
+    "defaults": {
+      "revenue": null,
+      "billableServiceCalls": null,
+      "serviceRevenue": null,
+      "opportunities": null,
+      "leadConversionRate": null,
+      "techLeads": null,
+      "marketedLeads": null,
+      "closingRate": null,
+      "installs": null,
+      "installAverageTicket": null,
+      "installRevenue": null
+    },
+    "technicians": {}
+  },
+  "jobClassifications": {
+    "productionReady": false,
+    "classificationApproved": false,
+    "excludeRecalls": true,
+    "excludeWarranty": true,
+    "excludeNoCharge": true,
+    "unresolvedReason": "Service and install job classifications require business validation.",
+    "service": {
+      "includedJobTypeIds": [],
+      "includedJobTypeNames": [],
+      "includedNamePatterns": [],
+      "excludedJobTypeIds": [],
+      "excludedJobTypeNames": [],
+      "excludedNamePatterns": []
+    },
+    "install": {
+      "includedJobTypeIds": [],
+      "includedJobTypeNames": [],
+      "includedNamePatterns": [],
+      "excludedJobTypeIds": [],
+      "excludedJobTypeNames": [],
+      "excludedNamePatterns": []
+    }
+  }
+}
