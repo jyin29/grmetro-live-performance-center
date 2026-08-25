@@ -26,7 +26,6 @@ const MOCK_GOALS = Object.freeze({
   membershipsSold: 3
 });
 
-// Values follow the exact order of shared/kpis.js.
 const BASE_VALUES = Object.freeze([
   Object.freeze([9200,18,6100,11,7,62,2400,14200,4,7,2,58,1,8200,8200]),
   Object.freeze([10800,22,7400,14,9,68,2800,17600,6,9,4,64,2,8800,17600]),
@@ -41,9 +40,7 @@ function scenarioValues(name) {
   const values = clone(BASE_VALUES);
   if (name === "zero-values") return values.map(() => KPI_IDS.map(() => 0));
   if (name === "missing-data") { values[1][5] = null; values[3][2] = null; return values; }
-  if (name === "no-installs") {
-    return values.map((row) => row.map((value, index) => index === 13 ? null : ([12,14].includes(index) ? 0 : value)));
-  }
+  if (name === "no-installs") return values.map((row) => row.map((value, index) => index === 13 ? null : ([12,14].includes(index) ? 0 : value)));
   if (name === "ranking-changes") { values[4][0] = 11500; return values; }
   if (name === "new-leader") { values[2][0] = 12500; values[2][11] = 72; return values; }
   if (name === "goal-reached") { values[0][0] = MOCK_GOALS.revenue; return values; }
@@ -54,12 +51,14 @@ function scenarioValues(name) {
 function buildRecords(values, definition, timestamp) {
   return technicians.map((technician, technicianIndex) => {
     const stale = definition?.staleTechnicianIndex === technicianIndex || definition?.failedTechnicianIndex === technicianIndex;
+    const metrics = normalizeKpis({}, { mockValues: Object.fromEntries(KPI_IDS.map((id, index) => [id, values[technicianIndex][index]])) });
+    metrics.revenue = { ...metrics.revenue, dataQuality: metrics.revenue.hasData ? "confirmed" : "unavailable" };
     return {
       ...technician,
       stale,
       available: definition?.failedTechnicianIndex !== technicianIndex,
       lastSuccessfulUpdate: stale ? new Date(new Date(timestamp).getTime() - 240000).toISOString() : timestamp,
-      kpis: normalizeKpis({}, { mockValues: Object.fromEntries(KPI_IDS.map((id, index) => [id, values[technicianIndex][index]])) })
+      kpis: metrics
     };
   });
 }
