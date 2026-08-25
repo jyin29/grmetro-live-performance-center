@@ -5,6 +5,7 @@ import { SlideDeck } from "./SlideDeck";
 import { managementInsights } from "../lib/presentation";
 import { EventOverlay } from "./EventOverlay";
 import { DiagnosticsOverlay } from "./DiagnosticsOverlay";
+import { LocalDashboardControls } from "./LocalDashboardControls";
 import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 import { createDisplayWatchdog } from "../runtime/displayWatchdog";
 import { isFullscreenShortcut, requestDisplayFullscreen, toggleDisplayFullscreen } from "../runtime/fullscreen";
@@ -42,7 +43,9 @@ export function DashboardLayout({ data, displayId, displaySettings, error, refre
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
     <ManagementAttention insights={managementInsights(data, { hasError: Boolean(error), refreshing })} />
     <SlideDeck data={data} spreadsheetSlide={spreadsheetSlide} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} onSelectSlide={presentation.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }} />
-    <EventOverlay event={presentation.event} /><DiagnosticsOverlay diagnostics={diagnostics} />
+    <EventOverlay event={presentation.event} />
+    <DiagnosticsOverlay diagnostics={diagnostics} />
+    <LocalDashboardControls controller={presentation} />
     <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>{presentation.connectionState === "connected" ? "Display connected · Live updates enabled" : "Display reconnecting · Updates will resume automatically"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
   </div>;
 }
