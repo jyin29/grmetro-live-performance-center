@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
 import { formatClock, freshness, refreshLabel } from "../lib/presentation";
-import logoUrl from "../../../../assets/branding/grmetro-logo.png";
+import { branding } from "../config/branding";
 
 export function Header({ refreshedAt, refreshing, hasError }) {
   const [now, setNow] = useState(Date.now());
@@ -18,8 +18,8 @@ export function Header({ refreshedAt, refreshing, hasError }) {
     : "—";
   const ageLabel = refreshLabel(refreshedAt, now).replace(/^Updated /, "");
   return <header className="header">
-    <img className="header__logo" src={logoUrl} alt="GRmetro Heating & Cooling" />
-    <div className="header__title"><p>GRmetro Heating &amp; Cooling</p><h1>Live Performance Center</h1></div>
+    <img className="header__logo" src={branding.logoUrl} alt={branding.companyName} />
+    <div className="header__title"><p>{branding.companyName}</p><h1>{branding.applicationName}</h1></div>
     <div className="header__status">
       <StatusBadge tone={tone}><span className="live-dot" /><span>{refreshing ? "Refreshing" : state === "live" ? "Live" : "Attention"}</span></StatusBadge>
       <div className="header__time-block">

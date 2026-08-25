@@ -12,11 +12,24 @@ dist/
 build/
 coverage/
 .vite/
+playwright-report/
+test-results/
+*.trace.zip
+*.har
 
 # Runtime output
 *.log
 logs/
 *.pid
+
+# Browser/session material must never enter source control
+storage-state*.json
+auth-state*.json
+cookies*.json
+session*.json
+browser-profile/
+edge-profile/
+edge-*-profile/
 
 # Generated QR codes
 assets/qr/*.png
@@ -30,11 +43,13 @@ Thumbs.db
 .vscode/
 *.swp
 
-# Local ServiceTitan research output
+# Local ServiceTitan research/output. These files may contain company or employee data.
 *-drilldown-sanitized.json
 *-drilldown-enhanced.json
 drilldown-metadata*.json
 servicetitan-research-results*.json
+servicetitan-response*.json
+servicetitan-raw*.json
 research-output/
 
 # Runtime-managed business configuration
@@ -45,3 +60,9 @@ data/display-settings.json
 data/display-settings.json.tmp
 apps/backend/data/display-settings.json
 apps/backend/data/spreadsheet-slide.json
+
+# Local company/deployment configuration
+config/*.local.json
+config/*.private.json
+apps/backend/config/*.local.json
+apps/backend/config/*.private.json

@@ -7,6 +7,7 @@ const { loadConfig } = require("../src/config");
 const valid = {
   NODE_ENV: "development", HOST: "127.0.0.1", PORT: "3000",
   EDGE_DEBUG_URL: "http://127.0.0.1:9223", SERVICETITAN_BASE_URL: "https://go.servicetitan.com",
+  SERVICETITAN_BUSINESS_UNIT_IDS: "101,202,303",
   TIMEZONE: "America/New_York", REFRESH_INTERVAL_SECONDS: "60", REMOTE_OVERRIDE_SECONDS: "120",
   RETURN_TRANSITION_MILLISECONDS: "1000", STALE_WARNING_SECONDS: "180", STALE_CRITICAL_SECONDS: "600",
   MOCK_MODE: "true", ENABLE_DEVELOPMENT_ROUTES: "true"
@@ -17,6 +18,12 @@ test("valid development and production configurations load", () => {
   assert.equal(load().mockMode, true);
   const production = load({ NODE_ENV: "production", MOCK_MODE: "false", ENABLE_DEVELOPMENT_ROUTES: "false" });
   assert.equal(production.isProduction, true);
+});
+
+test("business unit IDs are configurable, numeric, and de-duplicated", () => {
+  assert.deepEqual(load({ SERVICETITAN_BUSINESS_UNIT_IDS: "101, 202,101" }).businessUnitIds, [101, 202]);
+  assert.throws(() => load({ SERVICETITAN_BUSINESS_UNIT_IDS: "" }), /SERVICETITAN_BUSINESS_UNIT_IDS/);
+  assert.throws(() => load({ SERVICETITAN_BUSINESS_UNIT_IDS: "101,nope" }), /SERVICETITAN_BUSINESS_UNIT_IDS/);
 });
 
 test("invalid ports, hosts, URLs, intervals, and timeouts fail clearly", () => {
