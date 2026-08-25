@@ -17,9 +17,28 @@ if (-not (Test-Path ".env")) {
   Write-Host ".env already exists; leaving it unchanged."
 }
 
-Write-Host "Installing dependencies..."
-npm ci
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$dependenciesReady = $false
+if (Test-Path "node_modules") {
+  Write-Host "Checking existing dependencies..."
+  npm ls --depth=0 --silent *> $null
+  if ($LASTEXITCODE -eq 0) {
+    $dependenciesReady = $true
+    Write-Host "Existing dependencies are valid; skipping reinstall."
+  } else {
+    Write-Host "Existing dependencies need repair."
+  }
+}
+
+if (-not $dependenciesReady) {
+  Write-Host "Installing dependencies..."
+  npm ci
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "Dependency installation failed. If Windows reports EPERM/unlink for esbuild.exe," -ForegroundColor Yellow
+    Write-Host "close any running Vite/dashboard development terminals and run setup again." -ForegroundColor Yellow
+    exit $LASTEXITCODE
+  }
+}
 
 Write-Host "Building dashboard..."
 npm run build
