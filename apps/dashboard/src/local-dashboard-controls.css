@@ -40,6 +40,7 @@
   box-shadow: 0 22px 60px rgba(10,28,43,.28);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  pointer-events: auto;
 }
 .local-dashboard-controls button,
 .local-dashboard-controls a { font: inherit; }
@@ -53,7 +54,11 @@
 
 .local-dashboard-controls__primary { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .local-dashboard-controls__primary button { min-height: 66px; border: 1px solid #dbe2e7; border-radius: 15px; background: #fff; color: #233746; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 4px 12px rgba(27,48,63,.06); }
-.local-dashboard-controls__primary button > span { font-size: 22px; font-weight: 900; }
+.local-dashboard-controls__primary button > svg { width: 23px; height: 23px; fill: currentColor; stroke: currentColor; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+.local-dashboard-controls__primary button > svg rect { stroke: none; }
+.local-dashboard-controls__primary button > svg path { fill: currentColor; }
+.local-dashboard-controls__primary button:first-child > svg path,
+.local-dashboard-controls__primary button:last-child > svg path { fill: none; }
 .local-dashboard-controls__primary button > small { font-size: 12px; font-weight: 800; }
 .local-dashboard-controls__primary button.is-primary { background: #15364d; color: #fff; border-color: #15364d; }
 
