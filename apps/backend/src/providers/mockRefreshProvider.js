@@ -3,103 +3,74 @@
 const scenarios = require("../../test/fixtures/scenarios.json");
 const technicians = require("../../../../shared/technicians");
 const kpis = require("../../../../shared/kpis");
-const slides = require("../../../../shared/slides");
+const { normalizeKpis } = require("../data/normalization/kpi");
+const { buildDashboardPayload } = require("../data/dashboardBuilder");
 
-const KPI_IDS = Object.keys(kpis);
+const KPI_IDS = Object.freeze(Object.keys(kpis));
 const FIXED_TIME = "2026-01-15T15:00:00.000Z";
 const MOCK_GOALS = Object.freeze({
-  revenue: 10000, billableServiceCalls: 20, serviceRevenue: 7000, opportunities: 10,
-  leadConversionRate: 65, techLeads: 5, marketedLeads: 8, closingRate: 60,
-  installs: 2, installAverageTicket: 8500, installRevenue: 17000, membershipsSold: 3
+  revenue: 10000,
+  billableServiceCalls: 20,
+  serviceRevenue: 7000,
+  opportunities: 10,
+  leadsSet: 8,
+  leadConversionRate: 65,
+  leadAverageSale: 2500,
+  leadSales: 15000,
+  techLeads: 5,
+  marketedLeads: 8,
+  closingRate: 60,
+  installs: 2,
+  installAverageTicket: 8500,
+  installRevenue: 17000,
+  membershipsSold: 3
 });
-const BASE_VALUES = [
-  [9200, 18, 6100, 11, 62, 4, 7, 2, 58, 1, 8200, 8200],
-  [10800, 22, 7400, 14, 68, 6, 9, 4, 64, 2, 8800, 17600],
-  [7600, 15, 5200, 9, 55, 3, 5, 1, 51, 1, 7900, 7900],
-  [8400, 17, 5700, 10, 59, 5, 6, 3, 56, 2, 8100, 16200],
-  [6900, 13, 4800, 8, 50, 2, 4, 0, 47, 1, 7600, 7600]
-];
+
+// Values follow the exact order of shared/kpis.js.
+const BASE_VALUES = Object.freeze([
+  Object.freeze([9200,18,6100,11,7,62,2400,14200,4,7,2,58,1,8200,8200]),
+  Object.freeze([10800,22,7400,14,9,68,2800,17600,6,9,4,64,2,8800,17600]),
+  Object.freeze([7600,15,5200,9,5,55,2100,10500,3,5,1,51,1,7900,7900]),
+  Object.freeze([8400,17,5700,10,6,59,2250,12600,5,6,3,56,2,8100,16200]),
+  Object.freeze([6900,13,4800,8,4,50,1900,7600,2,4,0,47,1,7600,7600])
+]);
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 
 function scenarioValues(name) {
   const values = clone(BASE_VALUES);
   if (name === "zero-values") return values.map(() => KPI_IDS.map(() => 0));
-  if (name === "missing-data") { values[1][4] = null; values[3][2] = null; return values; }
+  if (name === "missing-data") { values[1][5] = null; values[3][2] = null; return values; }
   if (name === "no-installs") {
-    return values.map((row) => row.map((value, index) => [9, 10, 11].includes(index) ? (index === 10 ? null : 0) : value));
+    return values.map((row) => row.map((value, index) => index === 13 ? null : ([12,14].includes(index) ? 0 : value)));
   }
   if (name === "ranking-changes") { values[4][0] = 11500; return values; }
-  if (name === "new-leader") { values[2][0] = 12500; values[2][7] = 72; return values; }
+  if (name === "new-leader") { values[2][0] = 12500; values[2][11] = 72; return values; }
   if (name === "goal-reached") { values[0][0] = MOCK_GOALS.revenue; return values; }
-  if (name === "entered-top-3") { values[4][0] = 9800; values[4][7] = 69; return values; }
+  if (name === "entered-top-3") { values[4][0] = 9800; values[4][11] = 69; return values; }
   return values;
 }
 
-function rankMetrics(records, previousRanks = {}) {
-  for (const kpiId of KPI_IDS) {
-    const ranked = records.filter((record) => record.kpis[kpiId].hasData)
-      .sort((a, b) => b.kpis[kpiId].value - a.kpis[kpiId].value || a.id - b.id);
-    ranked.forEach((record, index) => {
-      const metric = record.kpis[kpiId];
-      metric.rank = index + 1;
-      metric.previousRank = previousRanks[kpiId]?.[record.id] ?? metric.rank;
-      metric.rankChange = metric.previousRank - metric.rank;
-    });
-  }
-}
-
-function getRankSnapshot(values) {
-  return Object.fromEntries(KPI_IDS.map((kpiId, kpiIndex) => [kpiId,
-    Object.fromEntries(technicians.map((technician, technicianIndex) => [
-      technician.id,
-      values.map((row, index) => ({ index, value: row[kpiIndex] }))
-        .filter(({ value }) => value !== null)
-        .sort((a, b) => b.value - a.value || technicians[a.index].id - technicians[b.index].id)
-        .findIndex(({ index }) => index === technicianIndex) + 1
-    ]))
-  ]));
-}
-
-function makeMetric(kpiId, value) {
-  const hasData = value !== null;
-  const goal = MOCK_GOALS[kpiId];
-  return {
-    id: kpiId, label: kpis[kpiId].label, shortLabel: kpis[kpiId].shortLabel,
-    value, hasData, dataQuality: hasData ? "fallback" : "unavailable",
-    format: kpis[kpiId].format, unit: kpis[kpiId].unit,
-    goal, percentComplete: hasData ? value / goal * 100 : null,
-    remaining: hasData ? Math.max(0, goal - value) : null,
-    reached: hasData ? value >= goal : false, rank: null, previousRank: null, rankChange: null
-  };
-}
-
-const SLIDE_KPIS = {
-  revenue: ["revenue", "serviceRevenue", "installRevenue"],
-  activity: ["billableServiceCalls", "opportunities", "techLeads", "marketedLeads", "membershipsSold", "installs"],
-  performance: ["leadConversionRate", "closingRate"],
-  "average-ticket": ["installAverageTicket", "installRevenue", "installs"]
-};
-const PRIMARY_KPI = { revenue: "revenue", activity: "billableServiceCalls", performance: "closingRate", "average-ticket": "installAverageTicket" };
-
-function buildSlides(records) {
-  const result = {};
-  for (const slide of slides.slice(0, 4)) {
-    const metricIds = SLIDE_KPIS[slide.id];
-    const primaryKpiId = PRIMARY_KPI[slide.id];
-    const maximum = slide.id === "performance" ? 100 : Math.max(1, ...records.flatMap((r) => metricIds.map((id) => r.kpis[id].value ?? 0)));
-    result[slide.id] = {
-      ...slide, primaryKpiId,
-      metrics: metricIds.map((id) => ({ id, label: kpis[id].label, color: kpis[id].color })),
-      axis: { minimum: 0, maximum, tickValues: [0, maximum / 2, maximum], format: kpis[primaryKpiId].format },
-      rows: [...records].sort((a, b) => (b.kpis[primaryKpiId].value ?? -Infinity) - (a.kpis[primaryKpiId].value ?? -Infinity))
-        .map((record) => ({ technicianId: record.id, name: record.name, shortName: record.shortName,
-          initials: record.initials, primaryRank: record.kpis[primaryKpiId].rank, stale: record.stale,
-          metrics: metricIds.map((id) => ({ ...record.kpis[id], normalizedRatio: record.kpis[id].hasData ? record.kpis[id].value / maximum : null })) }))
+function buildRecords(values, definition, timestamp) {
+  return technicians.map((technician, technicianIndex) => {
+    const stale = definition?.staleTechnicianIndex === technicianIndex || definition?.failedTechnicianIndex === technicianIndex;
+    return {
+      ...technician,
+      stale,
+      available: definition?.failedTechnicianIndex !== technicianIndex,
+      lastSuccessfulUpdate: stale ? new Date(new Date(timestamp).getTime() - 240000).toISOString() : timestamp,
+      kpis: normalizeKpis({}, { mockValues: Object.fromEntries(KPI_IDS.map((id, index) => [id, values[technicianIndex][index]])) })
     };
-  }
-  result["top-three"] = { ...slides[4], entries: records.slice().sort((a, b) => a.overall.rank - b.overall.rank).slice(0, 3) };
-  return result;
+  });
+}
+
+function baselinePayload(timestamp, goals) {
+  return buildDashboardPayload(buildRecords(clone(BASE_VALUES), {}, timestamp), {
+    now: timestamp,
+    goals,
+    rotationEpoch: "2026-01-15T05:00:00.000Z",
+    status: { browser: "bypassed", serviceTitan: "bypassed", cache: "fresh", staleTechnicianCount: 0 }
+  });
 }
 
 class MockRefreshProvider {
@@ -116,61 +87,49 @@ class MockRefreshProvider {
   }
 
   selectScenario(name) {
-    if (this.config.nodeEnv === "production" || !this.config.developmentRoutesEnabled) {
-      throw new Error("Mock scenario selection is development-only and must be explicitly enabled.");
-    }
+    if (this.config.nodeEnv === "production" || !this.config.developmentRoutesEnabled) throw new Error("Mock scenario selection is development-only and must be explicitly enabled.");
     this.scenario = this.#validateScenario(name);
   }
 
   async refresh({ now = FIXED_TIME, date, previousPayload } = {}) {
     const definition = scenarios[this.scenario];
     const timestamp = new Date(now).toISOString();
-    const values = scenarioValues(this.scenario);
-    let records = technicians.map((technician, technicianIndex) => ({
-      ...technician,
-      stale: definition.staleTechnicianIndex === technicianIndex || definition.failedTechnicianIndex === technicianIndex,
-      available: definition.failedTechnicianIndex !== technicianIndex,
-      lastSuccessfulUpdate: definition.staleTechnicianIndex === technicianIndex || definition.failedTechnicianIndex === technicianIndex
-        ? new Date(new Date(timestamp).getTime() - 240000).toISOString() : timestamp,
-      kpis: Object.fromEntries(KPI_IDS.map((id, index) => [id, makeMetric(id, values[technicianIndex][index])]))
-    }));
-    const runtimeGoals = this.goalsProvider?.() || {};
-    for (const record of records) for (const [id, goal] of Object.entries(runtimeGoals)) {
-      if (!record.kpis[id] || !(goal > 0)) continue;
-      Object.assign(record.kpis[id], { goal, percentComplete: record.kpis[id].hasData ? record.kpis[id].value / goal * 100 : null,
-        remaining: record.kpis[id].hasData ? Math.max(0, goal - record.kpis[id].value) : null,
-        reached: record.kpis[id].hasData ? record.kpis[id].value >= goal : false });
-    }
+    const goals = this.goalsProvider?.() || MOCK_GOALS;
+    let records = buildRecords(scenarioValues(this.scenario), definition, timestamp);
+
     if (definition.failedTechnicianIndex !== undefined && previousPayload) {
       const failedId = technicians[definition.failedTechnicianIndex].id;
       const retained = previousPayload.technicians?.find((record) => record.id === failedId);
-      if (retained) {
-        records = records.map((record) => record.id === failedId ? {
-          ...clone(retained), available: false, stale: true,
-          lastSuccessfulUpdate: retained.lastSuccessfulUpdate || previousPayload.lastSuccessfulRefreshAt
-        } : record);
-      }
+      if (retained) records = records.map((record) => record.id === failedId ? { ...clone(retained), available: false, stale: true } : record);
     }
-    rankMetrics(records, getRankSnapshot(BASE_VALUES));
-    const overallOrder = [...records].sort((a, b) => b.kpis.revenue.value - a.kpis.revenue.value || a.id - b.id);
-    const previousOverall = getRankSnapshot(BASE_VALUES).revenue;
-    overallOrder.forEach((record, index) => {
-      const rank = index + 1;
-      record.overall = { score: record.kpis.revenue.percentComplete / 100, rank,
-        previousRank: previousOverall[record.id], rankChange: previousOverall[record.id] - rank, qualifies: true };
+
+    const needsBaseline = ["ranking-changes", "new-leader", "entered-top-3"].includes(this.scenario);
+    const comparisonPayload = previousPayload || (needsBaseline ? baselinePayload(timestamp, goals) : undefined);
+    const status = {
+      browser: "bypassed",
+      serviceTitan: "bypassed",
+      cache: definition.variant === "stale" ? "stale" : "fresh",
+      staleTechnicianCount: records.filter((record) => record.stale).length
+    };
+    const payload = buildDashboardPayload(records, {
+      now: timestamp,
+      previousPayload: comparisonPayload,
+      goals,
+      rotationEpoch: "2026-01-15T05:00:00.000Z",
+      status
     });
-    const event = definition.event ? [{ type: definition.event, technicianId: overallOrder[0].id, createdAt: timestamp }] : [];
+
+    const scenarioEvent = definition.event ? [{ type: definition.event, technicianId: payload.overallTopThree.find((entry) => entry.technicianId)?.technicianId || technicians[0].id, createdAt: timestamp }] : [];
     return {
-      version: 1, provider: "mock", scenario: this.scenario, generatedAt: timestamp, refreshedAt: timestamp,
-      lastSuccessfulRefreshAt: timestamp, rotationEpoch: "2026-01-15T05:00:00.000Z",
-      status: { browser: "bypassed", serviceTitan: "bypassed", cache: definition.variant === "stale" ? "stale" : "fresh", staleTechnicianCount: records.filter((r) => r.stale).length },
-      slides: buildSlides(records), technicians: records,
-      overallTopThree: overallOrder.slice(0, 3).map((record) => ({ technicianId: record.id, name: record.name, ...record.overall })),
-      events: event,
-      diagnostics: { date: date || null, results: records.map((record) => ({
-        technicianId: record.id, ok: record.available, stale: record.stale,
-        lastSuccessfulUpdate: record.lastSuccessfulUpdate
-      })) }
+      ...payload,
+      provider: "mock",
+      scenario: this.scenario,
+      lastSuccessfulRefreshAt: timestamp,
+      events: [...payload.events, ...scenarioEvent],
+      diagnostics: {
+        date: date || null,
+        results: records.map((record) => ({ technicianId: record.id, ok: record.available, stale: record.stale, lastSuccessfulUpdate: record.lastSuccessfulUpdate }))
+      }
     };
   }
 }
