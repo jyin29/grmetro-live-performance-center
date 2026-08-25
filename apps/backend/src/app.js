@@ -1,5 +1,7 @@
 "use strict";
 
+const path = require("node:path");
+const fs = require("node:fs");
 const express = require("express");
 const cors = require("cors");
 const { requestLogger } = require("./middleware/requestLogger");
@@ -11,6 +13,15 @@ const { createTvRoutes } = require("./routes/tvRoutes");
 const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
+
+function installDashboardStaticRoutes(app) {
+  const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
+  const indexFile = path.join(dashboardDist, "index.html");
+  if (!fs.existsSync(indexFile)) return false;
+  app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
+  app.get(/^(?!\/api\/|\/ws\/).*/, (_request, response) => response.sendFile(indexFile));
+  return true;
+}
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
   browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
@@ -27,9 +38,10 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
+  installDashboardStaticRoutes(app);
   app.use(notFound);
   app.use(errorHandler({ logger, isProduction: config.isProduction }));
   return app;
 }
 
-module.exports = { createApp };
+module.exports = { createApp, installDashboardStaticRoutes };
