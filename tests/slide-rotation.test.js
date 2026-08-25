@@ -59,6 +59,6 @@ test("operations health presentation uses only existing dashboard and presentati
   assert.equal(health.overall.label, "Dashboard Healthy");
   assert.deepEqual(health.cards.map(({ id }) => id), ["refresh", "refresh-state", "cache", "technicians", "slide", "rotation"]);
   assert.equal(health.cards.find(({ id }) => id === "technicians").value, "2");
-  assert.equal(health.cards.find(({ id }) => id === "slide").detail, "Slide 4 of 6");
+  assert.equal(health.cards.find(({ id }) => id === "slide").detail, "Slide 5 of 5");
   assert.equal(health.cards.find(({ id }) => id === "rotation").value, "Running");
 });
