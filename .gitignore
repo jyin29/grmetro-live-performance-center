@@ -7,6 +7,20 @@ node_modules/
 .env.*
 !.env.example
 
+# Company-specific/private configuration
+# Keep the example template tracked; real company data stays local.
+data/company-config.json
+data/company-config.*.json
+!data/company-config.example.json
+company-config.json
+company-config.*.json
+private/
+local-data/
+
+# Company-specific branding/assets
+assets/company/
+apps/dashboard/public/company/
+
 # Build and test output
 dist/
 build/
