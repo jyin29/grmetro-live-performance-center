@@ -11,9 +11,10 @@ const { createTvRoutes } = require("./routes/tvRoutes");
 const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
+const { createPresentationRoutes } = require("./routes/presentationRoutes");
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
-  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
+  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, presentationRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
   if (!config || !logger) throw new Error("createApp requires config and logger.");
   const app = express();
   app.disable("x-powered-by");
@@ -24,6 +25,7 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   app.use("/api/v1/health", createHealthRoutes({ cache, applicationVersion, browserStatusProvider, serviceTitanStatusProvider, clock }));
   app.use("/api/v1/dashboard", createDashboardRoutes({ cache }));
   app.use("/api/v1/tvs", createTvRoutes({ tvManager, rateLimiter, clock }));
+  if (presentationRuntime) app.use("/api/v1/presentation", createPresentationRoutes(presentationRuntime));
   if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
