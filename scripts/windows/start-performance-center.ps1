@@ -49,6 +49,36 @@ function Show-BackendStartupLogs {
   Write-Host "Full logs: $stdoutLog and $stderrLog" -ForegroundColor DarkGray
 }
 
+function Find-Edge {
+  $candidatePaths = @()
+  foreach ($base in @(${env:ProgramFiles(x86)}, $env:ProgramFiles, $env:LOCALAPPDATA)) {
+    if ($base) { $candidatePaths += (Join-Path $base "Microsoft\Edge\Application\msedge.exe") }
+  }
+  foreach ($commandName in @("msedge.exe", "msedge")) {
+    $command = Get-Command $commandName -ErrorAction SilentlyContinue
+    if ($command -and $command.Source) { $candidatePaths += $command.Source }
+  }
+  return $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+}
+
+function Open-DashboardAtHalfZoom {
+  param([string]$Url)
+  $edge = Find-Edge
+  if (-not $edge) {
+    Write-Warning "Could not locate Edge for automatic 50% zoom; opening the dashboard in the default browser instead."
+    Start-Process $Url
+    return
+  }
+
+  # Open a separate dashboard window at 50% device scale. This affects only the
+  # launched dashboard window; it does not CSS-scale the app or change ServiceTitan.
+  Start-Process -FilePath $edge -ArgumentList @(
+    "--new-window",
+    "--force-device-scale-factor=0.5",
+    $Url
+  )
+}
+
 $health = "http://127.0.0.1:3000/api/v1/health"
 $deadline = (Get-Date).AddSeconds(30)
 $healthy = $false
@@ -74,7 +104,9 @@ if (-not $healthy) {
 }
 
 Write-Host "Live Performance Center is running (PID $($backend.Id))."
+Write-Host "Backend health check passed: $health"
 Write-Host "Backend logs are stored in $logDirectory."
-if (-not $NoBrowser) { Start-Process "http://127.0.0.1:3000" }
+if (-not $NoBrowser) { Open-DashboardAtHalfZoom "http://127.0.0.1:3000" }
+Write-Host "Dashboard opened at 50% scale."
 Write-Host "Close this window or press Ctrl+C to stop the application."
 try { Wait-Process -Id $backend.Id } finally { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
