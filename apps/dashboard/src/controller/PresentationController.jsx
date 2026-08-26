@@ -6,11 +6,24 @@ import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 
 const PresentationControllerContext = createContext(null);
 const slideCount = PRESENTATION_SLIDES.length;
-const FALLBACK_POLL_MS = 750;
-const HEARTBEAT_MS = 3000;
-function slideStorageKey(displayId){return `grmetro.presentation.${displayId}.slideIndex`;}
-function rememberedSlideIndex(displayId){try{const value=Number(window.sessionStorage.getItem(slideStorageKey(displayId)));return Number.isInteger(value)&&value>=0&&value<slideCount?value:0;}catch{return 0;}}
+const POLL_MS = 750;
+const DISPLAY_HEARTBEAT_MS = 3000;
+
+function slideStorageKey(displayId) { return `grmetro.presentation.${displayId}.slideIndex`; }
+function rememberedSlideIndex(displayId) { try { const value=Number(window.sessionStorage.getItem(slideStorageKey(displayId))); return Number.isInteger(value)&&value>=0&&value<slideCount?value:0; } catch{return 0;} }
 function rememberSlideIndex(displayId,index){if(!Number.isInteger(index)||index<0)return;try{window.sessionStorage.setItem(slideStorageKey(displayId),String(index%slideCount));}catch{/* optional */}}
+function apiOrigin(){
+  // The packaged TV may be opened on 127.0.0.1 while phones use the PC's LAN IP.
+  // The launcher injects ?server=<LAN-IP> so both clients intentionally use the same
+  // network identity for presentation HTTP/WebSocket traffic.
+  const params=new URLSearchParams(window.location.search);
+  const configured=params.get("server");
+  if(configured) return `${window.location.protocol}//${configured}:${window.location.port||"3000"}`;
+  return window.location.origin;
+}
+async function jsonRequest(path,options={}){const response=await fetch(`${apiOrigin()}${path}`,{cache:"no-store",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});if(!response.ok)throw new Error(`presentation request failed (${response.status})`);return response.json();}
+function applyState(setState,displayId,payload){const next=payload?.state;if(!next||next.displayId!==displayId)return;rememberSlideIndex(displayId,next.activeSlideIndex);setState(next);}
+
 export function PresentationControllerProvider({children}){return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>;}
 
 export function usePresentationController(requestedDisplayId=DEFAULT_DISPLAY_ID,clientType="display"){
@@ -18,32 +31,19 @@ export function usePresentationController(requestedDisplayId=DEFAULT_DISPLAY_ID,
   const displayId=findDisplay(requestedDisplayId)?.id??DEFAULT_DISPLAY_ID;const display=findDisplay(displayId);
   const [state,setState]=useState(()=>({displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:rememberedSlideIndex(displayId),isRunning:true,timerRevision:0,lastUpdated:null}));
   const [transportConnectionState,setTransportConnectionState]=useState("connecting");const [targetDisplayOnline,setTargetDisplayOnline]=useState(clientType!=="remote");const [transport,setTransport]=useState(null);const [runtime,setRuntime]=useState({reconnectCount:0,lastSynchronization:null});
-  const acceptState=useCallback((nextState)=>{if(!nextState||nextState.displayId!==displayId)return;rememberSlideIndex(displayId,nextState.activeSlideIndex);setState(nextState);setRuntime(current=>({...current,lastSynchronization:Date.now()}));},[displayId]);
 
-  // WebSocket is a fast-path only. HTTP below is authoritative, so a phone/TV still
-  // controls and follows the deck on networks that block or interrupt WebSockets.
-  useEffect(()=>{setState(current=>({...current,displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:current.displayId===displayId?current.activeSlideIndex:rememberedSlideIndex(displayId)}));const nextTransport=createWebSocketPresentationTransport({displayId,clientType,reconnectMinimumMs:RUNTIME_SETTINGS.reconnectMinimumMs,reconnectMaximumMs:RUNTIME_SETTINGS.reconnectMaximumMs,onState:acceptState,onConnectionChange:setTransportConnectionState,onReconnectAttempt:()=>setRuntime(current=>({...current,reconnectCount:current.reconnectCount+1}))});setTransport(nextTransport);return()=>nextTransport.close();},[acceptState,clientType,display.name,display.presentationProfile,displayId]);
+  useEffect(()=>{setState(current=>({...current,displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:current.displayId===displayId?current.activeSlideIndex:rememberedSlideIndex(displayId)}));
+    let nextTransport=null;
+    try{const origin=new URL(apiOrigin());nextTransport=createWebSocketPresentationTransport({displayId,clientType,location:origin,reconnectMinimumMs:RUNTIME_SETTINGS.reconnectMinimumMs,reconnectMaximumMs:RUNTIME_SETTINGS.reconnectMaximumMs,onState:(nextState)=>{rememberSlideIndex(displayId,nextState.activeSlideIndex);setState(nextState);setRuntime(current=>({...current,lastSynchronization:Date.now()}));},onConnectionChange:setTransportConnectionState,onReconnectAttempt:()=>setRuntime(current=>({...current,reconnectCount:current.reconnectCount+1}))});setTransport(nextTransport);}catch{setTransportConnectionState("reconnecting");}
+    return()=>nextTransport?.close();},[clientType,display.name,display.presentationProfile,displayId]);
 
-  useEffect(()=>{let active=true;const sync=async()=>{try{const response=await fetch(`/api/v1/presentation/${encodeURIComponent(displayId)}?clientType=${encodeURIComponent(clientType)}&t=${Date.now()}`,{cache:"no-store",headers:{"Cache-Control":"no-cache"}});if(!response.ok)throw new Error("presentation unavailable");const payload=await response.json();if(!active)return;acceptState(payload.state);if(clientType==="remote")setTargetDisplayOnline(payload.online===true);else setTransportConnectionState("connected");}catch{if(!active)return;if(clientType==="remote")setTargetDisplayOnline(false);else setTransportConnectionState("reconnecting");}};sync();const timer=window.setInterval(sync,FALLBACK_POLL_MS);return()=>{active=false;window.clearInterval(timer);};},[acceptState,clientType,displayId]);
+  useEffect(()=>{let active=true;const poll=async()=>{try{const suffix=clientType==="display"?"?clientType=display":"";const payload=await jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}${suffix}`);if(!active)return;applyState(setState,displayId,payload);setRuntime(current=>({...current,lastSynchronization:Date.now()}));if(clientType==="remote")setTargetDisplayOnline(payload.online===true);}catch{if(active&&clientType==="remote")setTargetDisplayOnline(false);}};poll();const timer=window.setInterval(poll,POLL_MS);return()=>{active=false;window.clearInterval(timer);};},[clientType,displayId]);
 
-  useEffect(()=>{if(clientType!=="display")return undefined;let active=true;const beat=async()=>{if(!active)return;try{await fetch(`/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat?t=${Date.now()}`,{method:"POST",headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},body:"{}",cache:"no-store"});}catch{/* state polling also reports presence */}};beat();const timer=window.setInterval(beat,HEARTBEAT_MS);return()=>{active=false;window.clearInterval(timer);};},[clientType,displayId]);
+  useEffect(()=>{if(clientType!=="display")return undefined;let active=true;const heartbeat=()=>jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat`,{method:"POST",body:"{}"}).catch(()=>{});heartbeat();const timer=window.setInterval(()=>{if(active)heartbeat();},DISPLAY_HEARTBEAT_MS);return()=>{active=false;window.clearInterval(timer);};},[clientType,displayId]);
+
   useEffect(()=>{rememberSlideIndex(displayId,state.activeSlideIndex);},[displayId,state.activeSlideIndex]);
-
-  const action=useCallback(async(name,payload={})=>{
-    setState(current=>{
-      if(name==="next")return {...current,activeSlideIndex:(current.activeSlideIndex+1)%slideCount};
-      if(name==="previous")return {...current,activeSlideIndex:(current.activeSlideIndex-1+slideCount)%slideCount};
-      if(name==="select"&&Number.isInteger(payload.index))return {...current,activeSlideIndex:payload.index};
-      if(name==="pause")return {...current,isRunning:false};
-      if(name==="resume")return {...current,isRunning:true};
-      if(name==="restart")return {...current,activeSlideIndex:0,isRunning:true};
-      return current;
-    });
-    const response=await fetch(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}?t=${Date.now()}`,{method:"POST",headers:{"Content-Type":"application/json","Cache-Control":"no-cache"},body:JSON.stringify(payload),cache:"no-store"});
-    if(!response.ok){const detail=await response.text().catch(()=>"");throw new Error(`Presentation action ${name} failed (${response.status}) ${detail}`);}
-    const result=await response.json();acceptState(result.state);if(clientType==="remote"&&typeof result.online==="boolean")setTargetDisplayOnline(result.online);return result.state;
-  },[acceptState,clientType,displayId]);
-
+  const action=useCallback(async(name,payload={})=>{if(name==="next")setState(current=>({...current,activeSlideIndex:(current.activeSlideIndex+1)%slideCount}));if(name==="previous")setState(current=>({...current,activeSlideIndex:(current.activeSlideIndex-1+slideCount)%slideCount}));if(name==="select"&&Number.isInteger(payload.index))setState(current=>({...current,activeSlideIndex:payload.index%slideCount}));if(name==="pause")setState(current=>({...current,isRunning:false}));if(name==="resume")setState(current=>({...current,isRunning:true}));
+    try{const result=await jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}`,{method:"POST",body:JSON.stringify(payload)});applyState(setState,displayId,result);if(clientType==="remote")setTargetDisplayOnline(result.online===true);return result;}catch(error){console.error("Presentation action failed",{displayId,name,error});throw error;}},[clientType,displayId]);
   const connectionState=clientType==="remote"?(targetDisplayOnline?"connected":"offline"):transportConnectionState;
   return useMemo(()=>({...state,...runtime,connectionState,targetDisplayOnline,activeSlide:PRESENTATION_SLIDES[state.activeSlideIndex%slideCount],displays:PRESENTATION_DISPLAYS,slides:PRESENTATION_SLIDES,nextSlide:()=>action("next"),pauseRotation:()=>action("pause"),previousSlide:()=>action("previous"),restartRotationTimer:()=>action("restart"),resumeRotation:()=>action("resume"),selectSlide:(index)=>action("select",{index}),setRuntimePaused:()=>{},reconnect:()=>transport?.reconnect()}),[action,connectionState,runtime,state,targetDisplayOnline,transport]);
 }
