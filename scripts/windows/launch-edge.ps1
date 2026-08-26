@@ -7,16 +7,37 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Find-Edge {
-  $candidates = @(
-    "$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
-    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-    "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe"
-  ) | Where-Object { $_ -and (Test-Path $_) }
-  if (-not $candidates) { throw "Microsoft Edge was not found. Install Edge and try again." }
-  return $candidates[0]
+  $candidatePaths = @()
+
+  foreach ($base in @(${env:ProgramFiles(x86)}, $env:ProgramFiles, $env:LOCALAPPDATA)) {
+    if ($base) { $candidatePaths += (Join-Path $base "Microsoft\Edge\Application\msedge.exe") }
+  }
+
+  foreach ($commandName in @("msedge.exe", "msedge")) {
+    $command = Get-Command $commandName -ErrorAction SilentlyContinue
+    if ($command -and $command.Source) { $candidatePaths += $command.Source }
+  }
+
+  foreach ($registryPath in @(
+    "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe",
+    "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe",
+    "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe"
+  )) {
+    try {
+      $registered = (Get-ItemProperty -Path $registryPath -ErrorAction Stop).'(default)'
+      if ($registered) { $candidatePaths += $registered }
+    } catch { }
+  }
+
+  $edge = $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+  if (-not $edge) {
+    throw "Microsoft Edge is installed but its executable could not be located automatically. Expected msedge.exe under Program Files, LocalAppData, PATH, or Windows App Paths."
+  }
+  return $edge
 }
 
 $edge = Find-Edge
+Write-Host "Using Microsoft Edge: $edge"
 New-Item -ItemType Directory -Force -Path $ProfilePath | Out-Null
 $debugUrl = "http://127.0.0.1:$Port/json/version"
 
