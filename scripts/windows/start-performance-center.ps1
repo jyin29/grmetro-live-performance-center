@@ -39,11 +39,17 @@ $health="http://127.0.0.1:3000/api/v1/health"; $deadline=(Get-Date).AddSeconds(3
 do{Start-Sleep -Milliseconds 500;if($backend.HasExited){Show-BackendStartupLogs;$exitCode=$backend.ExitCode;if($null -eq $exitCode){$exitCode="unknown"};throw "Backend exited during startup with code $exitCode."};try{Invoke-RestMethod -Uri $health -TimeoutSec 2|Out-Null;$healthy=$true;break}catch{}}while((Get-Date)-lt $deadline)
 if(-not $healthy){Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue;Show-BackendStartupLogs;throw "Backend did not become healthy in time."}
 Write-Host "Live Performance Center is running (PID $($backend.Id))."; Write-Host "Backend health check passed: $health"; Write-Host "Backend logs are stored in $logDirectory."
-$lanIp=Get-LanIPv4Address; if($lanIp){Show-RemoteAccess "http://${lanIp}:3000/remote" $selectedDisplay.name}else{Write-Warning "Could not detect a LAN address. The dashboard is running, but the phone remote address could not be generated automatically."}
-# Use the root URL that is already proven to work in production, and identify the
-# physical screen with a query parameter. The React app validates the ID against
-# the shared display registry before registering its WebSocket display client.
-$displayUrl = "http://127.0.0.1:3000/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))"
+$lanIp=Get-LanIPv4Address
+if($lanIp){
+  Show-RemoteAccess "http://${lanIp}:3000/remote" $selectedDisplay.name
+  # Keep the browser page itself on loopback, but explicitly tell the frontend to
+  # use the LAN address for the presentation bridge. The phone already uses this
+  # exact address, so both sides now share one origin for remote-control traffic.
+  $displayUrl = "http://127.0.0.1:3000/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))&server=$([System.Uri]::EscapeDataString($lanIp))"
+}else{
+  Write-Warning "Could not detect a LAN address. Falling back to loopback presentation traffic; phone remote access may be unavailable."
+  $displayUrl = "http://127.0.0.1:3000/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))"
+}
 if(-not $NoBrowser){Open-DashboardAtHalfZoom $displayUrl}
 Write-Host ("This screen is registered as: {0} ({1})" -f $selectedDisplay.name,$selectedDisplay.id) -ForegroundColor Green; Write-Host "Display URL: $displayUrl" -ForegroundColor DarkGray
 Write-Host "Close this window or press Ctrl+C to stop the application."
