@@ -19,9 +19,6 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
   router.get("/:displayId", (request, response) => {
     const state = presentationManager.getDisplayState(request.params.displayId);
     if (!state) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
-    // A real dashboard identifies itself on its normal 1-second state poll. Treat that
-    // poll as presence too, so TV detection does not depend on WebSockets or a separate
-    // heartbeat request surviving the local network/browser. Remote polls never touch it.
     if (request.query.clientType === "display") displayPresence.touch(request.params.displayId);
     response.set("Cache-Control", "no-store, no-cache, must-revalidate");
     response.json({ ok: true, state, online: displayPresence.isOnline(request.params.displayId) });
@@ -34,12 +31,13 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     response.json({ ok: true, online: true });
   });
 
-  router.post("/:displayId/action/:action", (request, response) => {
+  function runAction(request, response) {
     const { displayId, action } = request.params;
     if (!presentationManager.getDisplayState(displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
     const type = ACTION_COMMANDS[action];
     if (!type) return response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_ACTION" } });
-    const payload = action === "select" ? { index: Number(request.body?.index) } : {};
+    const rawIndex = request.body?.index ?? request.query.index;
+    const payload = action === "select" ? { index: Number(rawIndex) } : {};
     try {
       const state = commandBus.dispatch({ type, displayId, payload });
       response.set("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -47,7 +45,12 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
-  });
+  }
+
+  router.post("/:displayId/action/:action", runAction);
+  // Same-origin GET fallback for the LAN remote. This avoids mobile-browser POST/body
+  // edge cases while keeping the POST API available for normal clients.
+  router.get("/:displayId/action/:action", runAction);
 
   router.post("/:displayId/command", (request, response) => {
     if (!presentationManager.getDisplayState(request.params.displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
