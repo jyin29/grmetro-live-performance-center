@@ -17,16 +17,31 @@ const { createPresentationRoutes } = require("./routes/presentationRoutes");
 
 const DASHBOARD_CLIENT_ROUTES = ["/", "/display", "/remote", "/admin", "/customize"];
 function installDashboardStaticRoutes(app) {
-  const dashboardDist = path.resolve(__dirname, "../../dashboard/dist"); const indexFile = path.join(dashboardDist, "index.html"); if (!fs.existsSync(indexFile)) return false;
-  app.use(express.static(dashboardDist, { index: false, maxAge: "1h" })); const serveDashboard = (_request, response) => response.sendFile(indexFile);
-  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard); app.get("/display/:displayId", serveDashboard); return true;
+  const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
+  const indexFile = path.join(dashboardDist, "index.html");
+  if (!fs.existsSync(indexFile)) return false;
+  app.use(express.static(dashboardDist, { index: false, maxAge: "1h", immutable: true }));
+  const serveDashboard = (_request, response) => {
+    // The HTML shell references Vite's hashed assets. Never cache the shell itself or
+    // a phone/TV can stay on an older remote implementation after the package updates.
+    response.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.set("Pragma", "no-cache");
+    response.set("Expires", "0");
+    return response.sendFile(indexFile);
+  };
+  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard);
+  app.get("/display/:displayId", serveDashboard);
+  return true;
 }
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
   browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, presentationRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
   if (!config || !logger) throw new Error("createApp requires config and logger.");
-  const app = express(); app.disable("x-powered-by"); if (!config.isProduction) app.use(cors({ origin: true, credentials: false }));
-  app.use(requestLogger(logger)); app.use(express.json({ limit: config.jsonBodyLimit, strict: true }));
+  const app = express();
+  app.disable("x-powered-by");
+  if (!config.isProduction) app.use(cors({ origin: true, credentials: false }));
+  app.use(requestLogger(logger));
+  app.use(express.json({ limit: config.jsonBodyLimit, strict: true }));
   const rateLimiter = createRateLimiter({ windowMilliseconds: config.remoteRateLimit.windowSeconds * 1000, maxRequests: config.remoteRateLimit.maxRequests });
   app.use("/api/v1/health", createHealthRoutes({ cache, applicationVersion, browserStatusProvider, serviceTitanStatusProvider, clock }));
   app.use("/api/v1/dashboard", createDashboardRoutes({ cache }));
@@ -35,6 +50,11 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
-  app.use("/api", notFound); app.use("/ws", notFound); installDashboardStaticRoutes(app); app.use(notFound); app.use(errorHandler({ logger, isProduction: config.isProduction })); return app;
+  app.use("/api", notFound);
+  app.use("/ws", notFound);
+  installDashboardStaticRoutes(app);
+  app.use(notFound);
+  app.use(errorHandler({ logger, isProduction: config.isProduction }));
+  return app;
 }
 module.exports = { createApp, installDashboardStaticRoutes };
