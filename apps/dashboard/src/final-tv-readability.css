@@ -54,6 +54,29 @@
 /* Slide 5 */
 .recognition-slide .podium-card > div > span:last-child { color:#14212b; font-size:clamp(38px,2.7vw,54px); font-weight:950; line-height:1; letter-spacing:-.035em; }
 .recognition-slide .podium-card__place { font-size:clamp(40px,2.9vw,58px); }
+/* Keep the champion effect completely inside its card. The conic gradient creates
+   equal angular spacing and equal-length rays, and the whole disc simply rotates. */
+.recognition-slide .podium-card--champion { overflow:hidden !important; isolation:isolate; }
+.recognition-slide .podium-card--champion > *:not(.champion-rays) { position:relative; z-index:2; }
+.recognition-slide .champion-rays {
+  position:absolute !important;
+  z-index:0 !important;
+  left:50% !important;
+  top:50% !important;
+  width:145% !important;
+  aspect-ratio:1 !important;
+  transform:translate(-50%,-50%) rotate(0deg);
+  transform-origin:50% 50% !important;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:.24;
+  background:repeating-conic-gradient(from 0deg, rgba(212,175,55,.44) 0deg 7.5deg, rgba(255,248,218,.10) 7.5deg 15deg);
+  animation:champion-rays-rotate 22s linear infinite !important;
+}
+@keyframes champion-rays-rotate {
+  from { transform:translate(-50%,-50%) rotate(0deg); }
+  to { transform:translate(-50%,-50%) rotate(360deg); }
+}
 
 @media (max-height:800px) {
   .technician-performance__grid { gap:6px; }
