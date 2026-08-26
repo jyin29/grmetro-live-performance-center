@@ -13,7 +13,7 @@ function slideStorageKey(displayId) { return `grmetro.presentation.${displayId}.
 function rememberedSlideIndex(displayId) { try { const value=Number(window.sessionStorage.getItem(slideStorageKey(displayId))); return Number.isInteger(value)&&value>=0&&value<slideCount?value:0; } catch{return 0;} }
 function rememberSlideIndex(displayId,index){if(!Number.isInteger(index)||index<0)return;try{window.sessionStorage.setItem(slideStorageKey(displayId),String(index%slideCount));}catch{/* optional */}}
 async function jsonRequest(path,options={}){const response=await fetch(path,{cache:"no-store",...options});if(!response.ok){let detail="";try{detail=JSON.stringify(await response.json());}catch{/* ignore */}throw new Error(`presentation request failed (${response.status})${detail?`: ${detail}`:""}`);}return response.json();}
-function applyState(setState,displayId,payload){const next=payload?.state;if(!next||next.displayId!==displayId)return;rememberSlideIndex(displayId,next.activeSlideIndex);setState(next);}
+function applyState(setState,displayId,payload){const next=payload?.state;if(!next||next.displayId!==displayId)return false;rememberSlideIndex(displayId,next.activeSlideIndex);setState(next);return true;}
 
 export function PresentationControllerProvider({children}){return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>;}
 
@@ -34,24 +34,27 @@ export function usePresentationController(requestedDisplayId=DEFAULT_DISPLAY_ID,
 
   useEffect(()=>{rememberSlideIndex(displayId,state.activeSlideIndex);},[displayId,state.activeSlideIndex]);
   const action=useCallback(async(name,payload={})=>{
-    if(clientType!=="remote"){
-      if(name==="next")setState(current=>({...current,activeSlideIndex:(current.activeSlideIndex+1)%slideCount}));
-      if(name==="previous")setState(current=>({...current,activeSlideIndex:(current.activeSlideIndex-1+slideCount)%slideCount}));
-      if(name==="select"&&Number.isInteger(payload.index))setState(current=>({...current,activeSlideIndex:payload.index%slideCount}));
-      if(name==="pause")setState(current=>({...current,isRunning:false}));
-      if(name==="resume")setState(current=>({...current,isRunning:true}));
-    }
     const query=name==="select"?`?index=${encodeURIComponent(payload.index)}`:"";
     try{
-      const result=await jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${encodeURIComponent(name)}${query}`);
-      applyState(setState,displayId,result);
-      setRuntime(current=>({...current,lastSynchronization:Date.now(),lastCommandAt:Date.now(),lastCommandError:null}));
+      const result=await jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${encodeURIComponent(name)}${query}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      if(!applyState(setState,displayId,result))throw new Error("Backend did not return presentation state.");
+      const now=Date.now();
+      setRuntime(current=>({...current,lastSynchronization:now,lastCommandAt:now,lastCommandError:null}));
       if(clientType==="remote")setTargetDisplayOnline(result.online===true);
       return result;
-    }catch(error){
-      setRuntime(current=>({...current,lastCommandAt:Date.now(),lastCommandError:error.message}));
-      console.error("Presentation action failed",{displayId,name,error});
-      throw error;
+    }catch(firstError){
+      try{
+        const result=await jsonRequest(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${encodeURIComponent(name)}${query}`);
+        if(!applyState(setState,displayId,result))throw new Error("Backend did not return presentation state.");
+        const now=Date.now();
+        setRuntime(current=>({...current,lastSynchronization:now,lastCommandAt:now,lastCommandError:null}));
+        if(clientType==="remote")setTargetDisplayOnline(result.online===true);
+        return result;
+      }catch(error){
+        setRuntime(current=>({...current,lastCommandAt:Date.now(),lastCommandError:error.message}));
+        console.error("Presentation action failed",{displayId,name,firstError,error});
+        throw error;
+      }
     }
   },[clientType,displayId]);
   const connectionState=clientType==="remote"?(targetDisplayOnline?"connected":"offline"):transportConnectionState;
