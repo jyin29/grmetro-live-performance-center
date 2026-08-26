@@ -15,22 +15,26 @@ const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
 const { createPresentationRoutes } = require("./routes/presentationRoutes");
 
-const DASHBOARD_CLIENT_ROUTES = ["/", "/display", "/remote", "/admin", "/customize"];
+const DASHBOARD_CLIENT_ROUTES = new Set(["/", "/display", "/remote", "/admin", "/customize"]);
 function installDashboardStaticRoutes(app) {
   const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
   const indexFile = path.join(dashboardDist, "index.html");
   if (!fs.existsSync(indexFile)) return false;
   app.use(express.static(dashboardDist, { index: false, maxAge: "1h", immutable: true }));
   const serveDashboard = (_request, response) => {
-    // The HTML shell references Vite's hashed assets. Never cache the shell itself or
-    // a phone/TV can stay on an older remote implementation after the package updates.
     response.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     response.set("Pragma", "no-cache");
     response.set("Expires", "0");
     return response.sendFile(indexFile);
   };
-  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard);
-  app.get("/display/:displayId", serveDashboard);
+  // Match the parsed pathname ourselves. This deliberately ignores the query string,
+  // so paired URLs such as /remote?display=main-office always receive the SPA shell.
+  app.use((request, response, next) => {
+    if (request.method !== "GET") return next();
+    const pathname = request.path.replace(/\/+$/, "") || "/";
+    if (DASHBOARD_CLIENT_ROUTES.has(pathname) || /^\/display\/[^/]+$/.test(pathname)) return serveDashboard(request, response);
+    return next();
+  });
   return true;
 }
 
