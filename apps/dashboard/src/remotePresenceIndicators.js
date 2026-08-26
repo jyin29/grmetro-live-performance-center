@@ -9,6 +9,8 @@ function applyPresence(displays = []) {
     button.classList.toggle("is-display-offline", !online);
     const dot = button.querySelector(".display-dot");
     if (dot) {
+      dot.style.background = online ? "#22c55e" : "#94a3b8";
+      dot.style.boxShadow = online ? "0 0 0 3px rgba(34,197,94,.16)" : "none";
       dot.title = online ? "Display online" : "Display offline";
       dot.setAttribute("aria-label", online ? "Display online" : "Display offline");
     }
@@ -22,12 +24,12 @@ async function refreshPresence() {
     if (!response.ok) return;
     const payload = await response.json();
     applyPresence(payload.displays || []);
-  } catch { /* the controller status handles server-offline state */ }
+  } catch { /* controller status handles server-offline state */ }
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("load", refreshPresence);
   window.setInterval(refreshPresence, POLL_MS);
-  const observer = new MutationObserver(() => refreshPresence());
+  const observer = new MutationObserver(() => { window.setTimeout(refreshPresence, 0); });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 }
