@@ -20,9 +20,12 @@ if (-not $SkipBuild) {
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+# The packaged app listens on the local machine's network interfaces so a phone or
+# tablet on the same LAN can use /remote. ServiceTitan/CDP remains loopback-only.
 $env:NODE_ENV = "production"
 $env:MOCK_MODE = "false"
 $env:ENABLE_DEVELOPMENT_ROUTES = "false"
+$env:HOST = "0.0.0.0"
 
 $logDirectory = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
@@ -59,8 +62,6 @@ function Open-DashboardAtHalfZoom {
   try {
     $shell=New-Object -ComObject WScript.Shell
     if($shell.AppActivate("Live Performance Center")){
-      # Give Edge time to finish focusing the newly-created window. Send each
-      # browser zoom command slowly so Chromium has time to process every step.
       Start-Sleep -Milliseconds 750
       $shell.SendKeys("^0")
       Start-Sleep -Milliseconds 750
@@ -77,6 +78,55 @@ function Open-DashboardAtHalfZoom {
   }
 }
 
+function Get-LanIPv4Address {
+  try {
+    $candidates = Get-NetIPConfiguration -ErrorAction Stop | Where-Object {
+      $_.NetAdapter.Status -eq "Up" -and $_.IPv4DefaultGateway -and $_.IPv4Address
+    } | ForEach-Object { $_.IPv4Address.IPAddress } | Where-Object {
+      $_ -and $_ -notlike "169.254.*" -and $_ -ne "127.0.0.1"
+    }
+    return $candidates | Select-Object -First 1
+  } catch {
+    try {
+      return [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) |
+        Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.IPAddressToString -notlike "169.254.*" } |
+        Select-Object -First 1 |
+        ForEach-Object { $_.IPAddressToString }
+    } catch { return $null }
+  }
+}
+
+function Show-RemoteAccess {
+  param([string]$RemoteUrl)
+  Write-Host ""
+  Write-Host "============================================================" -ForegroundColor DarkCyan
+  Write-Host "  PHONE / TABLET REMOTE" -ForegroundColor Cyan
+  Write-Host "============================================================" -ForegroundColor DarkCyan
+  Write-Host "  Connect your phone to the same Wi-Fi as this PC." -ForegroundColor White
+  Write-Host "  Remote: $RemoteUrl" -ForegroundColor Green
+  Write-Host ""
+
+  # qrenco.de returns a terminal QR directly. If Internet access is unavailable,
+  # the printed LAN URL remains a complete fallback and the app keeps running.
+  $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+  if ($curl) {
+    try {
+      $escaped = [System.Uri]::EscapeDataString($RemoteUrl)
+      $qr = & $curl.Source -sS --connect-timeout 3 --max-time 6 "https://qrenco.de/$escaped" 2>$null
+      if ($LASTEXITCODE -eq 0 -and $qr) {
+        $qr | ForEach-Object { Write-Host $_ }
+        Write-Host "  Scan the QR code with your phone camera." -ForegroundColor Cyan
+      } else { throw "QR service unavailable" }
+    } catch {
+      Write-Host "  QR code unavailable right now; type the green address above into your phone." -ForegroundColor Yellow
+    }
+  } else {
+    Write-Host "  QR code unavailable; type the green address above into your phone." -ForegroundColor Yellow
+  }
+  Write-Host "============================================================" -ForegroundColor DarkCyan
+  Write-Host ""
+}
+
 $health="http://127.0.0.1:3000/api/v1/health"
 $deadline=(Get-Date).AddSeconds(30);$healthy=$false
 do{Start-Sleep -Milliseconds 500;if($backend.HasExited){Show-BackendStartupLogs;$exitCode=$backend.ExitCode;if($null -eq $exitCode){$exitCode="unknown"};throw "Backend exited during startup with code $exitCode."};try{Invoke-RestMethod -Uri $health -TimeoutSec 2|Out-Null;$healthy=$true;break}catch{}}while((Get-Date)-lt $deadline)
@@ -85,6 +135,14 @@ if(-not $healthy){Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyConti
 Write-Host "Live Performance Center is running (PID $($backend.Id))."
 Write-Host "Backend health check passed: $health"
 Write-Host "Backend logs are stored in $logDirectory."
+
+$lanIp = Get-LanIPv4Address
+if ($lanIp) {
+  Show-RemoteAccess "http://${lanIp}:3000/remote"
+} else {
+  Write-Warning "Could not detect a LAN address. The dashboard is running, but the phone remote address could not be generated automatically."
+}
+
 if(-not $NoBrowser){Open-DashboardAtHalfZoom "http://127.0.0.1:3000"}
 Write-Host "Close this window or press Ctrl+C to stop the application."
 try{Wait-Process -Id $backend.Id}finally{Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue}
