@@ -14,23 +14,21 @@ const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
 
-const DASHBOARD_CLIENT_ROUTES = new Set(["/", "/display", "/remote", "/admin", "/customize"]);
-const DISPLAY_CLIENT_ROUTE = /^\/display\/[^/]+$/;
-
-function isDashboardClientRoute(requestPath) {
-  return DASHBOARD_CLIENT_ROUTES.has(requestPath) || DISPLAY_CLIENT_ROUTE.test(requestPath);
-}
+const DASHBOARD_CLIENT_ROUTES = ["/", "/display", "/remote", "/admin", "/customize"];
 
 function installDashboardStaticRoutes(app) {
   const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
   const indexFile = path.join(dashboardDist, "index.html");
   if (!fs.existsSync(indexFile)) return false;
+
   app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
-  app.get(/.*/, (request, response, next) => {
-    const normalizedPath = request.path.length > 1 ? request.path.replace(/\/$/, "") : request.path;
-    if (!isDashboardClientRoute(normalizedPath)) return next();
-    return response.sendFile(indexFile);
-  });
+  const serveDashboard = (_request, response) => response.sendFile(indexFile);
+
+  // Register the SPA entry points explicitly. Express 5/path-to-regexp no longer
+  // accepts several legacy wildcard route forms reliably, so named display URLs
+  // get their own parameterized route instead of depending on a catch-all regex.
+  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard);
+  app.get("/display/:displayId", serveDashboard);
   return true;
 }
 
@@ -57,4 +55,4 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   return app;
 }
 
-module.exports = { createApp, installDashboardStaticRoutes, isDashboardClientRoute };
+module.exports = { createApp, installDashboardStaticRoutes };
