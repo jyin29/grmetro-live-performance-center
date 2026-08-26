@@ -1,35 +1,35 @@
 const POLL_MS = 2000;
 
-function applyPresence(displays = []) {
-  const byName = new Map(displays.map((display) => [display.displayName, Boolean(display.displayOnline || (display.connectedClients?.displays ?? 0) > 0)]));
-  document.querySelectorAll(".display-picker button").forEach((button) => {
-    const name = button.querySelector("strong")?.textContent?.trim();
-    const online = byName.get(name) === true;
-    button.classList.toggle("is-display-online", online);
-    button.classList.toggle("is-display-offline", !online);
-    const dot = button.querySelector(".display-dot");
-    if (dot) {
-      dot.style.background = online ? "#22c55e" : "#94a3b8";
-      dot.style.boxShadow = online ? "0 0 0 3px rgba(34,197,94,.16)" : "none";
-      dot.title = online ? "Display online" : "Display offline";
-      dot.setAttribute("aria-label", online ? "Display online" : "Display offline");
-    }
-  });
+async function fetchDisplayOnline(displayId) {
+  try {
+    const response = await fetch(`/api/v1/presentation/${encodeURIComponent(displayId)}`, { cache: "no-store" });
+    if (!response.ok) return false;
+    const payload = await response.json();
+    return payload.online === true;
+  } catch { return false; }
 }
 
 async function refreshPresence() {
   if (!window.location.pathname.startsWith("/remote")) return;
-  try {
-    const response = await fetch("/api/v1/admin", { cache: "no-store" });
-    if (!response.ok) return;
-    const payload = await response.json();
-    applyPresence(payload.displays || []);
-  } catch { /* controller status handles server-offline state */ }
+  const buttons = [...document.querySelectorAll(".display-picker button")];
+  await Promise.all(buttons.map(async (button) => {
+    // RemoteControlPage exposes the canonical display id on each picker button.
+    // Fall back to the existing DOM value only for an older cached bundle.
+    const displayId = button.dataset.displayId;
+    const online = displayId ? await fetchDisplayOnline(displayId) : false;
+    button.classList.toggle("is-display-online", online);
+    button.classList.toggle("is-display-offline", !online);
+    const dot = button.querySelector(".display-dot");
+    if (dot) {
+      dot.title = online ? "Display online" : "Display offline";
+      dot.setAttribute("aria-label", online ? "Display online" : "Display offline");
+    }
+  }));
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("load", refreshPresence);
   window.setInterval(refreshPresence, POLL_MS);
-  const observer = new MutationObserver(() => { window.setTimeout(refreshPresence, 0); });
+  const observer = new MutationObserver(() => refreshPresence());
   observer.observe(document.documentElement, { childList: true, subtree: true });
 }
