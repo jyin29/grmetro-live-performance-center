@@ -1,4 +1,5 @@
 import { DEFAULT_DISPLAY_ID, PRESENTATION_DISPLAYS } from "./config/displayRegistry";
+import { PRESENTATION_SLIDES } from "./config/slideRegistry";
 
 function isRemotePage() {
   return window.location.pathname.replace(/\/+$/, "") === "/remote";
@@ -24,8 +25,9 @@ function commandForButton(button) {
     return index >= 0 ? { action: "select", index } : null;
   }
   const text = button.textContent?.replace(/\s+/g, " ").trim().toLowerCase() || "";
-  if (text.includes("previous")) return { action: "select", index: (activeSlideIndex() + 5) % 6 };
-  if (text.includes("next")) return { action: "select", index: (activeSlideIndex() + 1) % 6 };
+  const count = Math.max(1, PRESENTATION_SLIDES.length);
+  if (text.includes("previous")) return { action: "select", index: (activeSlideIndex() - 1 + count) % count };
+  if (text.includes("next")) return { action: "select", index: (activeSlideIndex() + 1) % count };
   if (text.includes("pause")) return { action: "pause" };
   if (text.includes("resume")) return { action: "resume" };
   if (text.includes("restart")) return { action: "restart" };
@@ -60,8 +62,6 @@ function issue(command) {
 
   // Deliberately use three independent browser delivery mechanisms. All remote slide
   // movement is converted to absolute `select` commands, so duplicate delivery is safe.
-  // If mobile fetch, WebSocket, or a single browser event path is flaky, one of these
-  // still reaches the same-origin backend presentation manager.
   ensureSink().src = url;
   const image = new Image();
   image.src = `${url}&transport=image`;
