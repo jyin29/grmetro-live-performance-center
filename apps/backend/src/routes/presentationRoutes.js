@@ -19,19 +19,21 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
   router.get("/:displayId", (request, response) => {
     const state = presentationManager.getDisplayState(request.params.displayId);
     if (!state) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
-    response.set("Cache-Control", "no-store");
+    // A real dashboard identifies itself on its normal 1-second state poll. Treat that
+    // poll as presence too, so TV detection does not depend on WebSockets or a separate
+    // heartbeat request surviving the local network/browser. Remote polls never touch it.
+    if (request.query.clientType === "display") displayPresence.touch(request.params.displayId);
+    response.set("Cache-Control", "no-store, no-cache, must-revalidate");
     response.json({ ok: true, state, online: displayPresence.isOnline(request.params.displayId) });
   });
 
   router.post("/:displayId/heartbeat", (request, response) => {
     if (!presentationManager.getDisplayState(request.params.displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
     displayPresence.touch(request.params.displayId);
-    response.json({ ok: true });
+    response.set("Cache-Control", "no-store");
+    response.json({ ok: true, online: true });
   });
 
-  // Simple action endpoint used by both the on-screen controls and phone remote.
-  // Keeping action -> command translation on the server removes any dependency on
-  // WebSocket readiness or a client-side command schema being perfectly in sync.
   router.post("/:displayId/action/:action", (request, response) => {
     const { displayId, action } = request.params;
     if (!presentationManager.getDisplayState(displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
@@ -40,8 +42,8 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     const payload = action === "select" ? { index: Number(request.body?.index) } : {};
     try {
       const state = commandBus.dispatch({ type, displayId, payload });
-      response.set("Cache-Control", "no-store");
-      response.json({ ok: true, state: state || presentationManager.getDisplayState(displayId) });
+      response.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      response.json({ ok: true, state: state || presentationManager.getDisplayState(displayId), online: displayPresence.isOnline(displayId) });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
@@ -52,6 +54,7 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     const command = { ...request.body, displayId: request.params.displayId };
     try {
       const state = commandBus.dispatch(command);
+      response.set("Cache-Control", "no-store");
       response.json({ ok: true, state: state || presentationManager.getDisplayState(request.params.displayId) });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
