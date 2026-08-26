@@ -20,8 +20,6 @@ if (-not $SkipBuild) {
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-# A packaged launch is always production mode. Override development-only values
-# that may remain in a developer-created .env without modifying the private file.
 $env:NODE_ENV = "production"
 $env:MOCK_MODE = "false"
 $env:ENABLE_DEVELOPMENT_ROUTES = "false"
@@ -38,75 +36,53 @@ $backend = Start-Process -FilePath "node" -ArgumentList "apps/backend/src/index.
 function Show-BackendStartupLogs {
   Write-Host ""
   Write-Host "Backend startup output:" -ForegroundColor Yellow
-  if (Test-Path $stdoutLog) {
-    $stdout = Get-Content $stdoutLog -ErrorAction SilentlyContinue
-    if ($stdout) { $stdout | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
-  }
-  if (Test-Path $stderrLog) {
-    $stderr = Get-Content $stderrLog -ErrorAction SilentlyContinue
-    if ($stderr) { $stderr | Select-Object -Last 40 | ForEach-Object { Write-Host $_ -ForegroundColor Red } }
-  }
+  if (Test-Path $stdoutLog) { $stdout=Get-Content $stdoutLog -ErrorAction SilentlyContinue; if($stdout){$stdout|Select-Object -Last 40|ForEach-Object{Write-Host $_}} }
+  if (Test-Path $stderrLog) { $stderr=Get-Content $stderrLog -ErrorAction SilentlyContinue; if($stderr){$stderr|Select-Object -Last 40|ForEach-Object{Write-Host $_ -ForegroundColor Red}} }
   Write-Host "Full logs: $stdoutLog and $stderrLog" -ForegroundColor DarkGray
 }
 
 function Find-Edge {
-  $candidatePaths = @()
-  foreach ($base in @(${env:ProgramFiles(x86)}, $env:ProgramFiles, $env:LOCALAPPDATA)) {
-    if ($base) { $candidatePaths += (Join-Path $base "Microsoft\Edge\Application\msedge.exe") }
-  }
-  foreach ($commandName in @("msedge.exe", "msedge")) {
-    $command = Get-Command $commandName -ErrorAction SilentlyContinue
-    if ($command -and $command.Source) { $candidatePaths += $command.Source }
-  }
-  return $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+  $candidatePaths=@()
+  foreach($base in @(${env:ProgramFiles(x86)},$env:ProgramFiles,$env:LOCALAPPDATA)){if($base){$candidatePaths+=(Join-Path $base "Microsoft\Edge\Application\msedge.exe")}}
+  foreach($commandName in @("msedge.exe","msedge")){$command=Get-Command $commandName -ErrorAction SilentlyContinue;if($command -and $command.Source){$candidatePaths+=$command.Source}}
+  return $candidatePaths|Where-Object{$_ -and (Test-Path $_)}|Select-Object -First 1
 }
 
 function Open-DashboardAtHalfZoom {
   param([string]$Url)
-  $edge = Find-Edge
-  if (-not $edge) {
-    Write-Warning "Could not locate Edge for automatic 50% zoom; opening the dashboard in the default browser instead."
-    Start-Process $Url
-    return
-  }
+  $edge=Find-Edge
+  if(-not $edge){Write-Warning "Could not locate Edge; opening the dashboard in the default browser.";Start-Process $Url;return}
 
-  # Open a separate dashboard window at 50% device scale. This affects only the
-  # launched dashboard window; it does not CSS-scale the app or change ServiceTitan.
-  Start-Process -FilePath $edge -ArgumentList @(
-    "--new-window",
-    "--force-device-scale-factor=0.5",
-    $Url
-  )
-}
+  # Open the dashboard normally, then use Edge's real browser zoom command.
+  # This is equivalent to pressing Ctrl+- five times from the default 100% zoom:
+  # 100 -> 90 -> 80 -> 75 -> 67 -> 50.
+  Start-Process -FilePath $edge -ArgumentList @("--new-window",$Url)
+  Start-Sleep -Seconds 2
 
-$health = "http://127.0.0.1:3000/api/v1/health"
-$deadline = (Get-Date).AddSeconds(30)
-$healthy = $false
-do {
-  Start-Sleep -Milliseconds 500
-  if ($backend.HasExited) {
-    Show-BackendStartupLogs
-    $exitCode = $backend.ExitCode
-    if ($null -eq $exitCode) { $exitCode = "unknown" }
-    throw "Backend exited during startup with code $exitCode."
-  }
   try {
-    Invoke-RestMethod -Uri $health -TimeoutSec 2 | Out-Null
-    $healthy = $true
-    break
-  } catch { }
-} while ((Get-Date) -lt $deadline)
-
-if (-not $healthy) {
-  Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
-  Show-BackendStartupLogs
-  throw "Backend did not become healthy in time."
+    $shell=New-Object -ComObject WScript.Shell
+    if($shell.AppActivate("Live Performance Center")){
+      Start-Sleep -Milliseconds 250
+      $shell.SendKeys("^0")
+      Start-Sleep -Milliseconds 150
+      1..5|ForEach-Object{$shell.SendKeys("^-");Start-Sleep -Milliseconds 120}
+      Write-Host "Dashboard Edge page zoom set to 50%."
+    } else {
+      Write-Warning "Dashboard opened, but Edge could not be focused automatically. Press Ctrl+0, then Ctrl+- five times to set 50% zoom."
+    }
+  } catch {
+    Write-Warning "Dashboard opened, but automatic Edge zoom failed. Press Ctrl+0, then Ctrl+- five times to set 50% zoom."
+  }
 }
+
+$health="http://127.0.0.1:3000/api/v1/health"
+$deadline=(Get-Date).AddSeconds(30);$healthy=$false
+do{Start-Sleep -Milliseconds 500;if($backend.HasExited){Show-BackendStartupLogs;$exitCode=$backend.ExitCode;if($null -eq $exitCode){$exitCode="unknown"};throw "Backend exited during startup with code $exitCode."};try{Invoke-RestMethod -Uri $health -TimeoutSec 2|Out-Null;$healthy=$true;break}catch{}}while((Get-Date)-lt $deadline)
+if(-not $healthy){Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue;Show-BackendStartupLogs;throw "Backend did not become healthy in time."}
 
 Write-Host "Live Performance Center is running (PID $($backend.Id))."
 Write-Host "Backend health check passed: $health"
 Write-Host "Backend logs are stored in $logDirectory."
-if (-not $NoBrowser) { Open-DashboardAtHalfZoom "http://127.0.0.1:3000" }
-Write-Host "Dashboard opened at 50% scale."
+if(-not $NoBrowser){Open-DashboardAtHalfZoom "http://127.0.0.1:3000"}
 Write-Host "Close this window or press Ctrl+C to stop the application."
-try { Wait-Process -Id $backend.Id } finally { Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue }
+try{Wait-Process -Id $backend.Id}finally{Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue}
