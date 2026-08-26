@@ -14,6 +14,7 @@ import "./remote-layout-hotfix.css";
 import "./remote-stability.css";
 import "./local-dashboard-controls.css";
 import "./easterEgg";
+import "./remotePresenceIndicators";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
 createRoot(document.getElementById("root")).render(<StrictMode><DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary></StrictMode>);
