@@ -19,7 +19,7 @@ function installDashboardStaticRoutes(app) {
   const indexFile = path.join(dashboardDist, "index.html");
   if (!fs.existsSync(indexFile)) return false;
   app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
-  app.get(/^(?!\/api\/|\/ws\/).*/, (_request, response) => response.sendFile(indexFile));
+  app.get(/^(?!\/api(?:\/|$)|\/ws(?:\/|$)).*/, (_request, response) => response.sendFile(indexFile));
   return true;
 }
 
@@ -38,6 +38,8 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
+  app.use("/api", notFound);
+  app.use("/ws", notFound);
   installDashboardStaticRoutes(app);
   app.use(notFound);
   app.use(errorHandler({ logger, isProduction: config.isProduction }));
