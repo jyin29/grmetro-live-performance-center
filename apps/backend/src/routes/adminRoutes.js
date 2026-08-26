@@ -16,11 +16,24 @@ function createAdminRoutes({ cache, presentationManager, connectionStatusProvide
     const cacheState = cache.getState(now);
     const connections = connectionStatusProvider?.() || { total: 0, displays: 0, remotes: 0 };
     const eventState = eventEngine?.getState?.() || { activeEvent: null, queueLength: 0 };
-    const displays = presentationManager.getDisplayStates().map((display) => ({
-      ...display,
-      connectedClients: connections.byDisplay?.[display.displayId] || { displays: 0, remotes: 0, total: 0 },
-      currentSlide: slides[display.activeSlideIndex] || null,
-    }));
+    const displays = presentationManager.getDisplayStates().map((display) => {
+      const clients = connections.byDisplay?.[display.displayId] || { displays: 0, remotes: 0, total: 0 };
+      return {
+        ...display,
+        // `connectedClients.total` used to include the phone remote itself, which made an
+        // unplugged TV look connected as soon as somebody selected it on the remote.
+        // Keep the raw socket total separately and make the primary presence fields mean
+        // what the UI/user expects: is a physical dashboard display actually connected?
+        connectedClients: {
+          displays: clients.displays || 0,
+          remotes: clients.remotes || 0,
+          total: clients.displays || 0,
+          socketTotal: clients.total || 0,
+        },
+        displayOnline: (clients.displays || 0) > 0,
+        currentSlide: slides[display.activeSlideIndex] || null,
+      };
+    });
 
     response.json({
       generatedAt: now.toISOString(),
