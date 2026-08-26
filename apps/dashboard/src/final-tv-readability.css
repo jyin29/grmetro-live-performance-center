@@ -54,9 +54,9 @@
 /* Slide 5 */
 .recognition-slide .podium-card > div > span:last-child { color:#14212b; font-size:clamp(38px,2.7vw,54px); font-weight:950; line-height:1; letter-spacing:-.035em; }
 .recognition-slide .podium-card__place { font-size:clamp(40px,2.9vw,58px); }
-/* Deliberately oversized/wide champion crown. */
-.recognition-slide .champion-crown { display:inline-block !important; font-size:clamp(78px,6vw,124px) !important; line-height:.72 !important; transform:scaleX(2.8) !important; transform-origin:center bottom !important; margin-inline:clamp(55px,5vw,100px) !important; }
-.recognition-slide .champion-topper { overflow:visible !important; min-width:0; }
+/* Naturally wide SVG crown: no horizontal stretching/distortion. */
+.recognition-slide .champion-crown { display:block !important; width:clamp(150px,12vw,245px) !important; height:auto !important; overflow:visible; fill:#e7b932; filter:drop-shadow(0 4px 4px rgba(111,79,0,.2)); margin-inline:clamp(8px,1vw,20px) !important; transform:none !important; }
+.recognition-slide .champion-topper { overflow:visible !important; min-width:0; align-items:center; }
 
 @media (max-height:800px) {
   .technician-performance__grid { gap:6px; }
