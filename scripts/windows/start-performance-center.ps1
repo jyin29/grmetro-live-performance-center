@@ -53,20 +53,22 @@ function Open-DashboardAtHalfZoom {
   $edge=Find-Edge
   if(-not $edge){Write-Warning "Could not locate Edge; opening the dashboard in the default browser.";Start-Process $Url;return}
 
-  # Open the dashboard normally, then use Edge's real browser zoom command.
-  # This is equivalent to pressing Ctrl+- five times from the default 100% zoom:
-  # 100 -> 90 -> 80 -> 75 -> 67 -> 50.
   Start-Process -FilePath $edge -ArgumentList @("--new-window",$Url)
-  Start-Sleep -Seconds 2
+  Start-Sleep -Seconds 3
 
   try {
     $shell=New-Object -ComObject WScript.Shell
     if($shell.AppActivate("Live Performance Center")){
-      Start-Sleep -Milliseconds 250
+      # Give Edge time to finish focusing the newly-created window. Send each
+      # browser zoom command slowly so Chromium has time to process every step.
+      Start-Sleep -Milliseconds 750
       $shell.SendKeys("^0")
-      Start-Sleep -Milliseconds 150
-      1..5|ForEach-Object{$shell.SendKeys("^-");Start-Sleep -Milliseconds 120}
-      Write-Host "Dashboard Edge page zoom set to 50%."
+      Start-Sleep -Milliseconds 750
+      for($i=1;$i -le 5;$i++){
+        $shell.SendKeys("^-")
+        Start-Sleep -Milliseconds 700
+      }
+      Write-Host "Dashboard Edge page zoom commands completed (target: 50%)."
     } else {
       Write-Warning "Dashboard opened, but Edge could not be focused automatically. Press Ctrl+0, then Ctrl+- five times to set 50% zoom."
     }
