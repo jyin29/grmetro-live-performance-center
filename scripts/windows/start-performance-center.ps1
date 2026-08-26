@@ -41,13 +41,14 @@ if(-not $healthy){Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyConti
 Write-Host "Live Performance Center is running (PID $($backend.Id))."; Write-Host "Backend health check passed: $health"; Write-Host "Backend logs are stored in $logDirectory."
 $lanIp=Get-LanIPv4Address
 if($lanIp){
-  Show-RemoteAccess "http://${lanIp}:3000/remote" $selectedDisplay.name
-  # Keep the browser page itself on loopback, but explicitly tell the frontend to
-  # use the LAN address for the presentation bridge. The phone already uses this
-  # exact address, so both sides now share one origin for remote-control traffic.
-  $displayUrl = "http://127.0.0.1:3000/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))&server=$([System.Uri]::EscapeDataString($lanIp))"
+  $sharedOrigin = "http://${lanIp}:3000"
+  Show-RemoteAccess "$sharedOrigin/remote" $selectedDisplay.name
+  # IMPORTANT: the display and phone must use the same browser origin. Production CORS
+  # is intentionally disabled, so loading the TV from 127.0.0.1 and then asking its JS
+  # to fetch the LAN origin causes the browser to block the presentation bridge.
+  $displayUrl = "$sharedOrigin/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))"
 }else{
-  Write-Warning "Could not detect a LAN address. Falling back to loopback presentation traffic; phone remote access may be unavailable."
+  Write-Warning "Could not detect a LAN address. Phone remote access will be unavailable until a LAN address can be detected."
   $displayUrl = "http://127.0.0.1:3000/?display=$([System.Uri]::EscapeDataString($selectedDisplay.id))"
 }
 if(-not $NoBrowser){Open-DashboardAtHalfZoom $displayUrl}
