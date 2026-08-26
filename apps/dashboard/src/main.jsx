@@ -16,12 +16,4 @@ import "./local-dashboard-controls.css";
 import "./easterEgg";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
 
-// The primary local display is intentionally shown at the same size as Edge's
-// 50% page zoom. Do not apply this to the remote/admin interfaces.
-const pathname = window.location.pathname.replace(/\/$/, "") || "/";
-const isPrimaryDisplay = pathname === "/" || pathname === "/display" || pathname.startsWith("/display/");
-if (isPrimaryDisplay) {
-  document.documentElement.style.zoom = "0.5";
-}
-
 createRoot(document.getElementById("root")).render(<StrictMode><DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary></StrictMode>);
