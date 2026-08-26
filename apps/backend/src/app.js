@@ -14,12 +14,18 @@ const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
 
+const DASHBOARD_CLIENT_ROUTES = new Set(["/", "/display", "/remote", "/admin"]);
+
 function installDashboardStaticRoutes(app) {
   const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
   const indexFile = path.join(dashboardDist, "index.html");
   if (!fs.existsSync(indexFile)) return false;
   app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
-  app.get(/^(?!\/api(?:\/|$)|\/ws(?:\/|$)).*/, (_request, response) => response.sendFile(indexFile));
+  app.get(/.*/, (request, response, next) => {
+    const normalizedPath = request.path.length > 1 ? request.path.replace(/\/$/, "") : request.path;
+    if (!DASHBOARD_CLIENT_ROUTES.has(normalizedPath)) return next();
+    return response.sendFile(indexFile);
+  });
   return true;
 }
 
