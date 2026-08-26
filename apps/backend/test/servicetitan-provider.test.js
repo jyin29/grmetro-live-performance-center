@@ -1,6 +1,13 @@
 "use strict";
-const test=require("node:test");const assert=require("node:assert/strict");const technicians=require("../../../shared/technicians");
+const test=require("node:test");const assert=require("node:assert/strict");
 const {ServiceTitanRefreshProvider}=require("../src/providers/serviceTitanRefreshProvider");const {createRefreshProvider}=require("../src/providers/createRefreshProvider");
+const technicians=Object.freeze([
+{id:101,name:"Test Technician One",shortName:"One",initials:"TO"},
+{id:102,name:"Test Technician Two",shortName:"Two",initials:"TT"},
+{id:103,name:"Test Technician Three",shortName:"Three",initials:"TH"},
+{id:104,name:"Test Technician Four",shortName:"Four",initials:"TF"},
+{id:105,name:"Test Technician Five",shortName:"Five",initials:"TV"}
+]);
 const config={mockMode:false,timeZone:"America/New_York",businessUnitIds:[1],serviceTitanReloadKey:"2",serviceTitanDrilldownKpiType:"2"};
 const makeProvider=(options={})=>new ServiceTitanRefreshProvider({config,browserManager:{getServiceTitanPage:()=>({})},technicianConfiguration:technicians,...options});
 function executor({failId,drilldownRows=[]}={}){let active=0,max=0;const calls=[];return {calls,get max(){return max;},async post(endpoint,body){active++;max=Math.max(max,active);calls.push({endpoint:endpoint.name,id:Number(body.TechnicianId??body.technicianId)});await new Promise(r=>setTimeout(r,2));active--;const id=Number(body.TechnicianId??body.technicianId);if(id===failId&&endpoint.name==="technicianDatasource")throw Object.assign(Error("private raw failure"),{code:"SERVICE_TITAN_HTTP_ERROR"});if(endpoint.name==="technicianOverview")return {status:200,finalUrl:"https://go.servicetitan.com/app/api/x",contentType:"application/json",body:JSON.stringify({personalInfo:{id,phoneNumber:"616-555-1212"},kpis:{}}),duration:2};if(endpoint.name==="technicianJobDrilldown")return {status:200,finalUrl:"https://go.servicetitan.com/app/api/x",contentType:"application/json",body:JSON.stringify(drilldownRows),duration:2};return {status:200,finalUrl:"https://go.servicetitan.com/app/api/x",contentType:"application/json",body:JSON.stringify([{TechnicianId:id,CompletedRevenue:100,Opportunity:11,TechLeadJobs:2,MarketingLeadJobs:3,CloseRate:.5,phoneNumber:"private"}]),duration:2};}};}
