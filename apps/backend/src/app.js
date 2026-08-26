@@ -13,46 +13,28 @@ const { createTvRoutes } = require("./routes/tvRoutes");
 const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
+const { createPresentationRoutes } = require("./routes/presentationRoutes");
 
 const DASHBOARD_CLIENT_ROUTES = ["/", "/display", "/remote", "/admin", "/customize"];
-
 function installDashboardStaticRoutes(app) {
-  const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
-  const indexFile = path.join(dashboardDist, "index.html");
-  if (!fs.existsSync(indexFile)) return false;
-
-  app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
-  const serveDashboard = (_request, response) => response.sendFile(indexFile);
-
-  // Register the SPA entry points explicitly. Express 5/path-to-regexp no longer
-  // accepts several legacy wildcard route forms reliably, so named display URLs
-  // get their own parameterized route instead of depending on a catch-all regex.
-  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard);
-  app.get("/display/:displayId", serveDashboard);
-  return true;
+  const dashboardDist = path.resolve(__dirname, "../../dashboard/dist"); const indexFile = path.join(dashboardDist, "index.html"); if (!fs.existsSync(indexFile)) return false;
+  app.use(express.static(dashboardDist, { index: false, maxAge: "1h" })); const serveDashboard = (_request, response) => response.sendFile(indexFile);
+  for (const route of DASHBOARD_CLIENT_ROUTES) app.get(route, serveDashboard); app.get("/display/:displayId", serveDashboard); return true;
 }
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
-  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
+  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, presentationRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
   if (!config || !logger) throw new Error("createApp requires config and logger.");
-  const app = express();
-  app.disable("x-powered-by");
-  if (!config.isProduction) app.use(cors({ origin: true, credentials: false }));
-  app.use(requestLogger(logger));
-  app.use(express.json({ limit: config.jsonBodyLimit, strict: true }));
+  const app = express(); app.disable("x-powered-by"); if (!config.isProduction) app.use(cors({ origin: true, credentials: false }));
+  app.use(requestLogger(logger)); app.use(express.json({ limit: config.jsonBodyLimit, strict: true }));
   const rateLimiter = createRateLimiter({ windowMilliseconds: config.remoteRateLimit.windowSeconds * 1000, maxRequests: config.remoteRateLimit.maxRequests });
   app.use("/api/v1/health", createHealthRoutes({ cache, applicationVersion, browserStatusProvider, serviceTitanStatusProvider, clock }));
   app.use("/api/v1/dashboard", createDashboardRoutes({ cache }));
   app.use("/api/v1/tvs", createTvRoutes({ tvManager, rateLimiter, clock }));
+  if (presentationRuntime) app.use("/api/v1/presentation", createPresentationRoutes(presentationRuntime));
   if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
-  app.use("/api", notFound);
-  app.use("/ws", notFound);
-  installDashboardStaticRoutes(app);
-  app.use(notFound);
-  app.use(errorHandler({ logger, isProduction: config.isProduction }));
-  return app;
+  app.use("/api", notFound); app.use("/ws", notFound); installDashboardStaticRoutes(app); app.use(notFound); app.use(errorHandler({ logger, isProduction: config.isProduction })); return app;
 }
-
 module.exports = { createApp, installDashboardStaticRoutes };
