@@ -20,8 +20,6 @@ if (-not $SkipBuild) {
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-# The packaged app listens on the local machine's network interfaces so a phone or
-# tablet on the same LAN can use /remote. ServiceTitan/CDP remains loopback-only.
 $env:NODE_ENV = "production"
 $env:MOCK_MODE = "false"
 $env:ENABLE_DEVELOPMENT_ROUTES = "false"
@@ -70,11 +68,18 @@ function Open-DashboardAtHalfZoom {
         Start-Sleep -Milliseconds 700
       }
       Write-Host "Dashboard Edge page zoom commands completed (target: 50%)."
+
+      # Enter Edge fullscreen after zooming. On many keyboards F11 is behind the
+      # Fn layer; SendKeys sends the actual F11 virtual key, equivalent to Fn+F11
+      # on those keyboards, so no physical Fn key state is required.
+      Start-Sleep -Milliseconds 900
+      $shell.SendKeys("{F11}")
+      Write-Host "Dashboard Edge window switched to fullscreen (F11)."
     } else {
-      Write-Warning "Dashboard opened, but Edge could not be focused automatically. Press Ctrl+0, then Ctrl+- five times to set 50% zoom."
+      Write-Warning "Dashboard opened, but Edge could not be focused automatically. Set 50% zoom and press F11 manually."
     }
   } catch {
-    Write-Warning "Dashboard opened, but automatic Edge zoom failed. Press Ctrl+0, then Ctrl+- five times to set 50% zoom."
+    Write-Warning "Dashboard opened, but automatic Edge zoom/fullscreen failed. Set 50% zoom and press F11 manually."
   }
 }
 
@@ -106,19 +111,23 @@ function Show-RemoteAccess {
   Write-Host "  Remote: $RemoteUrl" -ForegroundColor Green
   Write-Host ""
 
-  # qrenco.de returns a terminal QR directly. If Internet access is unavailable,
-  # the printed LAN URL remains a complete fallback and the app keeps running.
+  # qrenco.de emits UTF-8 half-block characters. Decode curl's raw bytes as UTF-8
+  # before writing them so Windows PowerShell does not mojibake the QR code.
   $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
   if ($curl) {
+    $tempQr = Join-Path $env:TEMP "live-performance-center-remote-qr.txt"
     try {
       $escaped = [System.Uri]::EscapeDataString($RemoteUrl)
-      $qr = & $curl.Source -sS --connect-timeout 3 --max-time 6 "https://qrenco.de/$escaped" 2>$null
-      if ($LASTEXITCODE -eq 0 -and $qr) {
-        $qr | ForEach-Object { Write-Host $_ }
-        Write-Host "  Scan the QR code with your phone camera." -ForegroundColor Cyan
-      } else { throw "QR service unavailable" }
+      & $curl.Source -sS --connect-timeout 3 --max-time 6 -o $tempQr "https://qrenco.de/$escaped" 2>$null
+      if ($LASTEXITCODE -ne 0 -or -not (Test-Path $tempQr)) { throw "QR service unavailable" }
+      $qrText = [System.IO.File]::ReadAllText($tempQr, [System.Text.Encoding]::UTF8)
+      if ([string]::IsNullOrWhiteSpace($qrText)) { throw "QR service returned no data" }
+      Write-Host $qrText
+      Write-Host "  Scan the QR code with your phone camera." -ForegroundColor Cyan
     } catch {
       Write-Host "  QR code unavailable right now; type the green address above into your phone." -ForegroundColor Yellow
+    } finally {
+      Remove-Item $tempQr -Force -ErrorAction SilentlyContinue
     }
   } else {
     Write-Host "  QR code unavailable; type the green address above into your phone." -ForegroundColor Yellow
