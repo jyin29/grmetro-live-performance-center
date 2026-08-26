@@ -20,7 +20,12 @@ if (-not $SkipBuild) {
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+# A packaged launch is always production mode. Override development-only values
+# that may remain in a developer-created .env without modifying the private file.
 $env:NODE_ENV = "production"
+$env:MOCK_MODE = "false"
+$env:ENABLE_DEVELOPMENT_ROUTES = "false"
+
 $logDirectory = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
 $stdoutLog = Join-Path $logDirectory "launcher-backend.stdout.log"
@@ -51,7 +56,9 @@ do {
   Start-Sleep -Milliseconds 500
   if ($backend.HasExited) {
     Show-BackendStartupLogs
-    throw "Backend exited during startup with code $($backend.ExitCode)."
+    $exitCode = $backend.ExitCode
+    if ($null -eq $exitCode) { $exitCode = "unknown" }
+    throw "Backend exited during startup with code $exitCode."
   }
   try {
     Invoke-RestMethod -Uri $health -TimeoutSec 2 | Out-Null
