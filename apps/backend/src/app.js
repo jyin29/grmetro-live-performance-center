@@ -14,7 +14,12 @@ const { createDevelopmentRoutes } = require("./routes/developmentRoutes");
 const { createAdminRoutes } = require("./routes/adminRoutes");
 const { createManagementRoutes } = require("./routes/managementRoutes");
 
-const DASHBOARD_CLIENT_ROUTES = new Set(["/", "/display", "/remote", "/admin"]);
+const DASHBOARD_CLIENT_ROUTES = new Set(["/", "/display", "/remote", "/admin", "/customize"]);
+const DISPLAY_CLIENT_ROUTE = /^\/display\/[^/]+$/;
+
+function isDashboardClientRoute(requestPath) {
+  return DASHBOARD_CLIENT_ROUTES.has(requestPath) || DISPLAY_CLIENT_ROUTE.test(requestPath);
+}
 
 function installDashboardStaticRoutes(app) {
   const dashboardDist = path.resolve(__dirname, "../../dashboard/dist");
@@ -23,7 +28,7 @@ function installDashboardStaticRoutes(app) {
   app.use(express.static(dashboardDist, { index: false, maxAge: "1h" }));
   app.get(/.*/, (request, response, next) => {
     const normalizedPath = request.path.length > 1 ? request.path.replace(/\/$/, "") : request.path;
-    if (!DASHBOARD_CLIENT_ROUTES.has(normalizedPath)) return next();
+    if (!isDashboardClientRoute(normalizedPath)) return next();
     return response.sendFile(indexFile);
   });
   return true;
@@ -52,4 +57,4 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   return app;
 }
 
-module.exports = { createApp, installDashboardStaticRoutes };
+module.exports = { createApp, installDashboardStaticRoutes, isDashboardClientRoute };
