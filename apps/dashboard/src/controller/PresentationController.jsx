@@ -53,13 +53,21 @@ export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_I
 
   useEffect(() => {
     let active = true;
+    let failures = 0;
     const poll = async () => {
       try {
         const payload = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}`);
         if (!active) return;
+        failures = 0;
         acceptState(payload.state);
         if (clientType === "remote") setOnline(payload.online === true);
-      } catch { if (active && clientType === "remote") setOnline(false); }
+      } catch {
+        if (!active || clientType !== "remote") return;
+        failures += 1;
+        // A single missed LAN poll while changing tabs must not turn a healthy display
+        // offline. Presence is backend-authoritative; only degrade after several misses.
+        if (failures >= 6) setOnline(false);
+      }
     };
     poll();
     const timer = window.setInterval(poll, POLL_MS);
@@ -82,14 +90,12 @@ export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_I
 
   const action = useCallback(async (name, payload = {}) => {
     try {
-      // ONE write only. No optimistic local state and no duplicate WebSocket command.
-      // The backend mutates the shared presentation state and broadcasts it to every client.
       const query = name === "select" ? `?index=${encodeURIComponent(payload.index)}` : "";
       const result = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}${query}`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       acceptState(result.state);
-      if (clientType === "remote") setOnline(result.online === true);
+      if (clientType === "remote" && typeof result.online === "boolean") setOnline(result.online);
       setRuntime((current) => ({ ...current, lastCommandAt: Date.now(), lastCommandError: null }));
       return result;
     } catch (error) {
