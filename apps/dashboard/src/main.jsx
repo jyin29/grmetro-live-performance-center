@@ -16,5 +16,7 @@ import "./local-dashboard-controls.css";
 import "./easterEgg";
 import "./remotePresenceIndicators";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
+import { installKioskRecovery } from "./runtime/kioskRecovery";
 
+installKioskRecovery();
 createRoot(document.getElementById("root")).render(<StrictMode><DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary></StrictMode>);
