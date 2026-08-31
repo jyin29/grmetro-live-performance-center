@@ -5,6 +5,7 @@ import { PresentationControllerProvider } from "./controller/PresentationControl
 import "./styles.css";
 import "./remote-mobile-fixes.css";
 import "./remote-polish.css";
+import "./diagnostics-polish.css";
 import "./operations-slide-fixes.css";
 import "./final-tv-readability.css";
 import "./metric-customization.css";
