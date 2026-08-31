@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference="Stop"
 $root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $logs=Join-Path $root "logs"
+$edgeRecovery=Join-Path $PSScriptRoot "restart-servicetitan-edge.ps1"
 function Backend-Health { try { Invoke-RestMethod "http://127.0.0.1:3000/api/v1/health" -TimeoutSec 3 | Out-Null; return $true } catch { return $false } }
 function Backend-Processes { @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*apps/backend/src/index.js*" }) }
 switch($Action){
@@ -20,16 +21,11 @@ switch($Action){
     Backend-Processes | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
     Write-Host "Stopped backend. The supervisor will detect this and rebuild the backend process automatically." -ForegroundColor Yellow
   }
-  "restart-browser" {
-    & (Join-Path $PSScriptRoot "launch-edge.ps1") -RestartExisting
-  }
+  "restart-browser" { & $edgeRecovery }
   "full-recovery" {
     Backend-Processes | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-    & (Join-Path $PSScriptRoot "launch-edge.ps1") -RestartExisting
+    & $edgeRecovery
     Write-Host "Requested full recovery. The supervisor will restore the backend after detecting the stopped process." -ForegroundColor Yellow
   }
-  "logs" {
-    New-Item -ItemType Directory -Force -Path $logs | Out-Null
-    Start-Process explorer.exe $logs
-  }
+  "logs" { New-Item -ItemType Directory -Force -Path $logs | Out-Null; Start-Process explorer.exe $logs }
 }
