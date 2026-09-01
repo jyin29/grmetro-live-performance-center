@@ -51,7 +51,10 @@ test("admin API exposes safe read-only configuration and runtime state", async (
     assert.equal(body.events.pendingEvents, 2);
     assert.equal(body.presentation.slides.length, 6);
     assert.equal(body.system.connectedRemotes, 2);
-    assert.equal(JSON.stringify(body).toLowerCase().includes("servicetitan"), false);
+    const serialized = JSON.stringify(body).toLowerCase();
+    for (const secret of ["csrf", "cookie", "debugger", "authorization", "rawservicetitanresponse"]) {
+      assert.equal(serialized.includes(secret), false);
+    }
   });
 });
 
