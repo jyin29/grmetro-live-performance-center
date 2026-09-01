@@ -75,7 +75,16 @@ function Test-ServiceTitanAuthentication($admin) {
   $st=$admin.diagnostics.serviceTitan; $browser=$admin.diagnostics.browser
   $text=(($st|ConvertTo-Json -Compress -Depth 5)+" "+($browser|ConvertTo-Json -Compress -Depth 5)).ToLowerInvariant()
   if($text -match "login|sign.in|auth.*required|unauthorized|forbidden|session.*expired"){return "login-required"}
-  if($admin.diagnostics.subsystems.servicetitan -eq "healthy"){return "healthy"}
+
+  # The ServiceTitan client reports the healthy state as "connected" while the
+  # diagnostics subsystem historically used "healthy". Treat both as healthy.
+  # Requiring only the literal word "healthy" caused the supervisor to restart
+  # a perfectly working backend and Edge session forever.
+  $serviceTitanStatus = [string]$st.status
+  $subsystemStatus = [string]$admin.diagnostics.subsystems.servicetitan
+  $browserReady = ($browser.connected -eq $true -and $browser.serviceTitanPageFound -eq $true)
+  if(($serviceTitanStatus -eq "connected" -or $subsystemStatus -eq "healthy" -or $subsystemStatus -eq "connected") -and $browserReady){return "healthy"}
+
   return "degraded"
 }
 
