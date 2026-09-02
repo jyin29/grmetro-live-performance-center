@@ -11,7 +11,6 @@ $stdoutLog = Join-Path $logs "launcher-backend.stdout.log"
 $stderrLog = Join-Path $logs "launcher-backend.stderr.log"
 $healthUrl = "http://127.0.0.1:3000/api/v1/health"
 $adminUrl = "http://127.0.0.1:3000/api/v1/admin"
-$backendScript = Join-Path $root "apps\backend\src\index.js"
 $edgeRecovery = Join-Path $PSScriptRoot "restart-servicetitan-edge.ps1"
 $script:backend = $null
 $script:restartHistory = @()
@@ -70,21 +69,26 @@ function Invoke-FullRecovery([string]$Reason) {
   if(Wait-Healthy 30){ Write-SupervisorLog "full-recovery-complete" "Application stack recovered." "RECOVERED"; $script:recoveryLevel=0; return $true }
   Write-SupervisorLog "intervention-required" "Full recovery failed. Preserve logs and check ServiceTitan authentication/backend startup errors." "ERROR"; $script:recoveryLevel=6; return $false
 }
-function Test-ServiceTitanAuthentication($admin) {
+function Get-ServiceTitanState($admin) {
   if(-not $admin){return "unknown"}
-  $st=$admin.diagnostics.serviceTitan; $browser=$admin.diagnostics.browser
+  $st=$admin.diagnostics.serviceTitan
+  $browser=$admin.diagnostics.browser
   $text=(($st|ConvertTo-Json -Compress -Depth 5)+" "+($browser|ConvertTo-Json -Compress -Depth 5)).ToLowerInvariant()
   if($text -match "login|sign.in|auth.*required|unauthorized|forbidden|session.*expired"){return "login-required"}
 
-  # The ServiceTitan client reports the healthy state as "connected" while the
-  # diagnostics subsystem historically used "healthy". Treat both as healthy.
-  # Requiring only the literal word "healthy" caused the supervisor to restart
-  # a perfectly working backend and Edge session forever.
   $serviceTitanStatus = [string]$st.status
-  $subsystemStatus = [string]$admin.diagnostics.subsystems.servicetitan
-  $browserReady = ($browser.connected -eq $true -and $browser.serviceTitanPageFound -eq $true)
-  if(($serviceTitanStatus -eq "connected" -or $subsystemStatus -eq "healthy" -or $subsystemStatus -eq "connected") -and $browserReady){return "healthy"}
+  $browserConnected = ($browser.connected -eq $true)
+  $pageFound = ($browser.serviceTitanPageFound -eq $true)
+  $browserConnecting = ($browser.connecting -eq $true)
 
+  if($serviceTitanStatus -eq "connected" -and $browserConnected -and $pageFound){return "healthy"}
+
+  # BrowserManager can be connected to Edge before it has locked onto the approved
+  # ServiceTitan dashboard tab. That is a waiting/diagnostic state, not evidence
+  # that restarting Node or Edge will repair anything. Preserve the session so a
+  # user can navigate/login and so BrowserManager can discover the page naturally.
+  if($browserConnecting -or ($browserConnected -and -not $pageFound)){return "waiting-for-page"}
+  if(-not $browserConnected){return "browser-offline"}
   return "degraded"
 }
 
@@ -97,16 +101,32 @@ try {
     if($script:backend -and $script:backend.HasExited){ Write-SupervisorLog "backend-process-exited" "Backend process exited with code $($script:backend.ExitCode)." "ERROR"; if(-not (Restart-BackendSafely "Process exited")){ [void](Invoke-FullRecovery "Backend repeatedly exited") }; continue }
     if(-not (Test-BackendHealth)){ $script:healthFailures += 1; $script:recoveryLevel=1; Write-SupervisorLog "health-miss" "Backend health check failed ($($script:healthFailures)/3 before restart)." "WARN"; if($script:healthFailures -ge 3){ if(-not (Restart-BackendSafely "Three consecutive health failures")){ [void](Invoke-FullRecovery "Backend health remained unavailable") } }; continue }
     if($script:healthFailures -gt 0){Write-SupervisorLog "health-recovered" "Backend recovered without process restart." "RECOVERED"}; $script:healthFailures=0
-    $admin=Get-AdminHealth; $auth=Test-ServiceTitanAuthentication $admin
-    if($auth -eq "login-required"){
-      $script:recoveryLevel=6
+
+    $admin=Get-AdminHealth
+    $state=Get-ServiceTitanState $admin
+    if($state -eq "login-required"){
+      $script:recoveryLevel=6; $script:serviceTitanFailures=0
       if(((Get-Date)-$script:lastInterventionLog).TotalMinutes -ge 5){ Write-SupervisorLog "intervention-required" "ServiceTitan authentication/login is required. Destructive recovery is suspended; log in using the dedicated Edge profile." "ERROR"; $script:lastInterventionLog=Get-Date }
       Start-Sleep -Seconds 30; continue
     }
-    if($auth -eq "degraded"){
-      $script:serviceTitanFailures += 1; Write-SupervisorLog "servicetitan-degraded" "ServiceTitan/browser diagnostics degraded ($($script:serviceTitanFailures)/6)." "WARN"
-      if($script:serviceTitanFailures -eq 3){ $script:recoveryLevel=3; [void](Restart-BackendSafely "ServiceTitan connection remained degraded") }
-      elseif($script:serviceTitanFailures -ge 6){ if(Restart-ServiceTitanBrowser "ServiceTitan remained degraded after backend recovery"){ $script:serviceTitanFailures=0 } else { [void](Invoke-FullRecovery "ServiceTitan browser recovery failed") } }
-    } else { if($script:serviceTitanFailures -gt 0){Write-SupervisorLog "servicetitan-recovered" "ServiceTitan diagnostics returned healthy." "RECOVERED"}; $script:serviceTitanFailures=0; $script:recoveryLevel=0 }
+    if($state -eq "waiting-for-page"){
+      if($script:serviceTitanFailures -gt 0){Write-SupervisorLog "servicetitan-recovery-paused" "Edge is connected but no approved ServiceTitan dashboard tab is locked yet. Automatic destructive recovery is paused." "WARN"}
+      $script:serviceTitanFailures=0; $script:recoveryLevel=0; continue
+    }
+    if($state -eq "unknown"){
+      $script:serviceTitanFailures=0; continue
+    }
+    if($state -eq "browser-offline"){
+      $script:serviceTitanFailures += 1; Write-SupervisorLog "browser-offline" "Dedicated Edge connection is unavailable ($($script:serviceTitanFailures)/6)." "WARN"
+      if($script:serviceTitanFailures -ge 6){ if(Restart-ServiceTitanBrowser "Dedicated Edge remained unreachable"){ $script:serviceTitanFailures=0 } else { [void](Invoke-FullRecovery "ServiceTitan browser recovery failed") } }
+      continue
+    }
+    if($state -eq "degraded"){
+      $script:serviceTitanFailures += 1; Write-SupervisorLog "servicetitan-degraded" "ServiceTitan client is degraded while the approved browser page is present ($($script:serviceTitanFailures)/6)." "WARN"
+      if($script:serviceTitanFailures -ge 6){ if(-not (Restart-BackendSafely "ServiceTitan client remained degraded with browser page present")){ [void](Invoke-FullRecovery "ServiceTitan client recovery failed") }; $script:serviceTitanFailures=0 }
+    } else {
+      if($script:serviceTitanFailures -gt 0){Write-SupervisorLog "servicetitan-recovered" "ServiceTitan diagnostics returned healthy." "RECOVERED"}
+      $script:serviceTitanFailures=0; $script:recoveryLevel=0
+    }
   }
 } finally { Write-SupervisorLog "supervisor-stop" "Supervisor is shutting down; stopping owned backend process." "WARN"; Stop-Backend }
