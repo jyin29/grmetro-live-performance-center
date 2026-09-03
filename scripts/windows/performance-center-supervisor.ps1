@@ -19,6 +19,7 @@ $script:recoveryLevel = 0
 $script:serviceTitanFailures = 0
 $script:lastFullRecovery = [DateTime]::MinValue
 $script:lastInterventionLog = [DateTime]::MinValue
+$script:startupSummaryShown = $false
 
 function Write-SupervisorLog([string]$Event,[string]$Message,[string]$Severity="INFO") {
   $line = "{0} [{1}] L{2} {3}: {4}" -f (Get-Date).ToString("o"),$Severity,$script:recoveryLevel,$Event,$Message
@@ -26,112 +27,60 @@ function Write-SupervisorLog([string]$Event,[string]$Message,[string]$Severity="
   $color = if($Severity -eq "ERROR"){"Red"}elseif($Severity -eq "WARN"){"Yellow"}elseif($Severity -eq "RECOVERED"){"Green"}else{"DarkGray"}
   Write-Host $line -ForegroundColor $color
 }
-function Get-BackendPortOwner {
-  try {
-    $connection=Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction Stop | Select-Object -First 1
-    if($connection){return [int]$connection.OwningProcess}
-  } catch {}
-  return $null
-}
-function Get-ProcessCommandLine([int]$ProcessId) {
-  try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction Stop).CommandLine } catch { return "" }
-}
-function Test-ProjectBackendProcess([int]$ProcessId) {
-  if($ProcessId -le 0){return $false}
-  try { $process=Get-Process -Id $ProcessId -ErrorAction Stop; if($process.ProcessName -ne "node"){return $false} } catch { return $false }
-  $command=Get-ProcessCommandLine $ProcessId
-  return ($command -match "apps[\\/]backend[\\/]src[\\/]index\.js")
-}
-function Test-OwnedBackendHealth {
-  if(-not $script:backend -or $script:backend.HasExited){return $false}
-  $owner=Get-BackendPortOwner
-  if($owner -ne $script:backend.Id){return $false}
-  try { Invoke-RestMethod -Uri $healthUrl -TimeoutSec 3 | Out-Null; return $true } catch { return $false }
-}
+function Get-BackendPortOwner { try { $connection=Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction Stop | Select-Object -First 1; if($connection){return [int]$connection.OwningProcess} } catch {}; return $null }
+function Get-ProcessCommandLine([int]$ProcessId) { try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction Stop).CommandLine } catch { return "" } }
+function Test-ProjectBackendProcess([int]$ProcessId) { if($ProcessId -le 0){return $false}; try { $process=Get-Process -Id $ProcessId -ErrorAction Stop; if($process.ProcessName -ne "node"){return $false} } catch { return $false }; $command=Get-ProcessCommandLine $ProcessId; return ($command -match "apps[\\/]backend[\\/]src[\\/]index\.js") }
+function Test-OwnedBackendHealth { if(-not $script:backend -or $script:backend.HasExited){return $false}; $owner=Get-BackendPortOwner; if($owner -ne $script:backend.Id){return $false}; try { Invoke-RestMethod -Uri $healthUrl -TimeoutSec 3 | Out-Null; return $true } catch { return $false } }
 function Test-BackendHealth { return Test-OwnedBackendHealth }
 function Get-AdminHealth { try { return Invoke-RestMethod -Uri $adminUrl -TimeoutSec 4 } catch { return $null } }
-function Clear-StaleProjectBackend {
-  $owner=Get-BackendPortOwner
-  if(-not $owner){return $true}
-  if($script:backend -and -not $script:backend.HasExited -and $owner -eq $script:backend.Id){return $true}
-  if(-not (Test-ProjectBackendProcess $owner)){
-    Write-SupervisorLog "port-conflict" "Port 3000 is owned by unrelated PID $owner. Refusing to terminate it; intervention is required." "ERROR"
-    return $false
-  }
-  Write-SupervisorLog "stale-backend" "Found an older GRMetro backend PID $owner already owning port 3000. Stopping it before starting the supervised instance." "WARN"
-  Stop-Process -Id $owner -Force -ErrorAction SilentlyContinue
-  try { Wait-Process -Id $owner -Timeout 8 -ErrorAction SilentlyContinue } catch {}
-  Start-Sleep -Milliseconds 500
-  if(Get-BackendPortOwner){Write-SupervisorLog "stale-backend-stop-failed" "Port 3000 remained occupied after stopping stale project backend PID $owner." "ERROR";return $false}
-  return $true
-}
-function Start-Backend {
-  if($script:backend -and -not $script:backend.HasExited -and (Get-BackendPortOwner) -eq $script:backend.Id){ return $script:backend }
-  if(-not (Clear-StaleProjectBackend)){ $script:backend=$null; return $null }
-  $env:NODE_ENV="production"; $env:MOCK_MODE="false"; $env:ENABLE_DEVELOPMENT_ROUTES="false"; $env:HOST="0.0.0.0"
-  $script:backend = Start-Process -FilePath "node" -ArgumentList "apps/backend/src/index.js" -WorkingDirectory $root -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
-  Write-SupervisorLog "backend-start" "Started backend PID $($script:backend.Id); waiting for that exact PID to own port 3000."
-  return $script:backend
-}
-function Stop-Backend {
-  if($script:backend -and -not $script:backend.HasExited){ Write-SupervisorLog "backend-stop" "Stopping backend PID $($script:backend.Id)." "WARN"; Stop-Process -Id $script:backend.Id -Force -ErrorAction SilentlyContinue; try { Wait-Process -Id $script:backend.Id -Timeout 5 -ErrorAction SilentlyContinue } catch {} }
-  $script:backend=$null
-}
-function Wait-Healthy([int]$Seconds=30) {
-  $deadline=(Get-Date).AddSeconds($Seconds)
-  do {
-    if(Test-OwnedBackendHealth){return $true}
-    if($script:backend -and $script:backend.HasExited){Write-SupervisorLog "backend-startup-exited" "New backend PID $($script:backend.Id) exited before owning port 3000 (exit $($script:backend.ExitCode))." "ERROR";return $false}
-    $owner=Get-BackendPortOwner
-    if($owner -and $script:backend -and $owner -ne $script:backend.Id){Write-SupervisorLog "backend-owner-mismatch" "Health endpoint is being served by PID $owner, not supervised backend PID $($script:backend.Id). Refusing false healthy state." "ERROR";return $false}
-    Start-Sleep -Seconds 1
-  } while((Get-Date)-lt $deadline)
-  return $false
-}
-function Register-Restart { $cutoff=(Get-Date).AddMinutes(-10); $script:restartHistory=@($script:restartHistory|Where-Object{$_ -gt $cutoff}) + (Get-Date); return $script:restartHistory.Count }
-function Restart-BackendSafely([string]$Reason) {
-  $script:recoveryLevel=2; $count=Register-Restart
-  if($count -gt 5){ Write-SupervisorLog "restart-loop-protected" "More than 5 backend restarts occurred within 10 minutes. Escalating instead of looping." "ERROR"; return $false }
-  Write-SupervisorLog "backend-recovery" "Restart requested: $Reason (restart $count/5 in current window)." "WARN"
-  Stop-Backend; Start-Sleep -Seconds 2; if(-not(Start-Backend)){return $false}
-  if(Wait-Healthy 30){ Write-SupervisorLog "backend-recovered" "Owned backend health endpoint recovered." "RECOVERED"; $script:healthFailures=0; $script:recoveryLevel=0; return $true }
-  Write-SupervisorLog "backend-recovery-failed" "Owned backend failed to become healthy after restart." "ERROR"; return $false
-}
-function Restart-ServiceTitanBrowser([string]$Reason) {
-  if($NoBrowserRecovery){return $false}
-  $script:recoveryLevel=4; Write-SupervisorLog "browser-recovery" "Controlled dedicated ServiceTitan Edge recovery: $Reason" "WARN"
+function Get-LanIPv4 {
   try {
-    if(-not(Test-Path $edgeRecovery)){throw "Missing browser recovery helper: $edgeRecovery"}
-    & $edgeRecovery
-    if($LASTEXITCODE -ne 0){throw "Edge recovery helper exited $LASTEXITCODE"}
-    Start-Sleep -Seconds 8
-    Write-SupervisorLog "browser-relaunched" "Dedicated ServiceTitan Edge profile was relaunched without touching unrelated Edge profiles." "RECOVERED"; return $true
-  } catch { Write-SupervisorLog "browser-recovery-failed" $_.Exception.Message "ERROR"; return $false }
+    $candidate=Get-NetIPConfiguration -ErrorAction Stop | Where-Object { $_.IPv4DefaultGateway -and $_.IPv4Address } | ForEach-Object { $_.IPv4Address.IPAddress } | Where-Object { $_ -and $_ -notmatch '^127\.' -and $_ -notmatch '^169\.254\.' } | Select-Object -First 1
+    if($candidate){return [string]$candidate}
+  } catch {}
+  try { return [string]([System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and -not $_.IPAddressToString.StartsWith('127.') } | Select-Object -First 1).IPAddressToString } catch { return $null }
 }
-function Invoke-FullRecovery([string]$Reason) {
-  $script:recoveryLevel=5
-  if(((Get-Date)-$script:lastFullRecovery).TotalMinutes -lt 10){ Write-SupervisorLog "full-recovery-loop-protected" "A full recovery already ran within 10 minutes. Intervention is required." "ERROR"; $script:recoveryLevel=6; return $false }
-  $script:lastFullRecovery=Get-Date; Write-SupervisorLog "full-recovery" $Reason "WARN"; Stop-Backend
-  if(-not $NoBrowserRecovery){ [void](Restart-ServiceTitanBrowser "Full stack recovery") }
-  Start-Sleep -Seconds 3; if(-not(Start-Backend)){return $false}
-  if(Wait-Healthy 30){ Write-SupervisorLog "full-recovery-complete" "Application stack recovered." "RECOVERED"; $script:recoveryLevel=0; return $true }
-  Write-SupervisorLog "intervention-required" "Full recovery failed. Preserve logs and check ServiceTitan authentication/backend startup errors." "ERROR"; $script:recoveryLevel=6; return $false
+function Show-StartupSummary($admin) {
+  if($script:startupSummaryShown -or -not $admin){return}
+  $state=Get-ServiceTitanState $admin
+  if($state -ne "healthy"){return}
+  $ip=Get-LanIPv4; if(-not $ip){$ip="<THIS-PC-IP>"}
+  $base="http://${ip}:3000"
+  Write-Host ""
+  Write-Host "============================================================" -ForegroundColor Green
+  Write-Host " GRMetro Live Performance Center" -ForegroundColor White
+  Write-Host " SUCCESSFULLY CONNECTED" -ForegroundColor Green
+  Write-Host "============================================================" -ForegroundColor Green
+  Write-Host " Backend             CONNECTED" -ForegroundColor Green
+  Write-Host " ServiceTitan Edge   CONNECTED" -ForegroundColor Green
+  Write-Host " ServiceTitan Page   CONNECTED" -ForegroundColor Green
+  Write-Host " Live Data           CONNECTED" -ForegroundColor Green
+  Write-Host ""
+  Write-Host " Remote Control:" -ForegroundColor Cyan
+  Write-Host " $base/remote" -ForegroundColor White
+  Write-Host ""
+  Write-Host " Permanent TV display URLs:" -ForegroundColor Cyan
+  foreach($display in $admin.displays){ Write-Host (" {0,-14} {1}/?display={2}" -f $display.displayName,$base,$display.displayId) -ForegroundColor White }
+  Write-Host ""
+  Write-Host " QR CODE:" -ForegroundColor Cyan
+  Write-Host " Scan the QR shown on the Remote Control page to connect a phone." -ForegroundColor White
+  Write-Host ""
+  Write-Host " Self-healing supervisor is ACTIVE." -ForegroundColor Green
+  Write-Host " Leave this window running." -ForegroundColor DarkGray
+  Write-Host "============================================================" -ForegroundColor Green
+  Write-Host ""
+  Write-SupervisorLog "startup-ready" "Verified backend, dedicated Edge, approved ServiceTitan page, and ServiceTitan client. Remote: $base/remote" "RECOVERED"
+  $script:startupSummaryShown=$true
 }
-function Get-ServiceTitanState($admin) {
-  if(-not $admin){return "unknown"}
-  $st=$admin.diagnostics.serviceTitan
-  $browser=$admin.diagnostics.browser
-  $text=(($st|ConvertTo-Json -Compress -Depth 5)+" "+($browser|ConvertTo-Json -Compress -Depth 5)).ToLowerInvariant()
-  if($text -match "login|sign.in|auth.*required|unauthorized|forbidden|session.*expired"){return "login-required"}
-  $serviceTitanStatus = [string]$st.status
-  $browserConnected = ($browser.connected -eq $true)
-  $pageFound = ($browser.serviceTitanPageFound -eq $true)
-  $browserConnecting = ($browser.connecting -eq $true)
-  if($serviceTitanStatus -eq "connected" -and $browserConnected -and $pageFound){return "healthy"}
-  if($browserConnecting -or ($browserConnected -and -not $pageFound)){return "waiting-for-page"}
-  if(-not $browserConnected){return "browser-offline"}
-  return "degraded"
-}
+function Clear-StaleProjectBackend { $owner=Get-BackendPortOwner; if(-not $owner){return $true}; if($script:backend -and -not $script:backend.HasExited -and $owner -eq $script:backend.Id){return $true}; if(-not (Test-ProjectBackendProcess $owner)){Write-SupervisorLog "port-conflict" "Port 3000 is owned by unrelated PID $owner. Refusing to terminate it; intervention is required." "ERROR";return $false}; Write-SupervisorLog "stale-backend" "Found an older GRMetro backend PID $owner already owning port 3000. Stopping it before starting the supervised instance." "WARN"; Stop-Process -Id $owner -Force -ErrorAction SilentlyContinue; try { Wait-Process -Id $owner -Timeout 8 -ErrorAction SilentlyContinue } catch {}; Start-Sleep -Milliseconds 500; if(Get-BackendPortOwner){Write-SupervisorLog "stale-backend-stop-failed" "Port 3000 remained occupied after stopping stale project backend PID $owner." "ERROR";return $false}; return $true }
+function Start-Backend { if($script:backend -and -not $script:backend.HasExited -and (Get-BackendPortOwner) -eq $script:backend.Id){ return $script:backend }; if(-not (Clear-StaleProjectBackend)){ $script:backend=$null; return $null }; $env:NODE_ENV="production"; $env:MOCK_MODE="false"; $env:ENABLE_DEVELOPMENT_ROUTES="false"; $env:HOST="0.0.0.0"; $script:backend = Start-Process -FilePath "node" -ArgumentList "apps/backend/src/index.js" -WorkingDirectory $root -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog; Write-SupervisorLog "backend-start" "Started backend PID $($script:backend.Id); waiting for that exact PID to own port 3000."; return $script:backend }
+function Stop-Backend { if($script:backend -and -not $script:backend.HasExited){ Write-SupervisorLog "backend-stop" "Stopping backend PID $($script:backend.Id)." "WARN"; Stop-Process -Id $script:backend.Id -Force -ErrorAction SilentlyContinue; try { Wait-Process -Id $script:backend.Id -Timeout 5 -ErrorAction SilentlyContinue } catch {} }; $script:backend=$null }
+function Wait-Healthy([int]$Seconds=30) { $deadline=(Get-Date).AddSeconds($Seconds); do { if(Test-OwnedBackendHealth){return $true}; if($script:backend -and $script:backend.HasExited){Write-SupervisorLog "backend-startup-exited" "New backend PID $($script:backend.Id) exited before owning port 3000 (exit $($script:backend.ExitCode))." "ERROR";return $false}; $owner=Get-BackendPortOwner; if($owner -and $script:backend -and $owner -ne $script:backend.Id){Write-SupervisorLog "backend-owner-mismatch" "Health endpoint is being served by PID $owner, not supervised backend PID $($script:backend.Id). Refusing false healthy state." "ERROR";return $false}; Start-Sleep -Seconds 1 } while((Get-Date)-lt $deadline); return $false }
+function Register-Restart { $cutoff=(Get-Date).AddMinutes(-10); $script:restartHistory=@($script:restartHistory|Where-Object{$_ -gt $cutoff}) + (Get-Date); return $script:restartHistory.Count }
+function Restart-BackendSafely([string]$Reason) { $script:recoveryLevel=2; $count=Register-Restart; if($count -gt 5){ Write-SupervisorLog "restart-loop-protected" "More than 5 backend restarts occurred within 10 minutes. Escalating instead of looping." "ERROR"; return $false }; Write-SupervisorLog "backend-recovery" "Restart requested: $Reason (restart $count/5 in current window)." "WARN"; Stop-Backend; Start-Sleep -Seconds 2; if(-not(Start-Backend)){return $false}; if(Wait-Healthy 30){ Write-SupervisorLog "backend-recovered" "Owned backend health endpoint recovered." "RECOVERED"; $script:healthFailures=0; $script:recoveryLevel=0; return $true }; Write-SupervisorLog "backend-recovery-failed" "Owned backend failed to become healthy after restart." "ERROR"; return $false }
+function Restart-ServiceTitanBrowser([string]$Reason) { if($NoBrowserRecovery){return $false}; $script:recoveryLevel=4; Write-SupervisorLog "browser-recovery" "Controlled dedicated ServiceTitan Edge recovery: $Reason" "WARN"; try { if(-not(Test-Path $edgeRecovery)){throw "Missing browser recovery helper: $edgeRecovery"}; & $edgeRecovery; if($LASTEXITCODE -ne 0){throw "Edge recovery helper exited $LASTEXITCODE"}; Start-Sleep -Seconds 8; Write-SupervisorLog "browser-relaunched" "Dedicated ServiceTitan Edge profile was relaunched without touching unrelated Edge profiles." "RECOVERED"; return $true } catch { Write-SupervisorLog "browser-recovery-failed" $_.Exception.Message "ERROR"; return $false } }
+function Invoke-FullRecovery([string]$Reason) { $script:recoveryLevel=5; if(((Get-Date)-$script:lastFullRecovery).TotalMinutes -lt 10){ Write-SupervisorLog "full-recovery-loop-protected" "A full recovery already ran within 10 minutes. Intervention is required." "ERROR"; $script:recoveryLevel=6; return $false }; $script:lastFullRecovery=Get-Date; Write-SupervisorLog "full-recovery" $Reason "WARN"; Stop-Backend; if(-not $NoBrowserRecovery){ [void](Restart-ServiceTitanBrowser "Full stack recovery") }; Start-Sleep -Seconds 3; if(-not(Start-Backend)){return $false}; if(Wait-Healthy 30){ Write-SupervisorLog "full-recovery-complete" "Application stack recovered." "RECOVERED"; $script:recoveryLevel=0; return $true }; Write-SupervisorLog "intervention-required" "Full recovery failed. Preserve logs and check ServiceTitan authentication/backend startup errors." "ERROR"; $script:recoveryLevel=6; return $false }
+function Get-ServiceTitanState($admin) { if(-not $admin){return "unknown"}; $st=$admin.diagnostics.serviceTitan; $browser=$admin.diagnostics.browser; $text=(($st|ConvertTo-Json -Compress -Depth 5)+" "+($browser|ConvertTo-Json -Compress -Depth 5)).ToLowerInvariant(); if($text -match "login|sign.in|auth.*required|unauthorized|forbidden|session.*expired"){return "login-required"}; $serviceTitanStatus=[string]$st.status; $browserConnected=($browser.connected -eq $true); $pageFound=($browser.serviceTitanPageFound -eq $true); $browserConnecting=($browser.connecting -eq $true); if($serviceTitanStatus -eq "connected" -and $browserConnected -and $pageFound){return "healthy"}; if($browserConnecting -or ($browserConnected -and -not $pageFound)){return "waiting-for-page"}; if(-not $browserConnected){return "browser-offline"}; return "degraded" }
 
 Write-SupervisorLog "supervisor-start" "Windows supervisor started. Central PC hosts backend/ServiceTitan; TVs independently load permanent display URLs."
 if(-not(Start-Backend)){Write-SupervisorLog "backend-start-blocked" "Could not safely start the backend because port ownership could not be established." "ERROR";exit 1}
@@ -144,8 +93,8 @@ try {
     if($script:backend -and $owner -ne $script:backend.Id){$script:healthFailures+=1;$script:recoveryLevel=1;Write-SupervisorLog "backend-owner-mismatch" "Port 3000 owner PID $owner does not match supervised backend PID $($script:backend.Id)." "ERROR";if($script:healthFailures -ge 1){if(-not(Restart-BackendSafely "Lost ownership of backend port 3000")){[void](Invoke-FullRecovery "Backend port ownership could not be restored")}};continue}
     if(-not (Test-BackendHealth)){ $script:healthFailures += 1; $script:recoveryLevel=1; Write-SupervisorLog "health-miss" "Owned backend health check failed ($($script:healthFailures)/3 before restart)." "WARN"; if($script:healthFailures -ge 3){ if(-not (Restart-BackendSafely "Three consecutive owned-backend health failures")){ [void](Invoke-FullRecovery "Backend health remained unavailable") } }; continue }
     if($script:healthFailures -gt 0){Write-SupervisorLog "health-recovered" "Owned backend recovered without process restart." "RECOVERED"}; $script:healthFailures=0
-    $admin=Get-AdminHealth
-    $state=Get-ServiceTitanState $admin
+    $admin=Get-AdminHealth; $state=Get-ServiceTitanState $admin
+    if($state -eq "healthy"){ Show-StartupSummary $admin }
     if($state -eq "login-required"){$script:recoveryLevel=6;$script:serviceTitanFailures=0;if(((Get-Date)-$script:lastInterventionLog).TotalMinutes -ge 5){Write-SupervisorLog "intervention-required" "ServiceTitan authentication/login is required. Destructive recovery is suspended; log in using the dedicated Edge profile." "ERROR";$script:lastInterventionLog=Get-Date};Start-Sleep -Seconds 30;continue}
     if($state -eq "waiting-for-page"){if($script:serviceTitanFailures -gt 0){Write-SupervisorLog "servicetitan-recovery-paused" "Edge is connected but no approved ServiceTitan dashboard tab is locked yet. Automatic destructive recovery is paused." "WARN"};$script:serviceTitanFailures=0;$script:recoveryLevel=0;continue}
     if($state -eq "unknown"){$script:serviceTitanFailures=0;continue}
