@@ -33,13 +33,13 @@ function Get-BackendPortOwner {
   } catch {}
   return $null
 }
-function Get-ProcessCommandLine([int]$Pid) {
-  try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$Pid" -ErrorAction Stop).CommandLine } catch { return "" }
+function Get-ProcessCommandLine([int]$ProcessId) {
+  try { return [string](Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction Stop).CommandLine } catch { return "" }
 }
-function Test-ProjectBackendProcess([int]$Pid) {
-  if($Pid -le 0){return $false}
-  try { $process=Get-Process -Id $Pid -ErrorAction Stop; if($process.ProcessName -ne "node"){return $false} } catch { return $false }
-  $command=Get-ProcessCommandLine $Pid
+function Test-ProjectBackendProcess([int]$ProcessId) {
+  if($ProcessId -le 0){return $false}
+  try { $process=Get-Process -Id $ProcessId -ErrorAction Stop; if($process.ProcessName -ne "node"){return $false} } catch { return $false }
+  $command=Get-ProcessCommandLine $ProcessId
   return ($command -match "apps[\\/]backend[\\/]src[\\/]index\.js")
 }
 function Test-OwnedBackendHealth {
@@ -58,7 +58,6 @@ function Clear-StaleProjectBackend {
     Write-SupervisorLog "port-conflict" "Port 3000 is owned by unrelated PID $owner. Refusing to terminate it; intervention is required." "ERROR"
     return $false
   }
-  $command=Get-ProcessCommandLine $owner
   Write-SupervisorLog "stale-backend" "Found an older GRMetro backend PID $owner already owning port 3000. Stopping it before starting the supervised instance." "WARN"
   Stop-Process -Id $owner -Force -ErrorAction SilentlyContinue
   try { Wait-Process -Id $owner -Timeout 8 -ErrorAction SilentlyContinue } catch {}
