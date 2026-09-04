@@ -45,3 +45,10 @@ test("hidden-tab recovery waits for visibility and cleans up every listener", as
   doc.hidden = false; listeners.get("visibilitychange")(); listeners.get("online")();
   assert.deepEqual(events, ["visibility", "online"]); cleanup(); assert.equal(removed.length, 3);
 });
+
+test("kiosk recovery never reloads during a backend outage", async () => {
+  const { shouldControlledReload } = await import("../apps/dashboard/src/runtime/kioskRecovery.js");
+  assert.equal(shouldControlledReload({ backendHealthy: false, runtimeErrors: 99 }), false);
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 2 }), false);
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 3 }), true);
+});
