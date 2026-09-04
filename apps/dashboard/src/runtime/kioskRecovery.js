@@ -3,101 +3,10 @@ const CHECK_MS = 5000;
 const RUNTIME_ERRORS_BEFORE_RELOAD = 3;
 const RELOAD_WINDOW_MS = 15 * 60 * 1000;
 const MAX_RELOADS_PER_WINDOW = 3;
+const MEMORY_CHECK_MS = 60 * 1000;
+const MEMORY_RATIO_WARNING = 0.85;
+const MEMORY_WARNINGS_BEFORE_RELOAD = 5;
 
-function readState() {
-  try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}"); }
-  catch { return {}; }
-}
-
-function writeState(state) {
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch {}
-}
-
-function log(type, detail = {}) {
-  const state = readState();
-  const history = Array.isArray(state.history) ? state.history : [];
-  history.push({ at: new Date().toISOString(), type, ...detail });
-  writeState({ ...state, history: history.slice(-100) });
-  window.dispatchEvent(new CustomEvent("grmetro:recovery-event", { detail: history.at(-1) }));
-}
-
-export function getLocalRecoveryHistory() {
-  return (readState().history || []).slice().reverse();
-}
-
-export function shouldControlledReload({ backendHealthy, runtimeErrors }) {
-  return backendHealthy === true && runtimeErrors >= RUNTIME_ERRORS_BEFORE_RELOAD;
-}
-
-function attemptControlledReload(runtimeErrors) {
-  const state = readState();
-  const now = Date.now();
-  const reloads = (state.reloads || []).filter((at) => now - at < RELOAD_WINDOW_MS);
-  if (reloads.length >= MAX_RELOADS_PER_WINDOW) {
-    log("reload-loop-protected", { runtimeErrors });
-    return false;
-  }
-  reloads.push(now);
-  writeState({ ...state, reloads });
-  log("controlled-page-reload", { runtimeErrors, reloadNumber: reloads.length, reason: "runtime-errors-with-healthy-backend" });
-  window.location.reload();
-  return true;
-}
-
-export function installKioskRecovery({ enabled = true } = {}) {
-  if (!enabled || typeof window === "undefined" || window.location.pathname.replace(/\/+$/, "") === "/remote") return () => {};
-
-  let backendFailures = 0;
-  let runtimeErrors = 0;
-  let backendHealthy = false;
-  let stopped = false;
-  let request = null;
-
-  const check = async () => {
-    if (stopped) return;
-    request?.abort();
-    request = new AbortController();
-    try {
-      const response = await fetch("/api/v1/health", { cache: "no-store", signal: request.signal });
-      if (!response.ok) throw new Error(`health ${response.status}`);
-      backendHealthy = true;
-      if (backendFailures) {
-        log("backend-recovered", { failures: backendFailures });
-        backendFailures = 0;
-      }
-      if (shouldControlledReload({ backendHealthy, runtimeErrors })) {
-        if (attemptControlledReload(runtimeErrors)) return;
-        runtimeErrors = 0;
-      }
-    } catch (error) {
-      if (error.name === "AbortError") return;
-      backendHealthy = false;
-      backendFailures += 1;
-      log("backend-health-missed", { failures: backendFailures, action: "preserve-last-known-good" });
-      // Never reload while the backend/network is unavailable. Reloading here would
-      // throw away the already-rendered last-known-good dashboard and expose the TV
-      // browser's connection error page. The normal transport layer keeps retrying.
-    }
-  };
-
-  const onError = (event) => {
-    runtimeErrors += 1;
-    log("browser-runtime-error", { message: String(event?.message || event?.reason || "unknown"), runtimeErrors });
-    // A reload is only permitted after a subsequent successful health check proves
-    // that the backend is reachable. This prevents outage-driven reload loops.
-  };
-
-  const timer = window.setInterval(check, CHECK_MS);
-  check();
-  window.addEventListener("error", onError);
-  window.addEventListener("unhandledrejection", onError);
-
-  return () => {
-    stopped = true;
-    window.clearInterval(timer);
-    request?.abort();
-    window.removeEventListener("error", onError);
-    window.removeEventListener("unhandledrejection", onError);
-  };
-}
+function readState(){try{return JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"{}");}catch{return{};}}function writeState(state){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}function log(type,detail={}){const state=readState(),history=Array.isArray(state.history)?state.history:[];history.push({at:new Date().toISOString(),type,...detail});writeState({...state,history:history.slice(-100)});window.dispatchEvent(new CustomEvent("grmetro:recovery-event",{detail:history.at(-1)}));}export function getLocalRecoveryHistory(){return(readState().history||[]).slice().reverse();}export function shouldControlledReload({backendHealthy,runtimeErrors,memoryWarnings=0}){return backendHealthy===true&&(runtimeErrors>=RUNTIME_ERRORS_BEFORE_RELOAD||memoryWarnings>=MEMORY_WARNINGS_BEFORE_RELOAD);}
+function attemptControlledReload(runtimeErrors,reason="runtime-errors-with-healthy-backend"){const state=readState(),now=Date.now(),reloads=(state.reloads||[]).filter(at=>now-at<RELOAD_WINDOW_MS);if(reloads.length>=MAX_RELOADS_PER_WINDOW){log("reload-loop-protected",{runtimeErrors,reason});return false;}reloads.push(now);writeState({...state,reloads});log("controlled-page-reload",{runtimeErrors,reloadNumber:reloads.length,reason});window.location.reload();return true;}
+export function installKioskRecovery({enabled=true}={}){if(!enabled||typeof window==="undefined"||window.location.pathname.replace(/\/+$/,"")==="/remote")return()=>{};let backendFailures=0,runtimeErrors=0,memoryWarnings=0,backendHealthy=false,stopped=false,request=null;const check=async()=>{if(stopped)return;request?.abort();request=new AbortController();try{const response=await fetch("/api/v1/health",{cache:"no-store",signal:request.signal});if(!response.ok)throw new Error(`health ${response.status}`);backendHealthy=true;if(backendFailures){log("backend-recovered",{failures:backendFailures});backendFailures=0;}if(shouldControlledReload({backendHealthy,runtimeErrors,memoryWarnings})){const reason=memoryWarnings>=MEMORY_WARNINGS_BEFORE_RELOAD?"sustained-memory-pressure-with-healthy-backend":"runtime-errors-with-healthy-backend";if(attemptControlledReload(runtimeErrors,reason))return;runtimeErrors=0;memoryWarnings=0;}}catch(error){if(error.name==="AbortError")return;backendHealthy=false;backendFailures+=1;log("backend-health-missed",{failures:backendFailures,action:"preserve-last-known-good"});}};const onError=event=>{runtimeErrors+=1;log("browser-runtime-error",{message:String(event?.message||event?.reason||"unknown"),runtimeErrors});};const memoryCheck=()=>{const memory=performance?.memory;if(!memory||!Number.isFinite(memory.usedJSHeapSize)||!Number.isFinite(memory.jsHeapSizeLimit)||memory.jsHeapSizeLimit<=0)return;const ratio=memory.usedJSHeapSize/memory.jsHeapSizeLimit;if(ratio>=MEMORY_RATIO_WARNING){memoryWarnings+=1;log("memory-pressure",{percent:Math.round(ratio*100),warnings:memoryWarnings,action:backendHealthy?"eligible-for-controlled-recovery":"preserve-last-known-good"});}else if(memoryWarnings){memoryWarnings=0;log("memory-pressure-recovered",{percent:Math.round(ratio*100)});}};const timer=window.setInterval(check,CHECK_MS),memoryTimer=window.setInterval(memoryCheck,MEMORY_CHECK_MS);check();memoryCheck();window.addEventListener("error",onError);window.addEventListener("unhandledrejection",onError);return()=>{stopped=true;window.clearInterval(timer);window.clearInterval(memoryTimer);request?.abort();window.removeEventListener("error",onError);window.removeEventListener("unhandledrejection",onError);};}
