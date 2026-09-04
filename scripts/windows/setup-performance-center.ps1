@@ -40,6 +40,16 @@ if (-not $dependenciesReady) {
   }
 }
 
+# qrcode-terminal is deliberately installed as local Windows deployment tooling rather
+# than a backend runtime dependency. It has no dependencies and is only used to render
+# the LAN remote-control URL in the operator console.
+node -e "require.resolve('qrcode-terminal')" *> $null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Installing local QR renderer..."
+  npm install --no-save --no-package-lock qrcode-terminal@0.12.0
+  if ($LASTEXITCODE -ne 0) { throw "Could not install the local QR renderer." }
+}
+
 Write-Host "Building dashboard..."
 npm run build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
