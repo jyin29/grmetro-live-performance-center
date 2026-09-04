@@ -40,14 +40,17 @@ if (-not $dependenciesReady) {
   }
 }
 
-# qrcode-terminal is deliberately installed as local Windows deployment tooling rather
-# than a backend runtime dependency. It has no dependencies and is only used to render
-# the LAN remote-control URL in the operator console.
-node -e "require.resolve('qrcode-terminal')" *> $null
-if ($LASTEXITCODE -ne 0) {
+# qrcode-terminal is local Windows deployment tooling. PowerShell's Stop error policy
+# must not turn Node's expected "module missing" stderr into a terminating setup error.
+$qrRendererReady = Test-Path (Join-Path $root "node_modules\qrcode-terminal\package.json")
+if (-not $qrRendererReady) {
   Write-Host "Installing local QR renderer..."
   npm install --no-save --no-package-lock qrcode-terminal@0.12.0
   if ($LASTEXITCODE -ne 0) { throw "Could not install the local QR renderer." }
+  $qrRendererReady = Test-Path (Join-Path $root "node_modules\qrcode-terminal\package.json")
+  if (-not $qrRendererReady) { throw "QR renderer installation completed but the module could not be found." }
+} else {
+  Write-Host "QR renderer is ready."
 }
 
 Write-Host "Building dashboard..."
