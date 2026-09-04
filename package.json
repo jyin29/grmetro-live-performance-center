@@ -3,11 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Live technician-performance dashboard and presentation controller",
-  "workspaces": [
-    "apps/backend",
-    "apps/dashboard",
-    "apps/remote"
-  ],
+  "workspaces": ["apps/backend","apps/dashboard","apps/remote"],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "dev:backend": "npm run dev --workspace=@grmetro/backend",
@@ -18,11 +14,9 @@
     "start": "npm run start --workspace=@grmetro/backend",
     "setup:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/setup-performance-center.ps1",
     "start:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/start-performance-center.ps1",
+    "test:recovery": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/recovery-test.ps1",
     "edge:dashboard": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/launch-edge.ps1",
     "generate:qr": "node scripts/generate-qr-codes.js"
   },
-  "engines": {
-    "node": ">=22.0.0",
-    "npm": ">=10.0.0"
-  }
+  "engines": {"node": ">=22.0.0","npm": ">=10.0.0"}
 }
