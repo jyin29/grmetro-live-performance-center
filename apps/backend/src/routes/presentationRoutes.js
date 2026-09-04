@@ -17,6 +17,11 @@ function readCommandId(request) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function readAppliedRevision(request) {
+  const value = Number(request.body?.appliedRevision);
+  return Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
 function createPresentationRoutes({ presentationManager, commandBus, displayPresence }) {
   if (!presentationManager || !commandBus || !displayPresence) throw new TypeError("Presentation routes require runtime state.");
   const router = express.Router();
@@ -26,14 +31,17 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     if (!state) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
     if (request.query.clientType === "display") displayPresence.touch(request.params.displayId);
     response.set("Cache-Control", "no-store, no-cache, must-revalidate");
-    response.json({ ok: true, state, online: displayPresence.isOnline(request.params.displayId) });
+    const appliedRevision = displayPresence.getAppliedRevision(request.params.displayId);
+    response.json({ ok: true, state, online: displayPresence.isOnline(request.params.displayId), appliedRevision, applied: Number.isSafeInteger(appliedRevision) && appliedRevision >= state.revision });
   });
 
   router.post("/:displayId/heartbeat", (request, response) => {
-    if (!presentationManager.getDisplayState(request.params.displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
-    displayPresence.touch(request.params.displayId);
+    const state = presentationManager.getDisplayState(request.params.displayId);
+    if (!state) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
+    displayPresence.touch(request.params.displayId, { appliedRevision: readAppliedRevision(request) });
     response.set("Cache-Control", "no-store");
-    response.json({ ok: true, online: true });
+    const appliedRevision = displayPresence.getAppliedRevision(request.params.displayId);
+    response.json({ ok: true, online: true, targetRevision: state.revision, appliedRevision, applied: Number.isSafeInteger(appliedRevision) && appliedRevision >= state.revision });
   });
 
   function runAction(request, response) {
@@ -46,8 +54,10 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     const commandId = readCommandId(request);
     try {
       const state = commandBus.dispatch({ type, displayId, payload, ...(commandId ? { commandId } : {}) });
+      const resolved = state || presentationManager.getDisplayState(displayId);
+      const appliedRevision = displayPresence.getAppliedRevision(displayId);
       response.set("Cache-Control", "no-store, no-cache, must-revalidate");
-      response.json({ ok: true, commandId: commandId || null, state: state || presentationManager.getDisplayState(displayId), online: displayPresence.isOnline(displayId) });
+      response.json({ ok: true, commandId: commandId || null, state: resolved, targetRevision: resolved.revision, appliedRevision, applied: Number.isSafeInteger(appliedRevision) && appliedRevision >= resolved.revision, online: displayPresence.isOnline(displayId) });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
@@ -62,8 +72,10 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     const command = { ...request.body, displayId: request.params.displayId, ...(commandId ? { commandId } : {}) };
     try {
       const state = commandBus.dispatch(command);
+      const resolved = state || presentationManager.getDisplayState(request.params.displayId);
+      const appliedRevision = displayPresence.getAppliedRevision(request.params.displayId);
       response.set("Cache-Control", "no-store");
-      response.json({ ok: true, commandId: commandId || null, state: state || presentationManager.getDisplayState(request.params.displayId) });
+      response.json({ ok: true, commandId: commandId || null, state: resolved, targetRevision: resolved.revision, appliedRevision, applied: Number.isSafeInteger(appliedRevision) && appliedRevision >= resolved.revision });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
@@ -75,9 +87,13 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
 function createDisplayPresence({ timeoutMilliseconds = 12000, clock = () => Date.now() } = {}) {
   const seen = new Map();
   return Object.freeze({
-    touch(displayId) { seen.set(displayId, clock()); },
-    isOnline(displayId) { const at = seen.get(displayId); return Number.isFinite(at) && clock() - at <= timeoutMilliseconds; },
-    getOnlineDisplayIds() { return [...seen.keys()].filter((id) => { const at = seen.get(id); return Number.isFinite(at) && clock() - at <= timeoutMilliseconds; }); },
+    touch(displayId, { appliedRevision } = {}) {
+      const current = seen.get(displayId) || {};
+      seen.set(displayId, { at: clock(), appliedRevision: Number.isSafeInteger(appliedRevision) ? Math.max(current.appliedRevision ?? -1, appliedRevision) : current.appliedRevision });
+    },
+    isOnline(displayId) { const entry = seen.get(displayId); return Boolean(entry && Number.isFinite(entry.at) && clock() - entry.at <= timeoutMilliseconds); },
+    getAppliedRevision(displayId) { const value = seen.get(displayId)?.appliedRevision; return Number.isSafeInteger(value) ? value : null; },
+    getOnlineDisplayIds() { return [...seen.entries()].filter(([, entry]) => Number.isFinite(entry.at) && clock() - entry.at <= timeoutMilliseconds).map(([id]) => id); },
   });
 }
 
