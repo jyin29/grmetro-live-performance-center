@@ -12,6 +12,11 @@ const ACTION_COMMANDS = Object.freeze({
   select: PRESENTATION_COMMANDS.GO_TO_SLIDE,
 });
 
+function readCommandId(request) {
+  const value = request.body?.commandId ?? request.get("X-GRMETRO-Command-Id") ?? request.query.commandId;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
 function createPresentationRoutes({ presentationManager, commandBus, displayPresence }) {
   if (!presentationManager || !commandBus || !displayPresence) throw new TypeError("Presentation routes require runtime state.");
   const router = express.Router();
@@ -38,27 +43,27 @@ function createPresentationRoutes({ presentationManager, commandBus, displayPres
     if (!type) return response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_ACTION" } });
     const rawIndex = request.body?.index ?? request.query.index;
     const payload = action === "select" ? { index: Number(rawIndex) } : {};
+    const commandId = readCommandId(request);
     try {
-      const state = commandBus.dispatch({ type, displayId, payload });
+      const state = commandBus.dispatch({ type, displayId, payload, ...(commandId ? { commandId } : {}) });
       response.set("Cache-Control", "no-store, no-cache, must-revalidate");
-      response.json({ ok: true, state: state || presentationManager.getDisplayState(displayId), online: displayPresence.isOnline(displayId) });
+      response.json({ ok: true, commandId: commandId || null, state: state || presentationManager.getDisplayState(displayId), online: displayPresence.isOnline(displayId) });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
   }
 
   router.post("/:displayId/action/:action", runAction);
-  // Same-origin GET fallback for the LAN remote. This avoids mobile-browser POST/body
-  // edge cases while keeping the POST API available for normal clients.
   router.get("/:displayId/action/:action", runAction);
 
   router.post("/:displayId/command", (request, response) => {
     if (!presentationManager.getDisplayState(request.params.displayId)) return response.status(404).json({ ok: false, error: { code: "DISPLAY_NOT_FOUND" } });
-    const command = { ...request.body, displayId: request.params.displayId };
+    const commandId = readCommandId(request);
+    const command = { ...request.body, displayId: request.params.displayId, ...(commandId ? { commandId } : {}) };
     try {
       const state = commandBus.dispatch(command);
       response.set("Cache-Control", "no-store");
-      response.json({ ok: true, state: state || presentationManager.getDisplayState(request.params.displayId) });
+      response.json({ ok: true, commandId: commandId || null, state: state || presentationManager.getDisplayState(request.params.displayId) });
     } catch (error) {
       response.status(400).json({ ok: false, error: { code: "INVALID_PRESENTATION_COMMAND", message: error.message } });
     }
