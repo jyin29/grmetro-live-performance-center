@@ -5,6 +5,7 @@ import { PresentationControllerProvider } from "./controller/PresentationControl
 import "./styles.css";
 import "./remote-mobile-fixes.css";
 import "./remote-polish.css";
+import "./diagnostics-polish.css";
 import "./operations-slide-fixes.css";
 import "./final-tv-readability.css";
 import "./metric-customization.css";
@@ -14,6 +15,9 @@ import "./remote-layout-hotfix.css";
 import "./remote-stability.css";
 import "./local-dashboard-controls.css";
 import "./easterEgg";
+import "./remotePresenceIndicators";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";
+import { installKioskRecovery } from "./runtime/kioskRecovery";
 
+installKioskRecovery();
 createRoot(document.getElementById("root")).render(<StrictMode><DisplayErrorBoundary><PresentationControllerProvider><App /></PresentationControllerProvider></DisplayErrorBoundary></StrictMode>);

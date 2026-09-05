@@ -1,48 +1,6 @@
 "use strict";
-
-const express = require("express");
-const businessRules = require("../../../../shared/businessRules");
-const slides = require("../../../../shared/slides");
-const { PRESENTATION_DISPLAYS, PRESENTATION_ROTATION_MILLISECONDS } = require("../../../../shared/presentation");
-
-function createAdminRoutes({ cache, presentationManager, connectionStatusProvider, eventEngine,
-  applicationVersion, buildVersion = null, startedAt = new Date(), clock = () => new Date() } = {}) {
-  if (!cache?.getState || !presentationManager?.getDisplayStates) {
-    throw new TypeError("Admin routes require cache and presentation runtime state.");
-  }
-  const router = express.Router();
-  router.get("/", (request, response) => {
-    const now = clock();
-    const cacheState = cache.getState(now);
-    const connections = connectionStatusProvider?.() || { total: 0, displays: 0, remotes: 0 };
-    const eventState = eventEngine?.getState?.() || { activeEvent: null, queueLength: 0 };
-    const displays = presentationManager.getDisplayStates().map((display) => ({
-      ...display,
-      connectedClients: connections.byDisplay?.[display.displayId] || { displays: 0, remotes: 0, total: 0 },
-      currentSlide: slides[display.activeSlideIndex] || null,
-    }));
-
-    response.json({
-      generatedAt: now.toISOString(),
-      displays,
-      businessRules: { rules: businessRules.rules, settings: businessRules.settings },
-      events: { activeEvent: eventState.activeEvent, pendingEvents: eventState.queueLength,
-        queueSize: businessRules.settings.maximumQueueSize,
-        cooldownMilliseconds: businessRules.settings.cooldownMilliseconds,
-        eventDurationMilliseconds: businessRules.settings.eventDurationMilliseconds,
-        overlayDurationMilliseconds: businessRules.settings.overlayDurationMilliseconds },
-      presentation: { rotationIntervalMilliseconds: PRESENTATION_ROTATION_MILLISECONDS,
-        profiles: [...new Set(PRESENTATION_DISPLAYS.map(({ presentationProfile }) => presentationProfile))],
-        slides: slides.map(({ id, label, durationSeconds }) => ({ id, label, durationSeconds })) },
-      diagnostics: { enabledByDefault: false, cacheAvailable: cacheState.available,
-        cacheAgeMilliseconds: cacheState.cacheAgeMilliseconds, lastSuccessfulRefreshAt: cacheState.lastSuccessfulRefreshAt,
-        lastFailureCode: cacheState.lastFailure?.code || null },
-      system: { applicationVersion, buildVersion, uptimeSeconds: Math.max(0, Math.floor((now - startedAt) / 1000)),
-        websocketStatus: "running", backendStatus: "running", dashboardStatus: cacheState.available ? "available" : "waiting-for-data",
-        connectedClients: connections.total || 0, connectedDisplays: connections.displays || 0, connectedRemotes: connections.remotes || 0 },
-    });
-  });
-  return router;
-}
-
-module.exports = { createAdminRoutes };
+const express=require("express");const businessRules=require("../../../../shared/businessRules");const slides=require("../../../../shared/slides");const{PRESENTATION_DISPLAYS,PRESENTATION_ROTATION_MILLISECONDS}=require("../../../../shared/presentation");
+function safeBrowserStatus(value={}){return Object.freeze({connected:value.connected===true,connecting:value.connecting===true,serviceTitanPageFound:value.serviceTitanPageFound===true,lastConnectedAt:value.lastConnectedAt||null,lastDisconnectedAt:value.lastDisconnectedAt||null,reconnectAttempt:Number.isSafeInteger(value.reconnectAttempt)?value.reconnectAttempt:0,lastErrorCode:typeof value.lastErrorCode==="string"?value.lastErrorCode:null});}
+function safeServiceTitanStatus(value={}){const token=value.csrf||{};return Object.freeze({status:typeof value.status==="string"?value.status:"unavailable",lastSuccessfulRequestAt:value.lastSuccessfulRequestAt||null,sessionToken:Object.freeze({available:token.available===true,observing:token.observing===true,acquiring:token.acquiring===true,stage:typeof token.stage==="string"?token.stage:null})});}
+function createAdminRoutes({cache,presentationManager,displayPresence,connectionStatusProvider,eventEngine,scheduler,browserStatusProvider,serviceTitanStatusProvider,applicationVersion,buildVersion=null,startedAt=new Date(),clock=()=>new Date()}={}){if(!cache?.getState||!presentationManager?.getDisplayStates)throw new TypeError("Admin routes require cache and presentation runtime state.");const router=express.Router();router.get("/",(request,response)=>{const now=clock();const cacheState=cache.getState(now);const connections=connectionStatusProvider?.()||{total:0,displays:0,remotes:0,byDisplay:{}};const eventState=eventEngine?.getState?.()||{activeEvent:null,queueLength:0};const browser=safeBrowserStatus(browserStatusProvider?.()||{});const serviceTitan=safeServiceTitanStatus(serviceTitanStatusProvider?.()||{});const recovery=scheduler?.getRecoveryState?.()||{consecutiveFailures:0,lastRecoveryAt:null,retryScheduled:false,history:[]};const hasData=cacheState.available===true;const hasRefreshError=Boolean(cacheState.lastFailure?.code);const age=cacheState.cacheAgeMilliseconds;const stale=Number.isFinite(age)&&age>300000;const displays=presentationManager.getDisplayStates().map(display=>{const clients=connections.byDisplay?.[display.displayId]||{displays:0,remotes:0,total:0};const online=(clients.displays||0)>0;const appliedRevision=displayPresence?.getAppliedRevision?.(display.displayId)??null;const acknowledged=Number.isSafeInteger(appliedRevision)&&Number.isSafeInteger(display.revision)&&appliedRevision>=display.revision;return{...display,connectedClients:{displays:clients.displays||0,remotes:clients.remotes||0,total:clients.displays||0,socketTotal:clients.total||0},displayOnline:online,status:online?"connected":"offline",currentSlide:slides[display.activeSlideIndex]||null,acknowledgement:{targetRevision:display.revision??null,appliedRevision,applied:acknowledged}};});const anyDisplayOnline=displays.some((d)=>d.displayOnline);response.set("Cache-Control","no-store, no-cache, must-revalidate").json({generatedAt:now.toISOString(),displays,businessRules:{rules:businessRules.rules,settings:businessRules.settings},events:{activeEvent:eventState.activeEvent,pendingEvents:eventState.queueLength,queueSize:businessRules.settings.maximumQueueSize,cooldownMilliseconds:businessRules.settings.cooldownMilliseconds,eventDurationMilliseconds:businessRules.settings.eventDurationMilliseconds,overlayDurationMilliseconds:businessRules.settings.overlayDurationMilliseconds},presentation:{rotationIntervalMilliseconds:PRESENTATION_ROTATION_MILLISECONDS,profiles:[...new Set(PRESENTATION_DISPLAYS.map(({presentationProfile})=>presentationProfile))],slides:slides.map(({id,label,durationSeconds})=>({id,label,durationSeconds}))},diagnostics:{enabledByDefault:false,cacheAvailable:hasData,cacheAgeMilliseconds:age,cacheStale:stale,lastSuccessfulRefreshAt:cacheState.lastSuccessfulRefreshAt,lastFailureCode:cacheState.lastFailure?.code||null,recovery,browser,serviceTitan,subsystems:{backend:"healthy",dashboard:hasRefreshError?"degraded":(stale?"stale":(hasData?"healthy":"waiting")),servicetitan:serviceTitan.status||((browser.connected&&browser.serviceTitanPageFound)?"healthy":"unknown"),browser:browser.connected?"healthy":(browser.connecting?"recovering":"offline"),presentation:"healthy",displays:anyDisplayOnline?"healthy":"offline"}},system:{applicationVersion,buildVersion,uptimeSeconds:Math.max(0,Math.floor((now-startedAt)/1000)),websocketStatus:"running",backendStatus:"healthy",dashboardStatus:hasRefreshError?"error":(stale?"stale":(hasData?"available":"waiting-for-data")),connectedClients:connections.total||0,connectedDisplays:connections.displays||0,connectedRemotes:connections.remotes||0,anyDisplayOnline}});});return router;}
+module.exports={createAdminRoutes,safeBrowserStatus,safeServiceTitanStatus};

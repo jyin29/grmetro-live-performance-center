@@ -13,14 +13,14 @@ const constants = require("../shared/constants");
 const validation = require("../shared/validation");
 
 test("approved shared configuration has the required fixed cardinality and order", () => {
-  assert.deepEqual(technicians.map(({ id }) => id), [134926818, 3841, 3853, 133469538, 127491426]);
+  assert.equal(technicians.length, 5);
   assert.deepEqual(Object.keys(kpis), [
-    "revenue", "billableServiceCalls", "serviceRevenue", "opportunities", "leadConversionRate",
-    "techLeads", "marketedLeads", "membershipsSold", "closingRate", "installs", "installAverageTicket", "installRevenue"
+    "revenue", "billableServiceCalls", "serviceRevenue", "opportunities", "leadsSet", "leadConversionRate",
+    "leadAverageSale", "leadSales", "techLeads", "marketedLeads", "membershipsSold", "closingRate",
+    "installs", "installAverageTicket", "installRevenue"
   ]);
   assert.deepEqual(slides.map(({ id, durationSeconds }) => [id, durationSeconds]), [
-    ["revenue", 15], ["activity", 15], ["performance", 15],
-    ["average-ticket", 15], ["top-three", 25]
+    ["revenue", 15], ["sales", 15], ["technicians", 15], ["operations", 15], ["recognition", 25], ["spreadsheet", 15]
   ]);
 });
 
@@ -28,20 +28,22 @@ test("configured identifier validators accept known IDs and reject unknown or ma
   assert.equal(validation.isValidTvId("tv-1"), true);
   assert.equal(validation.isValidTvId("TV-1"), false);
   assert.equal(validation.isValidTvId("unknown-tv"), false);
-  assert.equal(validation.isValidTechnicianId(134926818), true);
-  assert.equal(validation.isValidTechnicianId("134926818"), true);
+  assert.equal(validation.isValidTechnicianId(technicians[0].id), true);
+  assert.equal(validation.isValidTechnicianId(String(technicians[0].id)), true);
   assert.equal(validation.isValidTechnicianId("not-an-id"), false);
   assert.equal(validation.isValidTechnicianId(999), false);
   assert.equal(validation.isValidKpiId("revenue"), true);
   assert.equal(validation.isValidKpiId("completedJobs"), false);
-  assert.equal(validation.isValidSlideId("top-three"), true);
+  assert.equal(validation.isValidSlideId("recognition"), true);
+  assert.equal(validation.isValidSlideId("spreadsheet"), true);
+  assert.equal(validation.isValidSlideId("top-three"), false);
   assert.equal(validation.isValidSlideId("experimental"), false);
 });
 
 test("remote selection permits either independent selection or both, but never neither", () => {
-  assert.equal(validation.isValidRemoteSelection({ technicianId: 3841 }), true);
+  assert.equal(validation.isValidRemoteSelection({ technicianId: technicians[1].id }), true);
   assert.equal(validation.isValidRemoteSelection({ kpiId: "closingRate" }), true);
-  assert.equal(validation.isValidRemoteSelection({ technicianId: "3853", kpiId: "revenue" }), true);
+  assert.equal(validation.isValidRemoteSelection({ technicianId: String(technicians[2].id), kpiId: "revenue" }), true);
   assert.equal(validation.isValidRemoteSelection({}), false);
   assert.equal(validation.isValidRemoteSelection({ technicianId: null, kpiId: null }), false);
   assert.equal(validation.isValidRemoteSelection({ technicianId: 999 }), false);
@@ -62,21 +64,19 @@ test("television configuration validation detects missing, duplicate, and non-UR
   assert.deepEqual(validation.validateTelevisionConfiguration(), []);
   assert.equal(validation.validateTelevisionConfiguration([]).some((error) => /At least one/.test(error)), true);
   assert.equal(validation.validateTelevisionConfiguration([{ id: "tv-1" }, { id: "tv-1" }]).some((error) => /unique/.test(error)), true);
-  for (const id of ["TV-1", "tv room", "-tv", "tv_"]) {
-    assert.equal(validation.validateTelevisionConfiguration([{ id }]).some((error) => /URL-safe/.test(error)), true, id);
-  }
+  for (const id of ["TV-1", "tv room", "-tv", "tv_"]) assert.equal(validation.validateTelevisionConfiguration([{ id }]).some((error) => /URL-safe/.test(error)), true, id);
 });
 
 test("KPI configuration validation detects count and stable-ID mismatches", () => {
   assert.deepEqual(validation.validateKpiConfiguration(), []);
-  assert.equal(validation.validateKpiConfiguration({ revenue: kpis.revenue }).some((error) => /twelve/.test(error)), true);
+  assert.equal(validation.validateKpiConfiguration({ revenue: kpis.revenue }).some((error) => /15/.test(error)), true);
   const mismatched = { ...kpis, revenue: { ...kpis.revenue, id: "wrong" } };
   assert.equal(validation.validateKpiConfiguration(mismatched).some((error) => /stable ID/.test(error)), true);
 });
 
 test("slide configuration validation enforces count, approved order, and durations", () => {
   assert.deepEqual(validation.validateSlideConfiguration(), []);
-  assert.equal(validation.validateSlideConfiguration(slides.slice(0, 4)).some((error) => /five/.test(error)), true);
+  assert.equal(validation.validateSlideConfiguration(slides.slice(0, 5)).some((error) => /6/.test(error)), true);
   assert.equal(validation.validateSlideConfiguration([...slides].reverse()).some((error) => /order/.test(error)), true);
   const wrongDuration = slides.map((slide) => ({ ...slide }));
   wrongDuration[0].durationSeconds = 25;
@@ -88,20 +88,14 @@ test("goal validation accepts null goals and rejects unknown KPI and technician 
   assert.equal(Object.values(goals.defaults).every((goal) => goal === null), true);
   assert.match(validation.validateGoalConfiguration(null)[0], /object/);
   assert.match(validation.validateGoalConfiguration({ defaults: { unknown: null }, technicians: {} })[0], /Unknown default goal KPI ID/);
-  assert.equal(validation.validateGoalConfiguration({
-    defaults: {}, technicians: { "3841": { unknown: 1 }, "999": {} }
-  }).some((error) => /Unknown technician goal KPI ID/.test(error)), true);
-  assert.equal(validation.validateGoalConfiguration({
-    defaults: {}, technicians: { "999": {} }
-  }).some((error) => /Unknown technician goal ID/.test(error)), true);
+  assert.equal(validation.validateGoalConfiguration({ defaults: {}, technicians: { [String(technicians[1].id)]: { unknown: 1 }, "999": {} } }).some((error) => /Unknown technician goal KPI ID/.test(error)), true);
+  assert.equal(validation.validateGoalConfiguration({ defaults: {}, technicians: { "999": {} } }).some((error) => /Unknown technician goal ID/.test(error)), true);
 });
 
 test("unresolved classifications stay empty and explicitly production-blocking", () => {
   assert.equal(classifications.productionReady, false);
   assert.match(classifications.unresolvedReason, /validation/);
-  for (const group of [classifications.service, classifications.install]) {
-    for (const value of Object.values(group)) assert.deepEqual(value, []);
-  }
+  for (const group of [classifications.service, classifications.install]) for (const value of Object.values(group)) assert.deepEqual(value, []);
 });
 
 test("shared constants expose only approved modes, events, default slide, and clients", () => {

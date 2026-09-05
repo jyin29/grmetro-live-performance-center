@@ -9,29 +9,46 @@ export function createWebSocketPresentationTransport({ displayId, clientType, on
   let reconnectTimer = null;
   let retryDelay = reconnectMinimumMs;
   let stopped = false;
-  let socketToReplace = null;
+  let generation = 0;
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
   const url = `${protocol}//${location.host}/ws/presentation?displayId=${encodeURIComponent(displayId)}&clientType=${clientType}`;
 
+  function scheduleReconnect() {
+    if (stopped || reconnectTimer) return;
+    onConnectionChange?.("reconnecting");
+    onReconnectAttempt?.();
+    const jitter = Math.floor(Math.random() * Math.max(100, retryDelay * 0.25));
+    const delay = Math.min(reconnectMaximumMs, retryDelay + jitter);
+    reconnectTimer = schedule(() => { reconnectTimer = null; connect(); }, delay);
+    retryDelay = Math.min(retryDelay * 2, reconnectMaximumMs);
+  }
+
   function connect() {
     if (stopped) return;
+    const myGeneration = ++generation;
     onConnectionChange?.("connecting");
-    const currentSocket = new WebSocketImpl(url);
+    let currentSocket;
+    try { currentSocket = new WebSocketImpl(url); } catch { scheduleReconnect(); return; }
     socket = currentSocket;
-    currentSocket.addEventListener("open", () => { retryDelay = reconnectMinimumMs; onConnectionChange?.("connected"); });
+    currentSocket.addEventListener("open", () => {
+      if (stopped || myGeneration !== generation) return;
+      retryDelay = reconnectMinimumMs;
+      onConnectionChange?.("connected");
+    });
     currentSocket.addEventListener("message", (event) => {
+      if (stopped || myGeneration !== generation) return;
       let message;
       try { message = JSON.parse(event.data); } catch { return; }
       if (message.type === "presentation/state" && message.state?.displayId === displayId) onState(message.state);
       if (message.type === "dashboard/update") window.dispatchEvent(new CustomEvent(DASHBOARD_UPDATE_EVENT, { detail: message }));
     });
     currentSocket.addEventListener("close", () => {
-      if (socketToReplace === currentSocket) { socketToReplace = null; return; }
-      onConnectionChange?.("reconnecting");
-      if (!stopped) { onReconnectAttempt?.(); reconnectTimer = schedule(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, reconnectMaximumMs); }
+      if (stopped || myGeneration !== generation) return;
+      scheduleReconnect();
     });
-    currentSocket.addEventListener("error", () => currentSocket.close());
+    currentSocket.addEventListener("error", () => { try { currentSocket.close(); } catch {} });
   }
+
   connect();
   return Object.freeze({
     send(command) {
@@ -42,9 +59,19 @@ export function createWebSocketPresentationTransport({ displayId, clientType, on
       if (stopped) return;
       if (reconnectTimer) cancel(reconnectTimer);
       reconnectTimer = null;
-      if (socket) { socketToReplace = socket; socket.close(); }
+      generation += 1;
+      try { socket?.close(); } catch {}
+      socket = null;
+      retryDelay = reconnectMinimumMs;
       connect();
     },
-    close() { stopped = true; if (reconnectTimer) cancel(reconnectTimer); socket?.close(); },
+    close() {
+      stopped = true;
+      generation += 1;
+      if (reconnectTimer) cancel(reconnectTimer);
+      reconnectTimer = null;
+      try { socket?.close(); } catch {}
+      socket = null;
+    },
   });
 }

@@ -1,78 +1,127 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_DISPLAY_ID, findDisplay, PRESENTATION_DISPLAYS } from "../config/displayRegistry";
 import { PRESENTATION_SLIDES } from "../config/slideRegistry";
-import { createPresentationCommand, PRESENTATION_COMMANDS } from "./presentationCommands";
 import { createWebSocketPresentationTransport } from "./presentationTransport";
 import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 
 const PresentationControllerContext = createContext(null);
 const slideCount = PRESENTATION_SLIDES.length;
-const POLL_MS = 500;
+const POLL_MS = 1000;
+const DISPLAY_HEARTBEAT_MS = 2000;
+const HTTP_FAILURES_BEFORE_OFFLINE = 6;
 
-function slideStorageKey(displayId) { return `grmetro.presentation.${displayId}.slideIndex`; }
-function rememberedSlideIndex(displayId) { try { const value=Number(window.sessionStorage.getItem(slideStorageKey(displayId))); return Number.isInteger(value)&&value>=0&&value<slideCount?value:0; } catch { return 0; } }
-function rememberSlideIndex(displayId,index){if(!Number.isInteger(index)||index<0)return;try{window.sessionStorage.setItem(slideStorageKey(displayId),String(index%slideCount));}catch{/* optional */}}
-function stateUrl(displayId){return `/api/v1/presentation/${encodeURIComponent(displayId)}`;}
-function actionUrl(displayId,type,payload={}){
-  const names={
-    [PRESENTATION_COMMANDS.NEXT_SLIDE]:"next",[PRESENTATION_COMMANDS.PREVIOUS_SLIDE]:"previous",
-    [PRESENTATION_COMMANDS.PAUSE_ROTATION]:"pause",[PRESENTATION_COMMANDS.RESUME_ROTATION]:"resume",
-    [PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER]:"restart",[PRESENTATION_COMMANDS.GO_TO_SLIDE]:"select"
-  };
-  const base=`${stateUrl(displayId)}/action/${names[type]}`;
-  return type===PRESENTATION_COMMANDS.GO_TO_SLIDE?`${base}?index=${encodeURIComponent(payload.index)}`:base;
+async function requestJson(path, options = {}) {
+  const response = await fetch(path, { cache: "no-store", ...options });
+  if (!response.ok) throw new Error(`presentation request failed (${response.status})`);
+  return response.json();
 }
+function sleep(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }
 
-export function PresentationControllerProvider({children}){return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>;}
+export function PresentationControllerProvider({ children }) { return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>; }
 
-export function usePresentationController(requestedDisplayId=DEFAULT_DISPLAY_ID,clientType="display"){
-  if(!useContext(PresentationControllerContext))throw new Error("usePresentationController must be used within PresentationControllerProvider");
-  const displayId=findDisplay(requestedDisplayId)?.id??DEFAULT_DISPLAY_ID;
-  const display=findDisplay(displayId);
-  const [state,setState]=useState(()=>({displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:rememberedSlideIndex(displayId),isRunning:true,timerRevision:0,lastUpdated:null}));
-  const [connectionState,setConnectionState]=useState("connecting");
-  const [transport,setTransport]=useState(null);
-  const [runtime,setRuntime]=useState({reconnectCount:0,lastSynchronization:null,lastCommandError:null});
+export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_ID, clientType = "display") {
+  if (!useContext(PresentationControllerContext)) throw new Error("usePresentationController must be used within PresentationControllerProvider");
+  const displayId = findDisplay(requestedDisplayId)?.id ?? DEFAULT_DISPLAY_ID;
+  const display = findDisplay(displayId);
+  const [state, setState] = useState({ displayId, displayName: display.name, presentationProfile: display.presentationProfile, activeSlideIndex: 0, isRunning: true, timerRevision: 0, revision: 0, lastUpdated: null });
+  const [transportState, setTransportState] = useState("connecting");
+  const [online, setOnline] = useState(clientType === "display");
+  const [runtime, setRuntime] = useState({ reconnectCount: 0, lastSynchronization: null, lastCommandError: null, lastCommandAt: null, lastCommandId: null, lastCommandTargetRevision: null, appliedRevision: null, commandApplied: null, httpHealthy: false, heartbeatHealthy: clientType !== "display", recoveryLevel: 0 });
+  const [transport, setTransport] = useState(null);
+  const commandRef = useRef({ busy: false, sequence: 0 });
+  const appliedRevisionRef = useRef(0);
 
-  const acceptState=useCallback((nextState)=>{
-    if(!nextState||nextState.displayId!==displayId)return;
-    rememberSlideIndex(displayId,nextState.activeSlideIndex);setState(nextState);
-    setRuntime(current=>({...current,lastSynchronization:Date.now()}));
-  },[displayId]);
+  const acceptState = useCallback((next) => {
+    if (!next || next.displayId !== displayId) return;
+    setState(next);
+    if (Number.isSafeInteger(next.revision)) appliedRevisionRef.current = next.revision;
+    setRuntime((current) => ({ ...current, lastSynchronization: Date.now(), recoveryLevel: 0 }));
+  }, [displayId]);
 
-  useEffect(()=>{
-    setState(current=>({...current,displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:current.displayId===displayId?current.activeSlideIndex:rememberedSlideIndex(displayId)}));
-    const nextTransport=createWebSocketPresentationTransport({displayId,clientType,reconnectMinimumMs:RUNTIME_SETTINGS.reconnectMinimumMs,reconnectMaximumMs:RUNTIME_SETTINGS.reconnectMaximumMs,onState:acceptState,onConnectionChange:setConnectionState,onReconnectAttempt:()=>setRuntime(current=>({...current,reconnectCount:current.reconnectCount+1}))});
-    setTransport(nextTransport);return()=>nextTransport.close();
-  },[clientType,display.name,display.presentationProfile,displayId,acceptState]);
+  useEffect(() => {
+    let ws;
+    try {
+      ws = createWebSocketPresentationTransport({ displayId, clientType, location: window.location,
+        reconnectMinimumMs: RUNTIME_SETTINGS.reconnectMinimumMs, reconnectMaximumMs: RUNTIME_SETTINGS.reconnectMaximumMs,
+        onState: acceptState, onConnectionChange: setTransportState,
+        onReconnectAttempt: () => setRuntime((current) => ({ ...current, reconnectCount: current.reconnectCount + 1, recoveryLevel: Math.max(current.recoveryLevel, 2) })), });
+      setTransport(ws);
+    } catch { setTransportState("reconnecting"); }
+    return () => ws?.close();
+  }, [acceptState, clientType, displayId]);
 
-  // HTTP state is the fallback source of truth for BOTH the TV and phone. This means
-  // a stale/broken WebSocket cannot detach the remote from the physical display.
-  useEffect(()=>{let stopped=false;let timer;
-    const poll=async()=>{try{const response=await fetch(stateUrl(displayId),{cache:"no-store"});if(!response.ok)throw new Error(`Presentation state HTTP ${response.status}`);const body=await response.json();if(!stopped&&body.state){acceptState(body.state);setConnectionState("connected");}}catch(error){if(!stopped)setRuntime(current=>({...current,lastCommandError:error.message}));}finally{if(!stopped)timer=window.setTimeout(poll,POLL_MS);}};
-    poll();return()=>{stopped=true;if(timer)window.clearTimeout(timer);};
-  },[displayId,acceptState]);
+  useEffect(() => {
+    let active = true; let failures = 0;
+    const poll = async () => {
+      try {
+        const payload = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}`);
+        if (!active) return;
+        failures = 0; acceptState(payload.state);
+        setRuntime((current) => ({ ...current, httpHealthy: true,
+          appliedRevision: Number.isSafeInteger(payload.appliedRevision) ? payload.appliedRevision : current.appliedRevision,
+          commandApplied: Number.isSafeInteger(current.lastCommandTargetRevision) && Number.isSafeInteger(payload.appliedRevision) ? payload.appliedRevision >= current.lastCommandTargetRevision : current.commandApplied }));
+        if (clientType === "remote") setOnline(payload.online === true);
+      } catch {
+        if (!active) return;
+        failures += 1;
+        setRuntime((current) => ({ ...current, httpHealthy: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
+        if (clientType === "remote" && failures >= HTTP_FAILURES_BEFORE_OFFLINE) setOnline(false);
+        if (failures === 3 || failures === HTTP_FAILURES_BEFORE_OFFLINE) transport?.reconnect();
+      }
+    };
+    poll(); const timer = window.setInterval(poll, POLL_MS);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [acceptState, clientType, displayId, transport]);
 
-  useEffect(()=>{rememberSlideIndex(displayId,state.activeSlideIndex);},[displayId,state.activeSlideIndex]);
+  useEffect(() => {
+    if (clientType !== "display") return undefined;
+    let active = true; let failures = 0;
+    const beat = async () => {
+      try {
+        const result = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appliedRevision: appliedRevisionRef.current }) });
+        if (active) { failures = 0; setOnline(true); setRuntime((current) => ({ ...current, heartbeatHealthy: true, appliedRevision: result.appliedRevision ?? current.appliedRevision })); }
+      } catch {
+        if (!active) return; failures += 1;
+        setRuntime((current) => ({ ...current, heartbeatHealthy: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
+        if (failures >= 4 && transportState !== "connected") setOnline(false);
+      }
+    };
+    beat(); const timer = window.setInterval(beat, DISPLAY_HEARTBEAT_MS);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [clientType, displayId, transportState]);
 
-  const send=useCallback(async(type,payload={})=>{
-    setRuntime(current=>({...current,lastCommandError:null}));
-    // HTTP is authoritative for user controls. WebSocket remains useful for instant
-    // broadcast, but commands no longer depend on the socket being healthy.
-    try{
-      const response=await fetch(actionUrl(displayId,type,payload),{method:"GET",cache:"no-store",headers:{Accept:"application/json"}});
-      const body=await response.json().catch(()=>null);
-      if(!response.ok||!body?.ok)throw new Error(body?.error?.message||`Presentation command HTTP ${response.status}`);
-      acceptState(body.state);
-      return body.state;
-    }catch(error){
-      setRuntime(current=>({...current,lastCommandError:error.message}));
-      // Last-resort delivery over the already-open socket.
-      try{transport?.send(createPresentationCommand(type,displayId,payload));}catch{/* polling will expose whether state changed */}
-      return null;
-    }
-  },[displayId,transport,acceptState]);
+  const action = useCallback(async (name, payload = {}) => {
+    if (commandRef.current.busy) return null;
+    commandRef.current.busy = true;
+    const sequence = ++commandRef.current.sequence;
+    const commandId = `${displayId}-${Date.now()}-${sequence}`;
+    try {
+      const query = name === "select" ? `?index=${encodeURIComponent(payload.index)}` : "";
+      const body = JSON.stringify({ ...payload, commandId });
+      let lastError;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const result = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}${query}`, { method: "POST", headers: { "Content-Type": "application/json", "X-GRMETRO-Command-Id": commandId }, body });
+          acceptState(result.state);
+          if (clientType === "remote" && typeof result.online === "boolean") setOnline(result.online);
+          setRuntime((current) => ({ ...current, lastCommandAt: Date.now(), lastCommandError: null, lastCommandId: result.commandId || commandId,
+            lastCommandTargetRevision: Number.isSafeInteger(result.targetRevision) ? result.targetRevision : result.state?.revision ?? null,
+            appliedRevision: Number.isSafeInteger(result.appliedRevision) ? result.appliedRevision : current.appliedRevision,
+            commandApplied: result.applied === true }));
+          return result;
+        } catch (error) { lastError = error; if (attempt === 0) await sleep(250); }
+      }
+      throw lastError;
+    } catch (error) {
+      setRuntime((current) => ({ ...current, lastCommandAt: Date.now(), lastCommandError: error.message, lastCommandId: commandId, commandApplied: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
+      console.error("Presentation action failed", { displayId, clientType, name, error }); return null;
+    } finally { commandRef.current.busy = false; }
+  }, [acceptState, clientType, displayId]);
 
-  return useMemo(()=>({...state,...runtime,connectionState,activeSlide:PRESENTATION_SLIDES[state.activeSlideIndex%slideCount],displays:PRESENTATION_DISPLAYS,slides:PRESENTATION_SLIDES,
-    nextSlide:()=>send(PRESENTATION_COMMANDS.NEXT_SLIDE),pauseRotation:()=>send(PRESENTATION_COMMANDS.PAUSE_ROTATION),previousSlide:()=>send(PRESENTATION_COMMANDS.PREVIOUS_SLIDE),restartRotationTimer:()=>send(PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER),resumeRotation:()=>send(PRESENTATION_COMMANDS.RESUME_ROTATION),selectSlide:(index)=>send(PRESENTATION_COMMANDS.GO_TO_SLIDE,{index}),setRuntimePaused:()=>{},reconnect:()=>transport?.reconnect()}),[connectionState,runtime,send,state,transport]);
+  const connectionState = clientType === "remote" ? (online ? "connected" : "offline") : (online || transportState === "connected" ? "connected" : "reconnecting");
+  return useMemo(() => ({ ...state, ...runtime, transportState, connectionState, targetDisplayOnline: online,
+    activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex % slideCount], displays: PRESENTATION_DISPLAYS, slides: PRESENTATION_SLIDES,
+    nextSlide: () => action("next"), previousSlide: () => action("previous"), pauseRotation: () => action("pause"), resumeRotation: () => action("resume"), restartRotationTimer: () => action("restart"), selectSlide: (index) => action("select", { index }),
+    setRuntimePaused: () => {}, reconnect: () => transport?.reconnect(),
+  }), [action, connectionState, online, runtime, state, transport, transportState]);
 }
