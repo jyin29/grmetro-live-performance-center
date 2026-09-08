@@ -41,3 +41,10 @@ test("measured highlight observer releases detached DOM targets", () => {
   assert.match(highlights, /observedTargets\.delete\(target\)/);
   assert.match(highlights, /releaseDetachedTargets\(\)/);
 });
+
+test("automatic memory recovery is scoped to physical display routes", () => {
+  const recovery = source("apps/dashboard/src/runtime/kioskRecovery.js");
+  assert.match(recovery, /path!=="\/remote"&&path!=="\/admin"&&path!=="\/customize"/);
+  assert.match(recovery, /!isDisplayRoute\(\)/);
+  assert.match(recovery, /lastPlannedReload/);
+});
