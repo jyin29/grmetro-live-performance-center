@@ -18,25 +18,14 @@ function DisplayPresenceReporter({ displayId }) {
     const url = `/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat`;
     const beat = () => {
       if (!active) return;
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-        cache: "no-store",
-        keepalive: true,
-      }).catch(() => {});
+      fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", cache: "no-store", keepalive: true }).catch(() => {});
     };
     beat();
     const timer = window.setInterval(beat, DISPLAY_HEARTBEAT_MS);
     const onVisible = () => { if (document.visibilityState === "visible") beat(); };
     window.addEventListener("focus", beat);
     document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-      window.removeEventListener("focus", beat);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", beat); document.removeEventListener("visibilitychange", onVisible); };
   }, [displayId]);
   return null;
 }
@@ -44,22 +33,21 @@ function DisplayPresenceReporter({ displayId }) {
 function DashboardPage({ displayId }) {
   const { data, error, loading, refreshing, retry, lastSuccessfulRefresh } = useDashboard();
   const displaySettings = useDisplaySettings();
-  return <>
-    <DisplayPresenceReporter displayId={displayId} />
-    {loading ? <div className="app-shell"><Header refreshing/><LoadingView/></div>
-      : error && !data ? <div className="app-shell"><Header hasError/><ErrorView message={error.message} onRetry={retry}/></div>
-      : !data?.technicians?.length ? <div className="app-shell"><Header refreshedAt={data?.refreshedAt}/><EmptyState/></div>
-      : <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh}/>} 
-  </>;
+
+  // While the dashboard is still loading there is no presentation controller yet,
+  // so keep a lightweight presence heartbeat. Once DashboardLayout mounts, its
+  // controller owns the single authoritative display heartbeat (including memory
+  // telemetry) and this fallback disappears.
+  if (loading) return <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header refreshing/><LoadingView/></div></>;
+  if (error && !data) return <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header hasError/><ErrorView message={error.message} onRetry={retry}/></div></>;
+  if (!data?.technicians?.length) return <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header refreshedAt={data?.refreshedAt}/><EmptyState/></div></>;
+  return <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh}/>;
 }
 
 export default function App() {
   const route = resolveApplicationRoute(window.location.pathname, window.location.search);
   if (route.type === "admin") return <AdminPage/>;
-  if (route.type === "customize") {
-    window.history.replaceState(null, "", "/remote");
-    return <RemoteControlPage initialTab="settings" initialSettingsSection="customize"/>;
-  }
+  if (route.type === "customize") { window.history.replaceState(null, "", "/remote"); return <RemoteControlPage initialTab="settings" initialSettingsSection="customize"/>; }
   if (route.type === "remote") return <RemoteControlPage/>;
   return <DashboardPage displayId={route.displayId}/>;
 }
