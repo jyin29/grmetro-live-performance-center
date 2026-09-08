@@ -11,12 +11,13 @@ const MAINTENANCE_RELOAD_MS = 6 * 60 * 60 * 1000;
 function readState(){try{return JSON.parse(sessionStorage.getItem(STORAGE_KEY)||"{}");}catch{return{};}}
 function writeState(state){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}
 function log(type,detail={}){const state=readState(),history=Array.isArray(state.history)?state.history:[];history.push({at:new Date().toISOString(),type,...detail});writeState({...state,history:history.slice(-100)});window.dispatchEvent(new CustomEvent("grmetro:recovery-event",{detail:history.at(-1)}));}
+function isDisplayRoute(pathname=window.location.pathname){const path=pathname.replace(/\/+$/,"")||"/";return path!=="/remote"&&path!=="/admin"&&path!=="/customize";}
 export function getLocalRecoveryHistory(){return(readState().history||[]).slice().reverse();}
 export function shouldControlledReload({backendHealthy,runtimeErrors,memoryWarnings=0,uptimeMs=0}){return backendHealthy===true&&(runtimeErrors>=RUNTIME_ERRORS_BEFORE_RELOAD||memoryWarnings>=MEMORY_WARNINGS_BEFORE_RELOAD||uptimeMs>=MAINTENANCE_RELOAD_MS);}
-function attemptControlledReload(runtimeErrors,reason="runtime-errors-with-healthy-backend"){const state=readState(),now=Date.now(),reloads=(state.reloads||[]).filter(at=>now-at<RELOAD_WINDOW_MS);if(reloads.length>=MAX_RELOADS_PER_WINDOW){log("reload-loop-protected",{runtimeErrors,reason});return false;}reloads.push(now);writeState({...state,reloads});log("controlled-page-reload",{runtimeErrors,reloadNumber:reloads.length,reason});window.location.reload();return true;}
+function attemptControlledReload(runtimeErrors,reason="runtime-errors-with-healthy-backend"){const state=readState(),now=Date.now(),reloads=(state.reloads||[]).filter(at=>now-at<RELOAD_WINDOW_MS);if(reloads.length>=MAX_RELOADS_PER_WINDOW){log("reload-loop-protected",{runtimeErrors,reason});return false;}reloads.push(now);writeState({...state,reloads,lastPlannedReload:{at:new Date(now).toISOString(),reason}});log("controlled-page-reload",{runtimeErrors,reloadNumber:reloads.length,reason});window.location.reload();return true;}
 
 export function installKioskRecovery({enabled=true}={}){
-  if(!enabled||typeof window==="undefined"||window.location.pathname.replace(/\/+$/,"")==="/remote")return()=>{};
+  if(!enabled||typeof window==="undefined"||!isDisplayRoute())return()=>{};
   const startedAt=Date.now();
   let backendFailures=0,runtimeErrors=0,memoryWarnings=0,backendHealthy=false,stopped=false,request=null;
   const check=async()=>{
