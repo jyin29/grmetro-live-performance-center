@@ -34,6 +34,16 @@ test("large dashboard and customization payloads do not force constant rerenders
   assert.match(spreadsheet, /serializedRef\.current === serialized/);
 });
 
+test("long-running rendering reuses expensive Intl formatters", () => {
+  const presentation = source("apps/dashboard/src/lib/presentation.js");
+  const header = source("apps/dashboard/src/components/Header.jsx");
+  assert.match(presentation, /const CURRENCY_FORMATTER = new Intl\.NumberFormat/);
+  assert.match(presentation, /const CLOCK_FORMATTER = new Intl\.DateTimeFormat/);
+  assert.match(presentation, /return CLOCK_FORMATTER\.format\(now\)/);
+  assert.match(header, /const REFRESH_TIME_FORMATTER = new Intl\.DateTimeFormat/);
+  assert.match(header, /REFRESH_TIME_FORMATTER\.format\(refreshedDate\)/);
+});
+
 test("measured highlight observer releases detached DOM targets", () => {
   const highlights = source("apps/dashboard/src/measuredSlidingHighlights.js");
   assert.match(highlights, /const observedTargets = new Set\(\)/);
