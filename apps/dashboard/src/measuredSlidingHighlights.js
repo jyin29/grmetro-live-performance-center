@@ -4,6 +4,7 @@ const ACTIVE_SELECTOR = ":scope > button.is-selected,:scope > button.is-active,:
 let scheduledFrame = 0;
 let resizeObserver;
 let mutationObserver;
+const observedTargets = new Set();
 
 function neutralizeDisplayButtonSelection(group, active) {
   if (!group.classList.contains("display-picker")) return;
@@ -23,18 +24,7 @@ function layoutRect(group, button) {
   const rect = button.getBoundingClientRect();
   const width = button.offsetWidth || rect.width;
   const height = button.offsetHeight || rect.height;
-
-  // The indicator is absolutely positioned in the display picker's SCROLLING
-  // content coordinate system. getBoundingClientRect() is viewport-relative,
-  // so once portrait mode makes this row horizontally scrollable we must add
-  // the current scroll offsets back. Without this, every scroll makes the
-  // indicator appear to jump/drift by exactly the amount the row has scrolled.
-  return {
-    x: rect.left - groupRect.left + group.scrollLeft - (width - rect.width) / 2,
-    y: rect.top - groupRect.top + group.scrollTop - (height - rect.height) / 2,
-    width,
-    height,
-  };
+  return { x: rect.left - groupRect.left + group.scrollLeft - (width - rect.width) / 2, y: rect.top - groupRect.top + group.scrollTop - (height - rect.height) / 2, width, height };
 }
 
 function updateDisplayPicker(group, active) {
@@ -46,41 +36,24 @@ function updateDisplayPicker(group, active) {
     indicator.setAttribute("aria-hidden", "true");
     group.prepend(indicator);
   }
-
   const next = layoutRect(group, active);
   const previous = indicator.__geometry;
   indicator.__geometry = next;
-
   if (!previous) {
     Object.assign(indicator.style, { left:`${next.x}px`, top:`${next.y}px`, width:`${next.width}px`, height:`${next.height}px` });
     indicator.classList.add("is-ready");
     return;
   }
-
   indicator.getAnimations().forEach((animation) => animation.cancel());
   Object.assign(indicator.style, { left:`${next.x}px`, top:`${next.y}px`, width:`${next.width}px`, height:`${next.height}px` });
-
   if (Math.abs(previous.x-next.x) < .25 && Math.abs(previous.y-next.y) < .25 && Math.abs(previous.width-next.width) < .25 && Math.abs(previous.height-next.height) < .25) return;
-
-  indicator.animate([
-    { left:`${previous.x}px`, top:`${previous.y}px`, width:`${previous.width}px`, height:`${previous.height}px` },
-    { left:`${next.x}px`, top:`${next.y}px`, width:`${next.width}px`, height:`${next.height}px` },
-  ], { duration:320, easing:"cubic-bezier(.22,1,.36,1)" });
+  indicator.animate([{ left:`${previous.x}px`, top:`${previous.y}px`, width:`${previous.width}px`, height:`${previous.height}px` },{ left:`${next.x}px`, top:`${next.y}px`, width:`${next.width}px`, height:`${next.height}px` }], { duration:320, easing:"cubic-bezier(.22,1,.36,1)" });
 }
 
 function updateGroup(group) {
   const active = group.querySelector(ACTIVE_SELECTOR);
-  if (!active) {
-    group.classList.remove("has-measured-highlight");
-    return;
-  }
-
-  if (group.classList.contains("display-picker")) {
-    updateDisplayPicker(group, active);
-    group.classList.add("has-measured-highlight");
-    return;
-  }
-
+  if (!active) { group.classList.remove("has-measured-highlight"); return; }
+  if (group.classList.contains("display-picker")) { updateDisplayPicker(group, active); group.classList.add("has-measured-highlight"); return; }
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();
   group.style.setProperty("--highlight-x", `${activeRect.left-groupRect.left}px`);
@@ -90,11 +63,25 @@ function updateGroup(group) {
   group.classList.add("has-measured-highlight");
 }
 
+function observe(target) {
+  if (!resizeObserver || observedTargets.has(target)) return;
+  observedTargets.add(target);
+  resizeObserver.observe(target);
+}
+function releaseDetachedTargets() {
+  if (!resizeObserver) return;
+  for (const target of observedTargets) {
+    if (target.isConnected) continue;
+    resizeObserver.unobserve(target);
+    observedTargets.delete(target);
+  }
+}
 function syncAll() {
+  releaseDetachedTargets();
   document.querySelectorAll(GROUP_SELECTOR).forEach((group) => {
     updateGroup(group);
-    resizeObserver?.observe(group);
-    group.querySelectorAll(":scope > button").forEach((button) => resizeObserver?.observe(button));
+    observe(group);
+    group.querySelectorAll(":scope > button").forEach(observe);
   });
 }
 function scheduleSync() { if (scheduledFrame) cancelAnimationFrame(scheduledFrame); scheduledFrame=requestAnimationFrame(()=>{scheduledFrame=0;syncAll();}); }
