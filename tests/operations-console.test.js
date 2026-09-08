@@ -37,3 +37,10 @@ test("management and diagnostics remain available inside settings", () => {
   assert.match(source, /Business Rules &amp; Administration/);
   for (const label of ["Backend", "Dashboard", "Presentation", "Display Manager", "WebSocket", "Refresh Scheduler", "Watchdog", "Kiosk Mode", "Connection Quality", "Reconnect Count", "Build Version", "Application Version"]) assert.match(source, new RegExp(label));
 });
+
+test("display runtime health is visible from the phone console", () => {
+  for (const label of ["Memory", "Session uptime", "Last heartbeat", "Reloads", "Display memory", "Last TV heartbeat", "Last display recovery", "Browser session"]) assert.match(source, new RegExp(label));
+  assert.match(source, /runtimeHealth/);
+  assert.match(source, /formatMemoryHealth/);
+  assert.match(source, /formatHeartbeatAge/);
+});
