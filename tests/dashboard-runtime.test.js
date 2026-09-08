@@ -48,9 +48,16 @@ test("hidden-tab recovery waits for visibility and cleans up every listener", as
 
 test("kiosk recovery never reloads during a backend outage", async () => {
   const { shouldControlledReload } = await import("../apps/dashboard/src/runtime/kioskRecovery.js");
-  assert.equal(shouldControlledReload({ backendHealthy: false, runtimeErrors: 99, memoryWarnings: 99 }), false);
+  assert.equal(shouldControlledReload({ backendHealthy: false, runtimeErrors: 99, memoryWarnings: 99, uptimeMs: 99 * 60 * 60 * 1000 }), false);
   assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 2 }), false);
   assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 3 }), true);
-  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 4 }), false);
-  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 5 }), true);
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 2 }), false);
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 3 }), true);
+});
+
+test("kiosk recovery refreshes a healthy display before extreme long-runtime memory growth", async () => {
+  const { shouldControlledReload } = await import("../apps/dashboard/src/runtime/kioskRecovery.js");
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 0, uptimeMs: (6 * 60 * 60 * 1000) - 1 }), false);
+  assert.equal(shouldControlledReload({ backendHealthy: true, runtimeErrors: 0, memoryWarnings: 0, uptimeMs: 6 * 60 * 60 * 1000 }), true);
+  assert.equal(shouldControlledReload({ backendHealthy: false, runtimeErrors: 0, memoryWarnings: 0, uptimeMs: 12 * 60 * 60 * 1000 }), false);
 });
