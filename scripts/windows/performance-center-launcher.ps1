@@ -1,7 +1,8 @@
 param([switch]$AutoStart)
 $ErrorActionPreference = "Stop"
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName PresentationCore
+Add-Type -AssemblyName WindowsBase
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $setupScript = Join-Path $PSScriptRoot "setup-performance-center.ps1"
@@ -12,14 +13,11 @@ $launcherLog = Join-Path $root "logs\launcher.log"
 New-Item -ItemType Directory -Force -Path (Join-Path $root "logs") | Out-Null
 
 function Log([string]$message) {
-  $line = "$(Get-Date -Format o) $message"
-  Add-Content -Path $launcherLog -Value $line
+  Add-Content -Path $launcherLog -Value "$(Get-Date -Format o) $message"
 }
 function Test-Backend {
-  try {
-    $response = Invoke-RestMethod -Uri "http://127.0.0.1:3000/api/v1/health" -TimeoutSec 2
-    return $true
-  } catch { return $false }
+  try { Invoke-RestMethod -Uri "http://127.0.0.1:3000/api/v1/health" -TimeoutSec 2 | Out-Null; return $true }
+  catch { return $false }
 }
 function Get-LanAddress {
   try {
@@ -38,9 +36,8 @@ function Needs-Setup {
   return $false
 }
 function Run-HiddenWait([string]$script, [string]$arguments = "") {
-  $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$script`" $arguments"
-  $p = Start-Process powershell.exe -ArgumentList $argList -WorkingDirectory $root -WindowStyle Hidden -PassThru -Wait
-  return $p.ExitCode
+  $args = "-NoProfile -ExecutionPolicy Bypass -File `"$script`" $arguments"
+  return (Start-Process powershell.exe -ArgumentList $args -WorkingDirectory $root -WindowStyle Hidden -PassThru -Wait).ExitCode
 }
 function Start-Supervisor {
   if (Test-Backend) { return }
@@ -51,129 +48,175 @@ function Open-Url([string]$url) { Start-Process $url }
 function Run-Admin([string]$command) {
   Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$adminScript`" $command" -WorkingDirectory $root
 }
-
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "GRMetro Performance Center"
-$form.Size = New-Object System.Drawing.Size(760,620)
-$form.MinimumSize = New-Object System.Drawing.Size(760,620)
-$form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::FromArgb(245,247,250)
-$form.Font = New-Object System.Drawing.Font("Segoe UI",10)
-
-$header = New-Object System.Windows.Forms.Panel
-$header.Dock = "Top"; $header.Height = 92; $header.BackColor = [System.Drawing.Color]::FromArgb(20,32,49)
-$form.Controls.Add($header)
-$title = New-Object System.Windows.Forms.Label
-$title.Text = "GRMetro Performance Center"; $title.ForeColor = [System.Drawing.Color]::White; $title.Font = New-Object System.Drawing.Font("Segoe UI Semibold",21); $title.AutoSize = $true; $title.Location = New-Object System.Drawing.Point(26,18)
-$header.Controls.Add($title)
-$subtitle = New-Object System.Windows.Forms.Label
-$subtitle.Text = "Backend + ServiceTitan control center"; $subtitle.ForeColor = [System.Drawing.Color]::FromArgb(184,198,214); $subtitle.AutoSize = $true; $subtitle.Location = New-Object System.Drawing.Point(29,58)
-$header.Controls.Add($subtitle)
-
-$statusCard = New-Object System.Windows.Forms.Panel
-$statusCard.Location = New-Object System.Drawing.Point(24,112); $statusCard.Size = New-Object System.Drawing.Size(696,112); $statusCard.BackColor = [System.Drawing.Color]::White
-$form.Controls.Add($statusCard)
-$statusTitle = New-Object System.Windows.Forms.Label
-$statusTitle.Text = "SYSTEM STATUS"; $statusTitle.ForeColor = [System.Drawing.Color]::FromArgb(105,118,134); $statusTitle.Font = New-Object System.Drawing.Font("Segoe UI Semibold",9); $statusTitle.AutoSize=$true; $statusTitle.Location=New-Object System.Drawing.Point(20,16)
-$statusCard.Controls.Add($statusTitle)
-$statusLabel = New-Object System.Windows.Forms.Label
-$statusLabel.Text = "Checking…"; $statusLabel.Font = New-Object System.Drawing.Font("Segoe UI Semibold",18); $statusLabel.AutoSize=$true; $statusLabel.Location=New-Object System.Drawing.Point(20,40)
-$statusCard.Controls.Add($statusLabel)
-$statusDetail = New-Object System.Windows.Forms.Label
-$statusDetail.Text = ""; $statusDetail.ForeColor=[System.Drawing.Color]::FromArgb(90,102,116); $statusDetail.AutoSize=$true; $statusDetail.Location=New-Object System.Drawing.Point(22,78)
-$statusCard.Controls.Add($statusDetail)
-
-$primary = New-Object System.Windows.Forms.Button
-$primary.Location=New-Object System.Drawing.Point(24,242); $primary.Size=New-Object System.Drawing.Size(696,54); $primary.FlatStyle="Flat"; $primary.Font=New-Object System.Drawing.Font("Segoe UI Semibold",12); $primary.BackColor=[System.Drawing.Color]::FromArgb(21,112,239); $primary.ForeColor=[System.Drawing.Color]::White; $primary.FlatAppearance.BorderSize=0
-$form.Controls.Add($primary)
-
-$info = New-Object System.Windows.Forms.Label
-$info.Location=New-Object System.Drawing.Point(28,309); $info.Size=New-Object System.Drawing.Size(688,44); $info.ForeColor=[System.Drawing.Color]::FromArgb(75,87,101)
-$form.Controls.Add($info)
-
-function Make-Button([string]$text,[int]$x,[int]$y,[int]$w=216) {
-  $b=New-Object System.Windows.Forms.Button; $b.Text=$text; $b.Location=New-Object System.Drawing.Point($x,$y); $b.Size=New-Object System.Drawing.Size($w,42); $b.FlatStyle="Flat"; $b.BackColor=[System.Drawing.Color]::White; $b.FlatAppearance.BorderColor=[System.Drawing.Color]::FromArgb(210,217,226); return $b
+function Show-Error([string]$message) {
+  [System.Windows.MessageBox]::Show($window, $message, "GRMetro Performance Center", "OK", "Error") | Out-Null
 }
-$remote=Make-Button "Open Phone Remote" 24 368; $form.Controls.Add($remote)
-$admin=Make-Button "Open Admin Diagnostics" 264 368; $form.Controls.Add($admin)
-$logs=Make-Button "Open Recovery Logs" 504 368; $form.Controls.Add($logs)
-$refresh=Make-Button "Refresh Data" 24 422; $form.Controls.Add($refresh)
-$restartBackend=Make-Button "Restart Backend" 264 422; $form.Controls.Add($restartBackend)
-$restartBrowser=Make-Button "Restart ServiceTitan Browser" 504 422; $form.Controls.Add($restartBrowser)
-$shortcut=Make-Button "Create Desktop Shortcut" 24 476; $form.Controls.Add($shortcut)
-$openFolder=Make-Button "Open Program Folder" 264 476; $form.Controls.Add($openFolder)
-$close=Make-Button "Close Control Center" 504 476; $form.Controls.Add($close)
+function Brush([string]$hex) { return [System.Windows.Media.BrushConverter]::new().ConvertFromString($hex) }
 
-$footer = New-Object System.Windows.Forms.Label
-$footer.Text="Closing this window does not stop the self-healing backend."; $footer.ForeColor=[System.Drawing.Color]::FromArgb(105,118,134); $footer.AutoSize=$true; $footer.Location=New-Object System.Drawing.Point(27,542)
-$form.Controls.Add($footer)
+[xml]$xaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="GRMetro Performance Center" Width="980" Height="720" MinWidth="920" MinHeight="680"
+        WindowStartupLocation="CenterScreen" Background="#F4F7FB" FontFamily="Segoe UI" Foreground="#172033">
+  <Window.Resources>
+    <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="Foreground" Value="White"/><Setter Property="Background" Value="#0F6CBD"/>
+      <Setter Property="FontSize" Value="15"/><Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="18,13"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bg" Property="Opacity" Value="0.92"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="Bg" Property="Opacity" Value="0.82"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter TargetName="Bg" Property="Background" Value="#95A3B5"/><Setter TargetName="Bg" Property="Opacity" Value="0.86"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="TileButton" TargetType="Button">
+      <Setter Property="Background" Value="White"/><Setter Property="Foreground" Value="#263248"/><Setter Property="BorderBrush" Value="#DCE3EC"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="14"/><Setter Property="Cursor" Value="Hand"/><Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Tile" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tile" Property="Background" Value="#F8FAFD"/><Setter TargetName="Tile" Property="BorderBrush" Value="#B8C6D8"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="Tile" Property="Background" Value="#EEF3F9"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+    </Style>
+  </Window.Resources>
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="112"/><RowDefinition Height="*"/><RowDefinition Height="42"/></Grid.RowDefinitions>
 
+    <Border Grid.Row="0" Background="#172033">
+      <Grid Margin="32,0">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="GRMetro" Foreground="#75B8F4" FontSize="13" FontWeight="SemiBold"/>
+          <TextBlock Text="Performance Center" Foreground="White" FontSize="30" FontWeight="SemiBold" Margin="0,2,0,0"/>
+          <TextBlock Text="Backend operations · ServiceTitan · display network" Foreground="#AEBCCE" FontSize="13" Margin="0,4,0,0"/>
+        </StackPanel>
+        <Border Grid.Column="1" x:Name="HeaderStatusPill" Background="#26364C" CornerRadius="14" Padding="12,6" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal"><Ellipse x:Name="HeaderStatusDot" Width="8" Height="8" Fill="#F0A400" Margin="0,0,8,0"/><TextBlock x:Name="HeaderStatusText" Text="Checking" Foreground="White" FontSize="12" FontWeight="SemiBold"/></StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <Grid Margin="32,26,32,22">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" BorderBrush="#E1E7EF" BorderThickness="1" CornerRadius="16" Padding="24">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="SYSTEM STATUS" Foreground="#758397" FontSize="11" FontWeight="SemiBold"/>
+              <StackPanel Orientation="Horizontal" Margin="0,9,0,0"><Ellipse x:Name="StatusDot" Width="12" Height="12" Fill="#F0A400" Margin="0,8,11,0" VerticalAlignment="Top"/><TextBlock x:Name="StatusLabel" Text="Checking…" FontSize="25" FontWeight="SemiBold"/></StackPanel>
+              <TextBlock x:Name="StatusDetail" Text="Reading backend health…" Foreground="#647287" FontSize="13" Margin="23,6,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+              <Button x:Name="PrimaryButton" Style="{StaticResource PrimaryButton}" Content="CHECKING…" IsEnabled="False"/>
+              <TextBlock Text="Safe to close after startup" Foreground="#8190A4" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,18,0,0">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Border Grid.Column="0" Background="#EAF4FF" BorderBrush="#CFE6FA" BorderThickness="1" CornerRadius="12" Padding="18,14">
+            <StackPanel><TextBlock Text="PHONE REMOTE" Foreground="#51779A" FontSize="10" FontWeight="SemiBold"/><TextBlock x:Name="RemoteUrl" Text="http://.../remote" Foreground="#183B5B" FontFamily="Consolas" FontSize="12" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+          </Border>
+          <Border Grid.Column="2" Background="#F4F1FF" BorderBrush="#DED7F7" BorderThickness="1" CornerRadius="12" Padding="18,14">
+            <StackPanel><TextBlock Text="TV DISPLAY URL" Foreground="#6F5F9C" FontSize="10" FontWeight="SemiBold"/><TextBlock x:Name="DisplayUrl" Text="http://.../?display=&lt;display-id&gt;" Foreground="#493E66" FontFamily="Consolas" FontSize="12" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,23,0,0">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="82"/><RowDefinition Height="12"/><RowDefinition Height="82"/><RowDefinition Height="12"/><RowDefinition Height="82"/></Grid.RowDefinitions>
+
+          <Button x:Name="RemoteButton" Grid.Row="0" Grid.Column="0" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Open Phone Remote" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Control displays from this network" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="AdminButton" Grid.Row="0" Grid.Column="2" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Admin Diagnostics" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Inspect system and display health" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="LogsButton" Grid.Row="0" Grid.Column="4" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Recovery Logs" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Open supervisor recovery history" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+
+          <Button x:Name="RefreshButton" Grid.Row="2" Grid.Column="0" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Refresh Data" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Request a fresh ServiceTitan sync" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="RestartBackendButton" Grid.Row="2" Grid.Column="2" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Restart Backend" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Restart only the backend service" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="RestartBrowserButton" Grid.Row="2" Grid.Column="4" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Restart ServiceTitan" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Relaunch the dedicated Edge session" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+
+          <Button x:Name="ShortcutButton" Grid.Row="4" Grid.Column="0" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Desktop Shortcut" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Create a one-click desktop launcher" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="FolderButton" Grid.Row="4" Grid.Column="2" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Program Folder" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Open the project directory" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+          <Button x:Name="CloseButton" Grid.Row="4" Grid.Column="4" Style="{StaticResource TileButton}"><StackPanel><TextBlock Text="Close Control Center" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="Backend keeps running" Foreground="#77869A" FontSize="11" Margin="0,4,0,0"/></StackPanel></Button>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="The self-healing supervisor continues running after this window is closed." Foreground="#8390A2" FontSize="11" HorizontalAlignment="Center" Margin="0,22,0,0"/>
+      </Grid>
+    </ScrollViewer>
+
+    <Border Grid.Row="2" Background="#EBEFF5" BorderBrush="#DDE4EC" BorderThickness="0,1,0,0">
+      <Grid Margin="32,0"><TextBlock Text="GRMetro Live Performance Center" Foreground="#758397" FontSize="11" VerticalAlignment="Center"/><TextBlock x:Name="LastCheckedText" Text="" Foreground="#8D99A8" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+    </Border>
+  </Grid>
+</Window>
+'@
+
+$reader = New-Object System.Xml.XmlNodeReader $xaml
+$window = [Windows.Markup.XamlReader]::Load($reader)
+function C([string]$name) { return $window.FindName($name) }
+$primary = C "PrimaryButton"; $statusLabel = C "StatusLabel"; $statusDetail = C "StatusDetail"; $statusDot = C "StatusDot"
+$headerStatusText = C "HeaderStatusText"; $headerStatusDot = C "HeaderStatusDot"; $remoteUrl = C "RemoteUrl"; $displayUrl = C "DisplayUrl"; $lastChecked = C "LastCheckedText"
+$remote = C "RemoteButton"; $admin = C "AdminButton"; $logs = C "LogsButton"; $refresh = C "RefreshButton"; $restartBackend = C "RestartBackendButton"; $restartBrowser = C "RestartBrowserButton"; $shortcut = C "ShortcutButton"; $openFolder = C "FolderButton"; $close = C "CloseButton"
 $lan = Get-LanAddress
+
+function Set-Status([string]$title,[string]$detail,[string]$pill,[string]$color) {
+  $statusLabel.Text = $title; $statusDetail.Text = $detail; $statusDot.Fill = Brush $color; $headerStatusDot.Fill = Brush $color; $headerStatusText.Text = $pill
+}
 function Update-Status {
-  $ready = -not (Needs-Setup)
-  $online = Test-Backend
+  $ready = -not (Needs-Setup); $online = Test-Backend
   if ($online) {
-    $statusLabel.Text="Running"; $statusLabel.ForeColor=[System.Drawing.Color]::FromArgb(25,135,84)
-    $statusDetail.Text="Backend healthy · self-healing supervisor active"
-    $primary.Text="Performance Center is Running"
-    $primary.Enabled=$false; $primary.BackColor=[System.Drawing.Color]::FromArgb(119,133,148)
+    Set-Status "Running" "Backend healthy · self-healing supervisor active" "ONLINE" "#29A36A"
+    $primary.Content = "PERFORMANCE CENTER IS RUNNING"; $primary.IsEnabled = $false
   } elseif ($ready) {
-    $statusLabel.Text="Ready to start"; $statusLabel.ForeColor=[System.Drawing.Color]::FromArgb(190,116,0)
-    $statusDetail.Text="Setup is complete. Start the supervised backend and ServiceTitan browser."
-    $primary.Text="START PERFORMANCE CENTER"
-    $primary.Enabled=$true; $primary.BackColor=[System.Drawing.Color]::FromArgb(21,112,239)
+    Set-Status "Ready to start" "Setup is complete. Start the supervised backend and ServiceTitan browser." "READY" "#E2A21B"
+    $primary.Content = "START PERFORMANCE CENTER"; $primary.IsEnabled = $true; $primary.Background = Brush "#0F6CBD"
   } else {
-    $statusLabel.Text="First-time setup needed"; $statusLabel.ForeColor=[System.Drawing.Color]::FromArgb(190,116,0)
-    $statusDetail.Text="One click will install dependencies, build, test, and start the system."
-    $primary.Text="SET UP + START"
-    $primary.Enabled=$true; $primary.BackColor=[System.Drawing.Color]::FromArgb(21,112,239)
+    Set-Status "First-time setup needed" "One click will install dependencies, build, test, and start the system." "SETUP" "#E2A21B"
+    $primary.Content = "SET UP + START"; $primary.IsEnabled = $true; $primary.Background = Brush "#0F6CBD"
   }
-  $info.Text="Remote: http://${lan}:3000/remote`r`nTVs: http://${lan}:3000/?display=<display-id>"
+  $remoteUrl.Text = "http://${lan}:3000/remote"
+  $displayUrl.Text = "http://${lan}:3000/?display=<display-id>"
+  $lastChecked.Text = "Checked $(Get-Date -Format 'h:mm:ss tt')"
 }
 
 $primary.Add_Click({
-  $primary.Enabled=$false
+  $primary.IsEnabled = $false
   try {
     if (Needs-Setup) {
-      $statusLabel.Text="Setting up…"; $statusDetail.Text="Installing, building, and validating. This can take a few minutes."; $form.Refresh()
+      Set-Status "Setting up…" "Installing dependencies, building, and validating. This can take a few minutes." "WORKING" "#4F8EDC"
+      $window.Dispatcher.Invoke([action]{}, "Background")
       Log "First-run setup requested"
       $code = Run-HiddenWait $setupScript
-      if ($code -ne 0) { throw "Setup failed (exit code $code). Open logs or run Setup Live Performance Center.cmd for details." }
+      if ($code -ne 0) { throw "Setup failed (exit code $code). Open Recovery Logs or run Setup Live Performance Center.cmd for details." }
     }
-    $statusLabel.Text="Starting…"; $statusDetail.Text="Launching ServiceTitan browser and self-healing backend."; $form.Refresh()
+    Set-Status "Starting…" "Launching ServiceTitan browser and self-healing backend." "STARTING" "#4F8EDC"
+    $window.Dispatcher.Invoke([action]{}, "Background")
     Start-Supervisor
-    $deadline=(Get-Date).AddSeconds(35)
-    while((Get-Date)-lt$deadline -and -not(Test-Backend)){Start-Sleep -Milliseconds 750;[System.Windows.Forms.Application]::DoEvents()}
-    if(-not(Test-Backend)){throw "The backend did not become healthy in time. Check Recovery Logs."}
+    $deadline = (Get-Date).AddSeconds(35)
+    while ((Get-Date) -lt $deadline -and -not (Test-Backend)) { Start-Sleep -Milliseconds 750; [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([action]{}, "Background") }
+    if (-not (Test-Backend)) { throw "The backend did not become healthy in time. Check Recovery Logs." }
     Log "Performance Center started"
   } catch {
     Log "Launcher error: $($_.Exception.Message)"
-    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message,"GRMetro Performance Center",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Error)|Out-Null
+    Show-Error $_.Exception.Message
   }
   Update-Status
 })
-$remote.Add_Click({Open-Url "http://${lan}:3000/remote"})
-$admin.Add_Click({Open-Url "http://127.0.0.1:3000/admin"})
-$logs.Add_Click({if(Test-Path $logPath){Start-Process notepad.exe -ArgumentList "`"$logPath`""}else{[System.Windows.Forms.MessageBox]::Show("No supervisor log exists yet.")|Out-Null}})
-$refresh.Add_Click({Run-Admin "refresh-data"})
-$restartBackend.Add_Click({Run-Admin "restart-backend"})
-$restartBrowser.Add_Click({Run-Admin "restart-browser"})
+$remote.Add_Click({ Open-Url "http://${lan}:3000/remote" })
+$admin.Add_Click({ Open-Url "http://127.0.0.1:3000/admin" })
+$logs.Add_Click({ if (Test-Path $logPath) { Start-Process notepad.exe -ArgumentList "`"$logPath`"" } else { [System.Windows.MessageBox]::Show($window,"No supervisor log exists yet.","GRMetro Performance Center") | Out-Null } })
+$refresh.Add_Click({ Run-Admin "refresh-data" })
+$restartBackend.Add_Click({ Run-Admin "restart-backend" })
+$restartBrowser.Add_Click({ Run-Admin "restart-browser" })
 $shortcut.Add_Click({
   try {
-    $shell=New-Object -ComObject WScript.Shell
-    $desktop=[Environment]::GetFolderPath("Desktop")
-    $lnk=$shell.CreateShortcut((Join-Path $desktop "GRMetro Performance Center.lnk"))
-    $lnk.TargetPath=Join-Path $root "GRMetro Performance Center.cmd"
-    $lnk.WorkingDirectory=$root
-    $lnk.Description="Start and manage the GRMetro Live Performance Center"
-    $lnk.Save()
-    [System.Windows.Forms.MessageBox]::Show("Desktop shortcut created.","GRMetro Performance Center")|Out-Null
-  } catch {[System.Windows.Forms.MessageBox]::Show($_.Exception.Message,"Could not create shortcut")|Out-Null}
+    $shell = New-Object -ComObject WScript.Shell; $desktop = [Environment]::GetFolderPath("Desktop")
+    $lnk = $shell.CreateShortcut((Join-Path $desktop "GRMetro Performance Center.lnk")); $lnk.TargetPath = Join-Path $root "GRMetro Performance Center.cmd"; $lnk.WorkingDirectory = $root; $lnk.Description = "Start and manage the GRMetro Live Performance Center"; $lnk.Save()
+    [System.Windows.MessageBox]::Show($window,"Desktop shortcut created.","GRMetro Performance Center") | Out-Null
+  } catch { Show-Error $_.Exception.Message }
 })
-$openFolder.Add_Click({Start-Process explorer.exe -ArgumentList "`"$root`""})
-$close.Add_Click({$form.Close()})
-$timer=New-Object System.Windows.Forms.Timer; $timer.Interval=5000; $timer.Add_Tick({Update-Status}); $timer.Start()
+$openFolder.Add_Click({ Start-Process explorer.exe -ArgumentList "`"$root`"" })
+$close.Add_Click({ $window.Close() })
+
+$timer = New-Object System.Windows.Threading.DispatcherTimer
+$timer.Interval = [TimeSpan]::FromSeconds(5)
+$timer.Add_Tick({ Update-Status })
+$timer.Start()
 Update-Status
-if($AutoStart){$form.Add_Shown({if(-not(Test-Backend)){$primary.PerformClick()}})}
-[void]$form.ShowDialog()
+if ($AutoStart) { $window.Add_ContentRendered({ if (-not (Test-Backend)) { $primary.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Button]::ClickEvent))) } }) }
+[void]$window.ShowDialog()
 $timer.Stop()
