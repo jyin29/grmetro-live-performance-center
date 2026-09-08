@@ -5,123 +5,18 @@ import { createWebSocketPresentationTransport } from "./presentationTransport";
 import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 
 const PresentationControllerContext = createContext(null);
-const slideCount = PRESENTATION_SLIDES.length;
-const POLL_MS = 1000;
-const DISPLAY_HEARTBEAT_MS = 2000;
-const HTTP_FAILURES_BEFORE_OFFLINE = 6;
-
-async function requestJson(path, options = {}) {
-  const response = await fetch(path, { cache: "no-store", ...options });
-  if (!response.ok) throw new Error(`presentation request failed (${response.status})`);
-  return response.json();
-}
-function sleep(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }
-
-export function PresentationControllerProvider({ children }) { return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>; }
-
-export function usePresentationController(requestedDisplayId = DEFAULT_DISPLAY_ID, clientType = "display") {
-  if (!useContext(PresentationControllerContext)) throw new Error("usePresentationController must be used within PresentationControllerProvider");
-  const displayId = findDisplay(requestedDisplayId)?.id ?? DEFAULT_DISPLAY_ID;
-  const display = findDisplay(displayId);
-  const [state, setState] = useState({ displayId, displayName: display.name, presentationProfile: display.presentationProfile, activeSlideIndex: 0, isRunning: true, timerRevision: 0, revision: 0, lastUpdated: null });
-  const [transportState, setTransportState] = useState("connecting");
-  const [online, setOnline] = useState(clientType === "display");
-  const [runtime, setRuntime] = useState({ reconnectCount: 0, lastSynchronization: null, lastCommandError: null, lastCommandAt: null, lastCommandId: null, lastCommandTargetRevision: null, appliedRevision: null, commandApplied: null, httpHealthy: false, heartbeatHealthy: clientType !== "display", recoveryLevel: 0 });
-  const [transport, setTransport] = useState(null);
-  const commandRef = useRef({ busy: false, sequence: 0 });
-  const appliedRevisionRef = useRef(0);
-
-  const acceptState = useCallback((next) => {
-    if (!next || next.displayId !== displayId) return;
-    setState(next);
-    if (Number.isSafeInteger(next.revision)) appliedRevisionRef.current = next.revision;
-    setRuntime((current) => ({ ...current, lastSynchronization: Date.now(), recoveryLevel: 0 }));
-  }, [displayId]);
-
-  useEffect(() => {
-    let ws;
-    try {
-      ws = createWebSocketPresentationTransport({ displayId, clientType, location: window.location,
-        reconnectMinimumMs: RUNTIME_SETTINGS.reconnectMinimumMs, reconnectMaximumMs: RUNTIME_SETTINGS.reconnectMaximumMs,
-        onState: acceptState, onConnectionChange: setTransportState,
-        onReconnectAttempt: () => setRuntime((current) => ({ ...current, reconnectCount: current.reconnectCount + 1, recoveryLevel: Math.max(current.recoveryLevel, 2) })), });
-      setTransport(ws);
-    } catch { setTransportState("reconnecting"); }
-    return () => ws?.close();
-  }, [acceptState, clientType, displayId]);
-
-  useEffect(() => {
-    let active = true; let failures = 0;
-    const poll = async () => {
-      try {
-        const payload = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}`);
-        if (!active) return;
-        failures = 0; acceptState(payload.state);
-        setRuntime((current) => ({ ...current, httpHealthy: true,
-          appliedRevision: Number.isSafeInteger(payload.appliedRevision) ? payload.appliedRevision : current.appliedRevision,
-          commandApplied: Number.isSafeInteger(current.lastCommandTargetRevision) && Number.isSafeInteger(payload.appliedRevision) ? payload.appliedRevision >= current.lastCommandTargetRevision : current.commandApplied }));
-        if (clientType === "remote") setOnline(payload.online === true);
-      } catch {
-        if (!active) return;
-        failures += 1;
-        setRuntime((current) => ({ ...current, httpHealthy: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
-        if (clientType === "remote" && failures >= HTTP_FAILURES_BEFORE_OFFLINE) setOnline(false);
-        if (failures === 3 || failures === HTTP_FAILURES_BEFORE_OFFLINE) transport?.reconnect();
-      }
-    };
-    poll(); const timer = window.setInterval(poll, POLL_MS);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [acceptState, clientType, displayId, transport]);
-
-  useEffect(() => {
-    if (clientType !== "display") return undefined;
-    let active = true; let failures = 0;
-    const beat = async () => {
-      try {
-        const result = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ appliedRevision: appliedRevisionRef.current }) });
-        if (active) { failures = 0; setOnline(true); setRuntime((current) => ({ ...current, heartbeatHealthy: true, appliedRevision: result.appliedRevision ?? current.appliedRevision })); }
-      } catch {
-        if (!active) return; failures += 1;
-        setRuntime((current) => ({ ...current, heartbeatHealthy: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
-        if (failures >= 4 && transportState !== "connected") setOnline(false);
-      }
-    };
-    beat(); const timer = window.setInterval(beat, DISPLAY_HEARTBEAT_MS);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [clientType, displayId, transportState]);
-
-  const action = useCallback(async (name, payload = {}) => {
-    if (commandRef.current.busy) return null;
-    commandRef.current.busy = true;
-    const sequence = ++commandRef.current.sequence;
-    const commandId = `${displayId}-${Date.now()}-${sequence}`;
-    try {
-      const query = name === "select" ? `?index=${encodeURIComponent(payload.index)}` : "";
-      const body = JSON.stringify({ ...payload, commandId });
-      let lastError;
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          const result = await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}${query}`, { method: "POST", headers: { "Content-Type": "application/json", "X-GRMETRO-Command-Id": commandId }, body });
-          acceptState(result.state);
-          if (clientType === "remote" && typeof result.online === "boolean") setOnline(result.online);
-          setRuntime((current) => ({ ...current, lastCommandAt: Date.now(), lastCommandError: null, lastCommandId: result.commandId || commandId,
-            lastCommandTargetRevision: Number.isSafeInteger(result.targetRevision) ? result.targetRevision : result.state?.revision ?? null,
-            appliedRevision: Number.isSafeInteger(result.appliedRevision) ? result.appliedRevision : current.appliedRevision,
-            commandApplied: result.applied === true }));
-          return result;
-        } catch (error) { lastError = error; if (attempt === 0) await sleep(250); }
-      }
-      throw lastError;
-    } catch (error) {
-      setRuntime((current) => ({ ...current, lastCommandAt: Date.now(), lastCommandError: error.message, lastCommandId: commandId, commandApplied: false, recoveryLevel: Math.max(current.recoveryLevel, 1) }));
-      console.error("Presentation action failed", { displayId, clientType, name, error }); return null;
-    } finally { commandRef.current.busy = false; }
-  }, [acceptState, clientType, displayId]);
-
-  const connectionState = clientType === "remote" ? (online ? "connected" : "offline") : (online || transportState === "connected" ? "connected" : "reconnecting");
-  return useMemo(() => ({ ...state, ...runtime, transportState, connectionState, targetDisplayOnline: online,
-    activeSlide: PRESENTATION_SLIDES[state.activeSlideIndex % slideCount], displays: PRESENTATION_DISPLAYS, slides: PRESENTATION_SLIDES,
-    nextSlide: () => action("next"), previousSlide: () => action("previous"), pauseRotation: () => action("pause"), resumeRotation: () => action("resume"), restartRotationTimer: () => action("restart"), selectSlide: (index) => action("select", { index }),
-    setRuntimePaused: () => {}, reconnect: () => transport?.reconnect(),
-  }), [action, connectionState, online, runtime, state, transport, transportState]);
-}
+const slideCount=PRESENTATION_SLIDES.length,POLL_MS=1000,DISPLAY_HEARTBEAT_MS=2000,HTTP_FAILURES_BEFORE_OFFLINE=6;
+const DISPLAY_SESSION_STARTED_AT=Date.now();
+function createSessionId(){try{const key="grmetro:display-session-count";const count=Number(sessionStorage.getItem(key)||0)+1;sessionStorage.setItem(key,String(count));return `${Date.now().toString(36)}-${count.toString(36)}-${Math.random().toString(36).slice(2,8)}`;}catch{return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;}}
+const DISPLAY_SESSION_ID=createSessionId();
+function runtimeHealth(){const memory=performance?.memory;const ratio=memory&&Number.isFinite(memory.usedJSHeapSize)&&Number.isFinite(memory.jsHeapSizeLimit)&&memory.jsHeapSizeLimit>0?memory.usedJSHeapSize/memory.jsHeapSizeLimit:null;let recovery={};try{recovery=JSON.parse(sessionStorage.getItem("grmetro:kiosk-recovery")||"{}");}catch{}const history=Array.isArray(recovery.history)?recovery.history:[];const lastReload=[...history].reverse().find(item=>item?.type==="controlled-page-reload");return{sessionId:DISPLAY_SESSION_ID,memoryPercent:Number.isFinite(ratio)?Math.round(ratio*100):null,memoryPressure:Number.isFinite(ratio)&&ratio>=.85,uptimeSeconds:Math.floor((Date.now()-DISPLAY_SESSION_STARTED_AT)/1000),recoveryState:Number.isFinite(ratio)&&ratio>=.85?"memory-pressure":"healthy",relaunchCount:Array.isArray(recovery.reloads)?recovery.reloads.length:0,lastRelaunchReason:lastReload?.reason||null};}
+async function requestJson(path,options={}){const response=await fetch(path,{cache:"no-store",...options});if(!response.ok)throw new Error(`presentation request failed (${response.status})`);return response.json();}function sleep(ms){return new Promise(resolve=>window.setTimeout(resolve,ms));}
+export function PresentationControllerProvider({children}){return <PresentationControllerContext.Provider value={true}>{children}</PresentationControllerContext.Provider>;}
+export function usePresentationController(requestedDisplayId=DEFAULT_DISPLAY_ID,clientType="display"){
+if(!useContext(PresentationControllerContext))throw new Error("usePresentationController must be used within PresentationControllerProvider");const displayId=findDisplay(requestedDisplayId)?.id??DEFAULT_DISPLAY_ID;const display=findDisplay(displayId);const[state,setState]=useState({displayId,displayName:display.name,presentationProfile:display.presentationProfile,activeSlideIndex:0,isRunning:true,timerRevision:0,revision:0,lastUpdated:null});const[transportState,setTransportState]=useState("connecting");const[online,setOnline]=useState(clientType==="display");const[runtime,setRuntime]=useState({reconnectCount:0,lastSynchronization:null,lastCommandError:null,lastCommandAt:null,lastCommandId:null,lastCommandTargetRevision:null,appliedRevision:null,commandApplied:null,httpHealthy:false,heartbeatHealthy:clientType!=="display",recoveryLevel:0});const[transport,setTransport]=useState(null);const commandRef=useRef({busy:false,sequence:0});const appliedRevisionRef=useRef(0);
+const acceptState=useCallback(next=>{if(!next||next.displayId!==displayId)return;setState(next);if(Number.isSafeInteger(next.revision))appliedRevisionRef.current=next.revision;setRuntime(current=>({...current,lastSynchronization:Date.now(),recoveryLevel:0}));},[displayId]);
+useEffect(()=>{let ws;try{ws=createWebSocketPresentationTransport({displayId,clientType,location:window.location,reconnectMinimumMs:RUNTIME_SETTINGS.reconnectMinimumMs,reconnectMaximumMs:RUNTIME_SETTINGS.reconnectMaximumMs,onState:acceptState,onConnectionChange:setTransportState,onReconnectAttempt:()=>setRuntime(current=>({...current,reconnectCount:current.reconnectCount+1,recoveryLevel:Math.max(current.recoveryLevel,2)}))});setTransport(ws);}catch{setTransportState("reconnecting");}return()=>ws?.close();},[acceptState,clientType,displayId]);
+useEffect(()=>{let active=true,failures=0;const poll=async()=>{try{const payload=await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}`);if(!active)return;failures=0;acceptState(payload.state);setRuntime(current=>({...current,httpHealthy:true,appliedRevision:Number.isSafeInteger(payload.appliedRevision)?payload.appliedRevision:current.appliedRevision,commandApplied:Number.isSafeInteger(current.lastCommandTargetRevision)&&Number.isSafeInteger(payload.appliedRevision)?payload.appliedRevision>=current.lastCommandTargetRevision:current.commandApplied}));if(clientType==="remote")setOnline(payload.online===true);}catch{if(!active)return;failures+=1;setRuntime(current=>({...current,httpHealthy:false,recoveryLevel:Math.max(current.recoveryLevel,1)}));if(clientType==="remote"&&failures>=HTTP_FAILURES_BEFORE_OFFLINE)setOnline(false);if(failures===3||failures===HTTP_FAILURES_BEFORE_OFFLINE)transport?.reconnect();}};poll();const timer=window.setInterval(poll,POLL_MS);return()=>{active=false;window.clearInterval(timer);};},[acceptState,clientType,displayId,transport]);
+useEffect(()=>{if(clientType!=="display")return undefined;let active=true,failures=0;const beat=async()=>{try{const result=await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/heartbeat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({appliedRevision:appliedRevisionRef.current,runtimeHealth:runtimeHealth()})});if(active){failures=0;setOnline(true);setRuntime(current=>({...current,heartbeatHealthy:true,appliedRevision:result.appliedRevision??current.appliedRevision}));}}catch{if(!active)return;failures+=1;setRuntime(current=>({...current,heartbeatHealthy:false,recoveryLevel:Math.max(current.recoveryLevel,1)}));if(failures>=4&&transportState!=="connected")setOnline(false);}};beat();const timer=window.setInterval(beat,DISPLAY_HEARTBEAT_MS);return()=>{active=false;window.clearInterval(timer);};},[clientType,displayId,transportState]);
+const action=useCallback(async(name,payload={})=>{if(commandRef.current.busy)return null;commandRef.current.busy=true;const sequence=++commandRef.current.sequence,commandId=`${displayId}-${Date.now()}-${sequence}`;try{const query=name==="select"?`?index=${encodeURIComponent(payload.index)}`:"",body=JSON.stringify({...payload,commandId});let lastError;for(let attempt=0;attempt<2;attempt+=1){try{const result=await requestJson(`/api/v1/presentation/${encodeURIComponent(displayId)}/action/${name}${query}`,{method:"POST",headers:{"Content-Type":"application/json","X-GRMETRO-Command-Id":commandId},body});acceptState(result.state);if(clientType==="remote"&&typeof result.online==="boolean")setOnline(result.online);setRuntime(current=>({...current,lastCommandAt:Date.now(),lastCommandError:null,lastCommandId:result.commandId||commandId,lastCommandTargetRevision:Number.isSafeInteger(result.targetRevision)?result.targetRevision:result.state?.revision??null,appliedRevision:Number.isSafeInteger(result.appliedRevision)?result.appliedRevision:current.appliedRevision,commandApplied:result.applied===true}));return result;}catch(error){lastError=error;if(attempt===0)await sleep(250);}}throw lastError;}catch(error){setRuntime(current=>({...current,lastCommandAt:Date.now(),lastCommandError:error.message,lastCommandId:commandId,commandApplied:false,recoveryLevel:Math.max(current.recoveryLevel,1)}));console.error("Presentation action failed",{displayId,clientType,name,error});return null;}finally{commandRef.current.busy=false;}},[acceptState,clientType,displayId]);
+const connectionState=clientType==="remote"?(online?"connected":"offline"):(online||transportState==="connected"?"connected":"reconnecting");return useMemo(()=>({...state,...runtime,transportState,connectionState,targetDisplayOnline:online,activeSlide:PRESENTATION_SLIDES[state.activeSlideIndex%slideCount],displays:PRESENTATION_DISPLAYS,slides:PRESENTATION_SLIDES,nextSlide:()=>action("next"),previousSlide:()=>action("previous"),pauseRotation:()=>action("pause"),resumeRotation:()=>action("resume"),restartRotationTimer:()=>action("restart"),selectSlide:index=>action("select",{index}),setRuntimePaused:()=>{},reconnect:()=>transport?.reconnect()}),[action,connectionState,online,runtime,state,transport,transportState]);}
