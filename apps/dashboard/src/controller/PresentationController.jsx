@@ -5,7 +5,8 @@ import { createWebSocketPresentationTransport } from "./presentationTransport";
 import { RUNTIME_SETTINGS } from "../config/runtimeSettings";
 
 const PresentationControllerContext = createContext(null);
-const slideCount=PRESENTATION_SLIDES.length,POLL_MS=1000,DISPLAY_CONNECTED_POLL_MS=15000,DISPLAY_HEARTBEAT_MS=2000,HTTP_FAILURES_BEFORE_OFFLINE=6;
+const slideCount = PRESENTATION_SLIDES.length;
+const POLL_MS=1000,DISPLAY_CONNECTED_POLL_MS=15000,DISPLAY_HEARTBEAT_MS=2000,HTTP_FAILURES_BEFORE_OFFLINE=6;
 const DISPLAY_SESSION_STARTED_AT=Date.now();
 const MEMORY_PRESSURE_RATIO=.80;
 const RECOVERY_CACHE_MS=30000;
