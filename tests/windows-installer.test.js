@@ -55,3 +55,12 @@ test("installer creates desktop and Start Menu launch points and supports autost
   assert.match(source, /install-performance-center-autostart\.ps1/);
   assert.match(source, /GRMetro Performance Center\.exe/);
 });
+
+test("IExpress manifest keeps target and source paths on single key-value lines", () => {
+  const source = read("scripts/windows/build-installer.ps1");
+  assert.match(source, /"TargetName=\$setupExe"/);
+  assert.match(source, /"SourceFiles0=\$sourceDir"/);
+  assert.match(source, /IExpress completed without creating/);
+  assert.doesNotMatch(source, /'TargetName='\+\$setupExe/);
+  assert.doesNotMatch(source, /'SourceFiles0='\+\$out/);
+});
