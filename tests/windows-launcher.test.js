@@ -25,8 +25,11 @@ test("control center handles first-run setup and supervised startup", () => {
 
 test("control center exposes day-to-day recovery and operator shortcuts", () => {
   const launcher = source("scripts/windows/performance-center-launcher.ps1");
-  for (const label of ["Open Phone Remote", "Open Admin Diagnostics", "Open Recovery Logs", "Refresh Data", "Restart Backend", "Restart ServiceTitan Browser", "Create Desktop Shortcut"]) {
+  for (const label of ["Open Phone Remote", "Admin Diagnostics", "Recovery Logs", "Refresh Data", "Restart Backend", "Restart ServiceTitan", "Create Desktop Shortcut"]) {
     assert.match(launcher, new RegExp(label));
   }
-  assert.match(launcher, /Closing this window does not stop the self-healing backend/);
+  assert.match(launcher, /self-healing backend|self-healing supervisor/i);
+  assert.match(launcher, /Minimize to Tray/);
+  assert.match(launcher, /Check for Updates/);
+  assert.match(launcher, /Setup & Configuration/);
 });
