@@ -56,11 +56,13 @@ test("installer creates desktop and Start Menu launch points and supports autost
   assert.match(source, /GRMetro Performance Center\.exe/);
 });
 
-test("IExpress manifest keeps target and source paths on single key-value lines", () => {
+test("setup EXE embeds installer script and package without IExpress", () => {
   const source = read("scripts/windows/build-installer.ps1");
-  assert.match(source, /"TargetName=\$setupExe"/);
-  assert.match(source, /"SourceFiles0=\$sourceDir"/);
-  assert.match(source, /IExpress completed without creating/);
-  assert.doesNotMatch(source, /'TargetName='\+\$setupExe/);
-  assert.doesNotMatch(source, /'SourceFiles0='\+\$out/);
+  assert.match(source, /GRMetroInstallerScript/);
+  assert.match(source, /GRMetroInstallerPackage/);
+  assert.match(source, /GetManifestResourceStream/);
+  assert.match(source, /\/target:winexe/);
+  assert.match(source, /GRMetro Performance Center Setup\.exe/);
+  assert.match(source, /csc\.exe/);
+  assert.doesNotMatch(source, /iexpress\.exe/i);
 });
