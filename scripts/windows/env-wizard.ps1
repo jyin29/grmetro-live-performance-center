@@ -6,7 +6,7 @@ $envPath=Join-Path $root ".env"
 $example=Join-Path $root ".env.example"
 if(-not(Test-Path $example)){throw "Missing .env.example"}
 function Read-EnvMap([string]$path){$map=@{};if(Test-Path $path){foreach($line in Get-Content $path){if($line -match '^\s*([^#=\s]+)=(.*)$'){$map[$matches[1]]=$matches[2]}}};return $map}
-function Set-EnvValue([string[]]$lines,[string]$key,[string]$value){$found=$false;$result=@();foreach($line in $lines){if($line -match ('^\s*'+[regex]::Escape($key)+'=')){$result+="$key=$value";$found=$true}else{$result+=$line}};if(-not$found){$result+="$key=$value"};return ,$result}
+function Set-EnvValue([string[]]$lines,[string]$key,[string]$value){$found=$false;$result=@();foreach($line in $lines){if($line -match ('^\s*'+[regex]::Escape($key)+'=')){$result+="$key=$value";$found=$true}else{$result+=$line}};if(-not$found){$result+="$key=$value"};return $result}
 $current=Read-EnvMap $envPath
 if(-not$Force -and $current['SERVICETITAN_BUSINESS_UNIT_IDS'] -and $current['SERVICETITAN_TECHNICIANS_JSON']){exit 0}
 [xml]$xaml=@'
@@ -32,11 +32,11 @@ $window.FindName("Cancel").Add_Click({$window.Close()})
 $window.FindName("Save").Add_Click({
   $errorText.Text=""
   if($bu.Text -notmatch '^\s*\d+(\s*,\s*\d+)*\s*$'){$errorText.Text="Enter one or more numeric business unit IDs separated by commas.";return}
-  try{$parsed=$tech.Text|ConvertFrom-Json;if(-not($parsed -is [System.Collections.IEnumerable])){throw "array"}}catch{$errorText.Text="Technician configuration must be valid JSON.";return}
+  try{$parsed=$tech.Text|ConvertFrom-Json;if($null -eq $parsed -or @($parsed).Count -lt 1){throw "array"}}catch{$errorText.Text="Technician configuration must be a non-empty valid JSON array.";return}
   $lines=if(Test-Path $envPath){@(Get-Content $envPath)}else{@(Get-Content $example)}
-  $lines=Set-EnvValue $lines "SERVICETITAN_BUSINESS_UNIT_IDS" $bu.Text.Trim()
-  $lines=Set-EnvValue $lines "SERVICETITAN_TECHNICIANS_JSON" (($tech.Text|ConvertFrom-Json|ConvertTo-Json -Compress -Depth 10))
-  $lines=Set-EnvValue $lines "TIMEZONE" $tz.Text.Trim()
+  $lines=@(Set-EnvValue $lines "SERVICETITAN_BUSINESS_UNIT_IDS" $bu.Text.Trim())
+  $lines=@(Set-EnvValue $lines "SERVICETITAN_TECHNICIANS_JSON" (($tech.Text|ConvertFrom-Json|ConvertTo-Json -Compress -Depth 10)))
+  $lines=@(Set-EnvValue $lines "TIMEZONE" $tz.Text.Trim())
   Set-Content -Path $envPath -Value $lines -Encoding UTF8
   Set-Content -Path (Join-Path $root ".grmetro-autostart-choice") -Value ($(if($auto.IsChecked){"yes"}else{"no"})) -Encoding ASCII
   $script:saved=$true;$window.DialogResult=$true;$window.Close()
