@@ -21,7 +21,7 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
   for (const display of displays) states.set(display.id, {
     displayId: display.id, displayName: display.name, activeSlideIndex: 0, isRunning: true,
     rotationStartedAt: timestamp(), nextRotationAt: null, presentationProfile: display.presentationProfile,
-    lastUpdated: timestamp(), timerRevision: 1,
+    lastUpdated: timestamp(), timerRevision: 1, revision: 0,
   });
 
   function getDisplayState(displayId) { return states.has(displayId) ? publicState(states.get(displayId)) : null; }
@@ -48,7 +48,7 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
   }
   function update(displayId, changes, restartTimer = true) {
     const state = requireDisplay(displayId);
-    Object.assign(state, changes, { lastUpdated: timestamp() });
+    Object.assign(state, changes, { lastUpdated: timestamp(), revision: state.revision + 1 });
     if (restartTimer) armTimer(displayId);
     return emit(displayId);
   }
@@ -69,17 +69,14 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
       case PRESENTATION_COMMANDS.GO_TO_SLIDE: return update(command.displayId, { activeSlideIndex: normalizeIndex(payload.index, slideCount) });
       case PRESENTATION_COMMANDS.PAUSE_ROTATION: return update(command.displayId, { isRunning: false });
       case PRESENTATION_COMMANDS.RESUME_ROTATION: return update(command.displayId, { isRunning: true });
-      case PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER:
-        // A restart is a full slideshow restart: return to Slide 1, make sure
-        // automatic rotation is running, and give Slide 1 a fresh interval.
-        return update(command.displayId, { activeSlideIndex: 0, isRunning: true });
+      case PRESENTATION_COMMANDS.RESTART_ROTATION_TIMER: return update(command.displayId, { activeSlideIndex: 0, isRunning: true });
       default: throw new RangeError("Invalid presentation command.");
     }
   }
   const unsubscribeEvent = eventEngine?.subscribe?.((nextEventState) => {
     const wasVisible = Boolean(eventState.activeEvent); eventState = nextEventState;
     for (const { id } of displays) {
-      const state = requireDisplay(id); state.lastUpdated = timestamp();
+      const state = requireDisplay(id); state.lastUpdated = timestamp(); state.revision += 1;
       cancelTimer(id);
       if (wasVisible && !eventState.activeEvent) armTimer(id, true);
       emit(id);

@@ -14,6 +14,6 @@ function createServiceTitanClient({ config, browserManager, logger }) {
     const response = await executor.post(ENDPOINTS.technicianJobDrilldown, buildTechnicianJobDrilldownRequest(config, technicianId, new Date(`${date}T12:00:00Z`)));
     const rows = validateJsonResponse(response, { endpointName: ENDPOINTS.technicianJobDrilldown.name, expectedShape: "array" });
     return { technicianId: Number(technicianId), date, ...sanitizeDrilldownRecords(rows) };
-  }, stop: () => { researchObserver.shutdown(); csrfTokenProvider.stop(); }, getStatus: () => ({ status: csrfTokenProvider.getSafeStatus().available ? "connected" : "unavailable" }) };
+  }, stop: () => { researchObserver.shutdown(); csrfTokenProvider.stop(); }, getStatus: () => { const csrf=csrfTokenProvider.getSafeStatus(); return { status: csrf.available ? "connected" : "unavailable", csrf: { available: csrf.available, observing: csrf.observing, acquiring: csrf.acquiring, stage: csrf.stage } }; } };
 }
 module.exports = { createServiceTitanClient };

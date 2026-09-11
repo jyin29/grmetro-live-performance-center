@@ -46,12 +46,15 @@ test("admin API exposes safe read-only configuration and runtime state", async (
     const { response, body } = await json(base, "/api/v1/admin");
     assert.equal(response.status, 200);
     assert.equal(body.displays[0].currentSlide.label, "Revenue");
-    assert.deepEqual(body.displays[0].connectedClients, { total: 3, displays: 1, remotes: 2 });
+    assert.deepEqual(body.displays[0].connectedClients, { total: 1, socketTotal: 3, displays: 1, remotes: 2 });
     assert.equal(body.businessRules.rules.length, businessRules.rules.length);
     assert.equal(body.events.pendingEvents, 2);
-    assert.equal(body.presentation.slides.length, 5);
+    assert.equal(body.presentation.slides.length, 6);
     assert.equal(body.system.connectedRemotes, 2);
-    assert.equal(JSON.stringify(body).toLowerCase().includes("servicetitan"), false);
+    const serialized = JSON.stringify(body).toLowerCase();
+    for (const secret of ["csrf", "cookie", "debugger", "authorization", "rawservicetitanresponse"]) {
+      assert.equal(serialized.includes(secret), false);
+    }
   });
 });
 
