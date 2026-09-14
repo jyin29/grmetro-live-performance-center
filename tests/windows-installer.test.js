@@ -12,15 +12,17 @@ test("native launcher and installer build scripts are present", () => {
     "scripts/windows/install-grmetro-performance-center.ps1",
     "scripts/windows/env-wizard.ps1",
     "scripts/windows/update-performance-center.ps1",
+    "scripts/windows/performance-center-launcher-host.ps1",
     "Build GRMetro Installer.cmd",
   ]) assert.equal(existsSync(path.join(root, file)), true, file);
 });
 
-test("root launcher prefers generated Windows executable with safe fallback", () => {
+test("root launcher prefers generated Windows executable with crash-safe fallback", () => {
   const source = read("GRMetro Performance Center.cmd");
   assert.match(source, /GRMetro Performance Center\.exe/);
   assert.match(source, /build-launcher-exe\.ps1/);
-  assert.match(source, /performance-center-launcher\.ps1/);
+  assert.match(source, /performance-center-launcher-host\.ps1/);
+  assert.match(source, /-STA/);
 });
 
 test("control center exposes finished operator workflow", () => {
