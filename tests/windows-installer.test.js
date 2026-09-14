@@ -27,7 +27,9 @@ test("root launcher prefers generated Windows executable with crash-safe fallbac
 
 test("control center exposes finished operator workflow", () => {
   const source = read("scripts/windows/performance-center-launcher.ps1");
-  for (const label of ["Check for Updates", "Setup & Configuration", "Minimize to Tray", "RECENT ACTIVITY", "OPEN SERVICETITAN LOGIN", "VersionText"]) assert.match(source, new RegExp(label.replace(/[&]/g, "&")));
+  for (const label of ["Check for Updates", "Minimize to Tray", "RECENT ACTIVITY", "OPEN SERVICETITAN LOGIN", "VersionText"]) assert.match(source, new RegExp(label));
+  assert.match(source, /Setup &amp; Configuration/);
+  assert.match(source, /xmlns:x="http:\/\/schemas\.microsoft\.com\/winfx\/2006\/xaml"/);
   assert.match(source, /NotifyIcon/);
   assert.match(source, /ServiceTitan-State/);
   assert.match(source, /update-performance-center\.ps1/);
