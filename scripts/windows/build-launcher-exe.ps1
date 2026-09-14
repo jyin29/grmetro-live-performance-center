@@ -32,16 +32,21 @@ static class Program {
   [STAThread]
   static void Main() {
     var root = AppDomain.CurrentDomain.BaseDirectory;
-    var script = Path.Combine(root,"scripts","windows","performance-center-launcher.ps1");
-    if(!File.Exists(script)){
-      MessageBox.Show("GRMetro launcher files are missing.","GRMetro Performance Center",MessageBoxButtons.OK,MessageBoxIcon.Error);
+    var host = Path.Combine(root,"scripts","windows","performance-center-launcher-host.ps1");
+    if(!File.Exists(host)){
+      MessageBox.Show("GRMetro launcher host is missing.","GRMetro Performance Center",MessageBoxButtons.OK,MessageBoxIcon.Error);
       return;
     }
-    var psi=new ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \""+script+"\" -AutoStart");
-    psi.WorkingDirectory=root;
-    psi.UseShellExecute=false;
-    psi.CreateNoWindow=true;
-    Process.Start(psi);
+    var args = "-STA -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"" + host + "\" -AutoStart";
+    var psi = new ProcessStartInfo("powershell.exe", args);
+    psi.WorkingDirectory = root;
+    psi.UseShellExecute = false;
+    psi.CreateNoWindow = true;
+    try {
+      Process.Start(psi);
+    } catch(Exception ex) {
+      MessageBox.Show("GRMetro Performance Center could not start.\n\n" + ex.Message,"GRMetro Performance Center",MessageBoxButtons.OK,MessageBoxIcon.Error);
+    }
   }
 }
 '@
