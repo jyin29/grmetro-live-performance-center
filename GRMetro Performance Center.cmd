@@ -7,6 +7,6 @@ if not exist "%~dp0GRMetro Performance Center.exe" (
 if exist "%~dp0GRMetro Performance Center.exe" (
   start "" "%~dp0GRMetro Performance Center.exe"
 ) else (
-  start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0scripts\windows\performance-center-launcher.ps1" -AutoStart
+  start "" powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0scripts\windows\performance-center-launcher-host.ps1" -AutoStart
 )
 exit /b 0
