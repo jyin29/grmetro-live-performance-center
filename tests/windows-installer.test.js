@@ -13,6 +13,7 @@ test("native launcher and installer build scripts are present", () => {
     "scripts/windows/env-wizard.ps1",
     "scripts/windows/update-performance-center.ps1",
     "scripts/windows/performance-center-launcher-host.ps1",
+    "scripts/windows/stop-performance-center.ps1",
     "Build GRMetro Installer.cmd",
   ]) assert.equal(existsSync(path.join(root, file)), true, file);
 });
@@ -27,12 +28,22 @@ test("root launcher prefers generated Windows executable with crash-safe fallbac
 
 test("control center exposes finished operator workflow", () => {
   const source = read("scripts/windows/performance-center-launcher.ps1");
-  for (const label of ["Check for Updates", "Minimize to Tray", "RECENT ACTIVITY", "OPEN SERVICETITAN LOGIN", "VersionText"]) assert.match(source, new RegExp(label));
+  for (const label of ["Check for Updates", "Minimize to Tray", "RECENT ACTIVITY", "OPEN SERVICETITAN LOGIN", "VersionText", "Stop Performance Center"]) assert.match(source, new RegExp(label));
   assert.match(source, /Setup &amp; Configuration/);
   assert.match(source, /xmlns:x="http:\/\/schemas\.microsoft\.com\/winfx\/2006\/xaml"/);
   assert.match(source, /NotifyIcon/);
   assert.match(source, /ServiceTitan-State/);
   assert.match(source, /update-performance-center\.ps1/);
+  assert.match(source, /stop-performance-center\.ps1/);
+});
+
+test("operator stop kills only GRMetro supervisor, backend, and dedicated Edge", () => {
+  const source = read("scripts/windows/stop-performance-center.ps1");
+  assert.match(source, /performance-center-supervisor\\\.ps1/);
+  assert.match(source, /apps\[\\\\\/\]backend/);
+  assert.match(source, /C:\\\\edge-dashboard-profile/);
+  assert.match(source, /Stop-Process/);
+  assert.doesNotMatch(source, /Get-Process\s+node\s*\|\s*Stop-Process/i);
 });
 
 test("first run wizard keeps deployment configuration out of source", () => {
