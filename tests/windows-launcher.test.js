@@ -8,9 +8,18 @@ function source(path) {
 
 test("root launcher opens the GRMetro control center in one click", () => {
   const cmd = source("GRMetro Performance Center.cmd");
-  assert.match(cmd, /performance-center-launcher\.ps1/);
+  assert.match(cmd, /performance-center-launcher-host\.ps1/);
   assert.match(cmd, /-AutoStart/);
   assert.match(cmd, /WindowStyle Hidden/);
+  assert.match(cmd, /-STA/);
+});
+
+test("launcher host makes startup failures visible and logged", () => {
+  const host = source("scripts/windows/performance-center-launcher-host.ps1");
+  assert.match(host, /performance-center-launcher\.ps1/);
+  assert.match(host, /control-center-crash\.log/);
+  assert.match(host, /MessageBox/);
+  assert.match(host, /CONTROL CENTER STARTUP FAILURE/);
 });
 
 test("control center handles first-run setup and supervised startup", () => {
