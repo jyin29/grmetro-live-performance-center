@@ -85,11 +85,22 @@ function Update-Status {
   $script:lastState=$state; Refresh-Activity
 }
 function Busy($text){$progress.Visibility="Visible";$statusLabel.Text=$text;$primary.IsEnabled=$false;$window.Dispatcher.Invoke([action]{},'Background')}
+function Show-RemoteQr {
+  try {
+    $remote = "http://${lan}:3000/remote"
+    $qrScript = Join-Path $root "scripts\show-remote-qr.js"
+    if (-not (Test-Path $qrScript)) { throw "QR helper is missing." }
+    $command = "Set-Location -LiteralPath `"$root`"; Write-Host `"GRMetro Phone Remote`" -ForegroundColor Cyan; Write-Host `"$remote`"; Write-Host; node `"$qrScript`" `"$remote`""
+    Start-Process powershell.exe -ArgumentList @("-NoExit", "-Command", $command) -WorkingDirectory $root | Out-Null
+  } catch {
+    [System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Remote QR Code","OK","Error") | Out-Null
+  }
+}
 
 $primary.Add_Click({try{if(Needs-Setup){Busy "Setting up...";$code=Run-Wait $setupScript;if($code -ne 0){throw "Setup did not complete."}};Busy "Starting...";Start-Supervisor;$deadline=(Get-Date).AddSeconds(40);while((Get-Date)-lt $deadline -and -not(Test-Backend)){Start-Sleep -Milliseconds 600;[System.Windows.Forms.Application]::DoEvents()};if(-not(Test-Backend)){throw "Backend did not become healthy. Open Recovery Logs."}}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"GRMetro","OK","Error")|Out-Null}finally{$progress.Visibility="Collapsed";Update-Status}})
 $login.Add_Click({Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$edgeScript`"" -WorkingDirectory $root})
 (C "RemoteButton").Add_Click({Start-Process "http://${lan}:3000/remote"})
-(C "QrButton").Add_Click({try{$remote="http://${lan}:3000/remote";$qrScript=Join-Path $root "scripts\show-remote-qr.js";if(-not(Test-Path $qrScript)){throw "QR helper is missing."};Start-Process powershell.exe -ArgumentList "-NoExit -Command `"Set-Location -LiteralPath '$($root.Replace("'","''"))'; Write-Host 'GRMetro Phone Remote' -ForegroundColor Cyan; Write-Host '$remote' -ForegroundColor White; Write-Host ''; node '$($qrScript.Replace("'","''"))' '$remote'`"" -WorkingDirectory $root})catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Remote QR Code","OK","Error")|Out-Null}})
+(C "QrButton").Add_Click({ Show-RemoteQr })
 (C "AdminButton").Add_Click({Start-Process "http://127.0.0.1:3000/admin"}); (C "LogsButton").Add_Click({if(Test-Path $logPath){Start-Process notepad.exe $logPath}}); (C "RefreshButton").Add_Click({Run-Admin "refresh-data"}); (C "RestartBackendButton").Add_Click({Run-Admin "restart-backend"}); (C "RestartBrowserButton").Add_Click({Run-Admin "restart-browser"}); (C "ConfigButton").Add_Click({Run-Wait $wizardScript "-Force"|Out-Null;Update-Status}); (C "FolderButton").Add_Click({Start-Process explorer.exe $root})
 (C "StopButton").Add_Click({$answer=[System.Windows.MessageBox]::Show($window,"Stop GRMetro completely?`n`nThis stops the self-healing supervisor, backend, and dedicated ServiceTitan Edge window. Your normal Edge windows are not touched. You can start GRMetro again from this app.","Stop GRMetro Performance Center","YesNo","Warning");if($answer -eq "Yes"){try{Busy "Stopping...";$code=Run-Wait $stopScript;if($code -ne 0){throw "GRMetro could not be stopped cleanly."};Start-Sleep -Milliseconds 700;Update-Status;[System.Windows.MessageBox]::Show($window,"GRMetro Performance Center is stopped. Click START PERFORMANCE CENTER whenever you want it running again.","GRMetro stopped","OK","Information")|Out-Null}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Stop failed","OK","Error")|Out-Null}finally{$progress.Visibility="Collapsed";Update-Status}}})
 $update.Add_Click({try{Busy "Checking for updates...";$json=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $updateScript -CheckOnly|Select-Object -Last 1;$r=$json|ConvertFrom-Json;if($r.updateAvailable){$updateTitle.Text="Install Update";$updateDetail.Text=$r.message;$answer=[System.Windows.MessageBox]::Show($window,"$($r.message)`n`nInstall now? Tests and a build will run before restart.","GRMetro Update","YesNo","Question");if($answer -eq "Yes"){Busy "Installing update...";$code=Run-Wait $updateScript;if($code -ne 0){throw "Update failed. Existing running system was left in place."};(C "VersionText").Text=Version-Text}}else{$updateTitle.Text="Check for Updates";$updateDetail.Text=$r.message}}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Update","OK","Error")|Out-Null}finally{$progress.Visibility="Collapsed";Update-Status}})
