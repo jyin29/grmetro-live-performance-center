@@ -17,15 +17,15 @@ function records() {
   }));
 }
 
-test("dashboard builder emits deterministic, fully prepared five-slide presentation data", () => {
+test("dashboard builder emits deterministic, fully prepared presentation data", () => {
   const options = { now: "2026-01-15T15:00:00Z", rotationEpoch: "2026-01-15T05:00:00Z", goals, overallScore };
   const payload = buildDashboardPayload(records(), options);
   assert.deepEqual(Object.keys(payload.slides), ["revenue", "activity", "performance", "average-ticket", "top-three"]);
-  assert.equal(payload.technicians.length, 5);
+  assert.equal(payload.technicians.length, technicians.length);
   assert.equal(payload.overallTopThree.length, 3);
   for (const slideId of ["revenue", "activity", "performance", "average-ticket"]) {
     assert.equal(Object.hasOwn(payload.slides[slideId], "entries"), false);
-    assert.equal(payload.slides[slideId].rows.length, 5);
+    assert.equal(payload.slides[slideId].rows.length, technicians.length);
     assert.equal(payload.slides[slideId].rows.every((row) => row.metrics.every((metric) => Object.hasOwn(metric, "rank") && Object.hasOwn(metric, "goal") && Object.hasOwn(metric, "normalizedRatio"))), true);
   }
   assert.equal(payload.slides.performance.axis.maximum, 100);

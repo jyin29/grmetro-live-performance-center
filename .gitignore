@@ -17,6 +17,11 @@ test-results/
 *.trace.zip
 *.har
 
+# Generated Windows packaging artifacts
+GRMetro Performance Center.exe
+assets/branding/grmetro.ico
+.grmetro-autostart-choice
+
 # Runtime output
 *.log
 logs/
