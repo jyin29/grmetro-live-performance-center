@@ -50,10 +50,10 @@ try {
 Write-Host "Starting dedicated dashboard Edge session on port $Port..."
 Start-Process -FilePath $edge -ArgumentList @(
   "--remote-debugging-port=$Port",
-  "--user-data-dir=$ProfilePath",
+  "--user-data-dir=`"$ProfilePath`"",
   "--no-first-run",
   "--no-default-browser-check",
-  $StartUrl
+  "`"$StartUrl`""
 )
 
 $deadline = (Get-Date).AddSeconds(20)

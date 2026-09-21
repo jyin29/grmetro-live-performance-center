@@ -2125,3 +2125,17 @@ backend logic, API, calculation, ranking, WebSocket, business rule, or synchroni
 The provisional Overall Score weights and 60% minimum valid-weight qualification are unchanged and still require
 management approval. No ServiceTitan, normalization, WebSocket, synchronization, remote, goal, scheduler, event,
 display, or five-slide sequencing architecture changed.
+
+## 2026-09-21 — Windows packaging repair and upgrade preservation
+
+- [x] Align Windows regression checks and the npm launch command with the native v2 control center, retaining action, confirmation, and process-targeting checks.
+- [x] Declare the setup wizard's WPF `x` namespace and verify all wizard controls construct without showing the window.
+- [x] Quote hidden worker, supervisor, login, Edge-profile, and Explorer paths; exercise actual v2 launch functions with harmless scripts in a spaced installation path.
+- [x] Package only the exact reviewed application manifest, excluding local data, credentials/session material, existing builds, logs, dependencies, and `~.DDF`.
+- [x] Validate the complete ZIP before application-file replacement and preserve all non-package files, including both backend working-directory data locations, spreadsheet uploads, company configuration, environment files, and autostart preference.
+- [x] Stage and back up the complete affected application set, publish a recovery journal, roll back ordinary failures, and recover an interrupted transaction on the next installer run.
+- [x] Remove only obsolete application files named by the prior installed manifest, followed only by empty application-directory cleanup.
+- [x] Test successful upgrade, obsolete cleanup, forced-failure rollback, interrupted-upgrade recovery, paths containing spaces, persistent-data preservation, and rejection of unexpected/private/traversal entries.
+- [x] Pass the full root and backend suites, PowerShell syntax validation, production build, Windows launcher/Setup EXE compilation, package verification, and whitespace checks.
+
+The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. The remote workspace still uses its existing no-op build/test script. Installation was not run: no autostart registration, Windows settings, running backend/Edge processes, or existing installed application was changed. A pre-manifest installation retains unknown unlisted files on its first manifest-based upgrade because there is no safe old-file inventory; subsequent upgrades clean manifest-listed obsolete application files. See [Windows packaging](./WINDOWS_PACKAGING.md). Existing live-data/business-approval blockers remain outside this repair.

@@ -14,7 +14,7 @@
     "start": "npm run start --workspace=@grmetro/backend",
     "setup:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/setup-performance-center.ps1",
     "start:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/start-performance-center.ps1",
-    "launch:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/performance-center-launcher.ps1",
+    "launch:windows": "powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File scripts/windows/performance-center-launcher-host.ps1",
     "build:windows-exe": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/build-launcher-exe.ps1",
     "package:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/build-installer.ps1",
     "update:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/update-performance-center.ps1",

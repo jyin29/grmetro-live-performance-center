@@ -27,5 +27,5 @@ switch($Action){
     & $edgeRecovery
     Write-Host "Requested full recovery. The supervisor will restore the backend after detecting the stopped process." -ForegroundColor Yellow
   }
-  "logs" { New-Item -ItemType Directory -Force -Path $logs | Out-Null; Start-Process explorer.exe $logs }
+  "logs" { New-Item -ItemType Directory -Force -Path $logs | Out-Null; Start-Process explorer.exe -ArgumentList ('"{0}"' -f $logs) }
 }

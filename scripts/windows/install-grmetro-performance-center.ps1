@@ -4,12 +4,8 @@ Add-Type -AssemblyName System.Windows.Forms
 $installRoot=Join-Path $env:LOCALAPPDATA "GRMetro\Performance Center"
 if(-not$PackageZip){$PackageZip=Join-Path $PSScriptRoot "grmetro-performance-center-package.zip"}
 if(-not(Test-Path $PackageZip)){throw "Installer package is missing: $PackageZip"}
-$existingEnv=Join-Path $installRoot ".env";$envBackup=$null
-if(Test-Path $existingEnv){$envBackup=Join-Path $env:TEMP ("grmetro-existing-env-"+[guid]::NewGuid().ToString()+".bak");Copy-Item $existingEnv $envBackup}
-New-Item -ItemType Directory -Force -Path $installRoot|Out-Null
-Get-ChildItem $installRoot -Force -ErrorAction SilentlyContinue|Where-Object{$_.Name -ne '.env'}|Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-Expand-Archive -Path $PackageZip -DestinationPath $installRoot -Force
-if($envBackup){Copy-Item $envBackup $existingEnv -Force;Remove-Item $envBackup -Force -ErrorAction SilentlyContinue}
+. (Join-Path $PSScriptRoot 'package-files.ps1')
+Install-GrMetroPackageFiles -PackageZip $PackageZip -InstallRoot $installRoot
 $wizard=Join-Path $installRoot "scripts\windows\env-wizard.ps1"
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $wizard
 if($LASTEXITCODE -eq 2){[System.Windows.Forms.MessageBox]::Show("Setup was cancelled. You can run GRMetro Performance Center later to continue.","GRMetro Setup")|Out-Null;exit 0}

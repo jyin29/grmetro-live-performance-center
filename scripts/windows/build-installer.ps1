@@ -1,6 +1,7 @@
 $ErrorActionPreference="Stop"
 $root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Set-Location $root
+. (Join-Path $PSScriptRoot 'package-files.ps1')
 
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "build-launcher-exe.ps1")
 if($LASTEXITCODE -ne 0){throw "Could not build launcher EXE."}
@@ -11,17 +12,17 @@ $stage=Join-Path $env:TEMP ("grmetro-package-"+[guid]::NewGuid().ToString())
 New-Item -ItemType Directory -Force -Path $stage|Out-Null
 
 try {
-  $exclude=@('.git','node_modules','logs','dist','.env')
-  Get-ChildItem $root -Force |
-    Where-Object{$exclude -notcontains $_.Name} |
-    ForEach-Object{Copy-Item $_.FullName -Destination $stage -Recurse -Force}
+  Copy-GrMetroPackageFiles -SourceRoot $root -StageRoot $stage
 
   $zip=Join-Path $out "grmetro-performance-center-package.zip"
   if(Test-Path $zip){Remove-Item $zip -Force}
-  Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -CompressionLevel Optimal
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  [IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip)
 
   $bootstrap=Join-Path $out "install-grmetro-performance-center.ps1"
   Copy-Item (Join-Path $PSScriptRoot "install-grmetro-performance-center.ps1") $bootstrap -Force
+  $packageHelper=Join-Path $out 'package-files.ps1'
+  Copy-Item (Join-Path $PSScriptRoot 'package-files.ps1') $packageHelper -Force
 
   # Keep a portable fallback alongside the EXE for troubleshooting.
   $cmd=Join-Path $out "install.cmd"
@@ -60,10 +61,11 @@ static class Program {
       string package = Path.Combine(temp, "grmetro-performance-center-package.zip");
       ExtractResource("GRMetroInstallerScript", script);
       ExtractResource("GRMetroInstallerPackage", package);
+      ExtractResource("GRMetroPackageHelper", Path.Combine(temp, "package-files.ps1"));
 
       var psi = new ProcessStartInfo(
         "powershell.exe",
-        "-NoProfile -ExecutionPolicy Bypass -File \"" + script + "\" -PackageZip \"" + package + "\"");
+        "-STA -NoProfile -ExecutionPolicy Bypass -File \"" + script + "\" -PackageZip \"" + package + "\"");
       psi.WorkingDirectory = temp;
       psi.UseShellExecute = false;
       var process = Process.Start(psi);
@@ -106,6 +108,7 @@ static class Program {
       $args=@('/nologo','/target:winexe',("/out:`"{0}`"" -f $setupExe),("/win32icon:`"{0}`"" -f $icon),'/reference:System.dll','/reference:System.Windows.Forms.dll',("/resource:`"{0}`",GRMetroInstallerScript" -f $bootstrap),("/resource:`"{0}`",GRMetroInstallerPackage" -f $zip),$tempSource)
     }
 
+    $args += ("/resource:`"{0}`",GRMetroPackageHelper" -f $packageHelper)
     & $csc @args
     if($LASTEXITCODE -ne 0){throw "Setup EXE compiler exited with code $LASTEXITCODE."}
     if(-not(Test-Path $setupExe)){throw "Compiler completed but 'GRMetro Performance Center Setup.exe' was not created."}
@@ -117,5 +120,8 @@ static class Program {
     Remove-Item $tempSource -Force -ErrorAction SilentlyContinue
   }
 } finally {
-  Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
+  $stagePath=[IO.Path]::GetFullPath($stage)
+  $tempRoot=[IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')
+  if ([IO.Path]::GetDirectoryName($stagePath) -ne $tempRoot -or [IO.Path]::GetFileName($stagePath) -notlike 'grmetro-package-*') { throw 'Unsafe staging cleanup path.' }
+  Remove-Item -LiteralPath $stagePath -Recurse -Force -ErrorAction SilentlyContinue
 }

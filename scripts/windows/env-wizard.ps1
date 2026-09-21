@@ -10,7 +10,7 @@ function Set-EnvValue([string[]]$lines,[string]$key,[string]$value){$found=$fals
 $current=Read-EnvMap $envPath
 if(-not$Force -and $current['SERVICETITAN_BUSINESS_UNIT_IDS'] -and $current['SERVICETITAN_TECHNICIANS_JSON']){exit 0}
 [xml]$xaml=@'
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Title="GRMetro Setup" Width="680" Height="600" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Background="#F5F7FA" FontFamily="Segoe UI">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="GRMetro Setup" Width="680" Height="600" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Background="#F5F7FA" FontFamily="Segoe UI">
 <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 <StackPanel><TextBlock Text="GRMetro Performance Center" FontSize="26" FontWeight="SemiBold" Foreground="#142031"/><TextBlock Text="First-time configuration" Margin="0,6,0,22" FontSize="14" Foreground="#637083"/></StackPanel>
 <Border Grid.Row="1" Background="White" CornerRadius="12" BorderBrush="#D7DEE8" BorderThickness="1" Padding="22"><StackPanel>

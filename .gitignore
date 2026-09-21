@@ -21,6 +21,7 @@ test-results/
 GRMetro Performance Center.exe
 assets/branding/grmetro.ico
 .grmetro-autostart-choice
+~.DDF
 
 # Runtime output
 *.log
