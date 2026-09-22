@@ -39,6 +39,32 @@ test("control center exposes finished operator workflow", () => {
   assert.match(source, /stop-performance-center\.ps1/);
 });
 
+test("native Phone Remote captures QR output as explicit UTF-8", () => {
+  const source = read("scripts/windows/native-operator-ui.ps1");
+  assert.match(source, /function Invoke-GrMetroUtf8Node/);
+  assert.match(source, /StandardOutputEncoding=\$utf8/);
+  assert.match(source, /StandardErrorEncoding=\$utf8/);
+  assert.match(source, /CreateNoWindow=\$true/);
+  assert.match(source, /Invoke-GrMetroUtf8Node -ScriptPath \$qrScript/);
+  assert.match(source, /if\(\$TerminalPalette\)\{\$box\.Background="#111827";\$box\.Foreground="White"\}/);
+  assert.match(source, /-Text \$text -TerminalPalette/);
+  assert.match(source, /GRMETRO PERFORMANCE CENTER/);
+  assert.match(source, /Secure local access from the native control center/);
+  assert.match(source, /\$header\.Background='#172033'/);
+});
+
+test("native diagnostics and recovery logs use readable status views", () => {
+  const source = read("scripts/windows/native-operator-ui.ps1");
+  for (const label of ["System health at a glance", "SERVICETITAN BROWSER", "DASHBOARD CACHE", "TV DISPLAYS", "Supervisor activity", "RECOVERY CENTER"]) {
+    assert.match(source, new RegExp(label));
+  }
+  assert.match(source, /\$data\.diagnostics\.cacheAvailable/);
+  assert.match(source, /Recovery level \$level/);
+  assert.doesNotMatch(source, /\$data\|ConvertTo-Json/);
+  assert.doesNotMatch(source, /Show-GrMetroTextDialog -Title "GRMetro Diagnostics"/);
+  assert.doesNotMatch(source, /Show-GrMetroTextDialog -Title "GRMetro Recovery Logs"/);
+});
+
 test("operator stop kills only GRMetro supervisor, backend, and dedicated Edge", () => {
   const source = read("scripts/windows/stop-performance-center.ps1");
   assert.match(source, /performance-center-supervisor\\\.ps1/);
@@ -55,6 +81,9 @@ test("first run wizard keeps deployment configuration out of source", () => {
   assert.match(source, /SERVICETITAN_BUSINESS_UNIT_IDS/);
   assert.match(source, /SERVICETITAN_TECHNICIANS_JSON/);
   assert.match(source, /Start GRMetro automatically/);
+  assert.match(source, /IsChecked="False"/);
+  assert.match(source, /Get-AutostartChoice \$auto\.IsChecked/);
+  assert.match(source, /\$isChecked -eq \$true/);
   assert.doesNotMatch(source, /password\s*=|secret\s*=/i);
 });
 
@@ -73,6 +102,27 @@ test("installer creates desktop and Start Menu launch points and supports autost
   assert.match(source, /Desktop/);
   assert.match(source, /install-performance-center-autostart\.ps1/);
   assert.match(source, /GRMetro Performance Center\.exe/);
+});
+
+test("installer reports setup failures in a native error dialog", () => {
+  const source = read("scripts/windows/install-grmetro-performance-center.ps1");
+  assert.match(source, /try\s*\{/);
+  assert.match(source, /catch\s*\{/);
+  assert.match(source, /GRMetro Setup Failed/);
+  assert.match(source, /MessageBoxIcon\]::Error/);
+  assert.match(source, /No autostart task was created/);
+  assert.match(source, /\$setupOutput=@\(& powershell\.exe/);
+  assert.match(source, /Select-Object -Last 8/);
+});
+
+test("setup identifies dependency, build, and test failures", () => {
+  const source = read("scripts/windows/setup-performance-center.ps1");
+  assert.match(source, /function Invoke-NpmCommand/);
+  assert.match(source, /\$exitCode=\$LASTEXITCODE/);
+  assert.match(source, /\$ErrorActionPreference="Continue"/);
+  assert.match(source, /Dependency installation failed \(npm ci exit code/);
+  assert.match(source, /Dashboard build failed \(npm run build exit code/);
+  assert.match(source, /Test suite failed \(npm test exit code/);
 });
 
 test("setup EXE embeds installer script and package without IExpress", () => {

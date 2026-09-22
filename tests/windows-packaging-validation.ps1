@@ -131,6 +131,40 @@ try {
   }
   Write-Output 'PASS: all Windows scripts parse; WPF windows construct without being shown.'
 
+  $wizardAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'scripts/windows/env-wizard.ps1'),[ref]$tokens,[ref]$parseErrors)
+  $choiceFunction=$wizardAst.Find({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-AutostartChoice'},$true)
+  Invoke-Expression $choiceFunction.Extent.Text
+  Assert ((Get-AutostartChoice $true) -eq 'yes') 'Checked autostart choice was not saved as yes.'
+  Assert ((Get-AutostartChoice $false) -eq 'no') 'Unchecked autostart choice was not saved as no.'
+  Assert ((Get-AutostartChoice $null) -eq 'no') 'Indeterminate autostart choice must default to no.'
+  Write-Output 'PASS: autostart preference defaults safely and preserves explicit checkbox state.'
+
+  $setupAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'scripts/windows/setup-performance-center.ps1'),[ref]$tokens,[ref]$parseErrors)
+  $npmFunction=$setupAst.Find({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Invoke-NpmCommand'},$true)
+  Invoke-Expression $npmFunction.Extent.Text
+  $fakeNpm=Join-Path $fixture 'npm.cmd'
+  Write-Fixture $fakeNpm "@echo npm warning on stderr 1>&2`r`n@exit /b 0`r`n"
+  $previousPath=$env:PATH
+  try {
+    $env:PATH="$fixture;$env:PATH"
+    Assert ((Invoke-NpmCommand @('ci') -Quiet) -eq 0) 'Successful npm warning on stderr was treated as a setup failure.'
+    Write-Fixture $fakeNpm "@echo npm failed 1>&2`r`n@exit /b 7`r`n"
+    Assert ((Invoke-NpmCommand @('ci') -Quiet) -eq 7) 'Failed npm exit code was not preserved.'
+  } finally {
+    $env:PATH=$previousPath
+  }
+  Write-Output 'PASS: npm warnings do not abort setup and nonzero exit codes remain failures.'
+
+  $nativeUiAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'scripts/windows/native-operator-ui.ps1'),[ref]$tokens,[ref]$parseErrors)
+  $utf8NodeFunction=$nativeUiAst.Find({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Invoke-GrMetroUtf8Node'},$true)
+  Invoke-Expression $utf8NodeFunction.Extent.Text
+  $unicodeProbe=Join-Path $fixture 'spaced qr probe.js'
+  Write-Fixture $unicodeProbe 'process.stdout.write("\u2584\u2588 QR");'
+  $unicodeResult=Invoke-GrMetroUtf8Node -ScriptPath $unicodeProbe -Argument 'unused'
+  $expectedUnicode=([string][char]0x2584)+([string][char]0x2588)+' QR'
+  Assert ($unicodeResult -eq $expectedUnicode) 'Native QR capture corrupted UTF-8 block characters.'
+  Write-Output 'PASS: native QR capture preserves UTF-8 blocks from a spaced script path.'
+
   # Execute the actual v2 launch functions against a harmless script in a spaced path.
   $root = $installed
   $probe = Join-Path $installed 'scripts/windows/child probe.ps1'
