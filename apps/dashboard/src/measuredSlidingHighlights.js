@@ -53,6 +53,7 @@ function updateDisplayPicker(group, active) {
 function updateGroup(group) {
   const active = group.querySelector(ACTIVE_SELECTOR);
   if (!active) { group.classList.remove("has-measured-highlight"); return; }
+  if (group.classList.contains("display-picker--cards")) { group.classList.remove("has-measured-highlight"); return; }
   if (group.classList.contains("display-picker")) { updateDisplayPicker(group, active); group.classList.add("has-measured-highlight"); return; }
   const groupRect = group.getBoundingClientRect();
   const activeRect = active.getBoundingClientRect();

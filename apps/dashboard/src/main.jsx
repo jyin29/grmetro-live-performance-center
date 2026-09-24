@@ -14,6 +14,7 @@ import "./measuredSlidingHighlights";
 import "./remote-layout-hotfix.css";
 import "./remote-stability.css";
 import "./local-dashboard-controls.css";
+import "./remote-displays.css";
 import "./easterEgg";
 import "./remotePresenceIndicators";
 import { DisplayErrorBoundary } from "./components/DisplayErrorBoundary";

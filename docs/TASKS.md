@@ -1338,6 +1338,8 @@ feat: add technician and KPI remote display views
 - [ ] Test Android Chrome.
 - [ ] Test Edge mobile.
 
+Progress note (2026-09-23): Reorganized the existing mobile Displays destination around display selection, selected-TV connection and current state, compact runtime health, and a two-column primary control grid. Restart Rotation, direct slide selection, customization, and command acknowledgement remain available under Advanced Controls. The refactor preserves the existing controller commands, target scoping, revision/acknowledgement machinery, WebSocket updates, recovery state, API contracts, and backend behavior. Rendered component tests cover connected/offline state, control availability, diagnostic hierarchy, and 360–430 px responsive structure; stakeholder visual approval remains pending.
+
 Recommended commits:
 
 ```text

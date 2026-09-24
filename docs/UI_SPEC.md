@@ -2190,6 +2190,10 @@ The final inventory and placement rationale are recorded in `docs/FINAL_KPI_AUDI
 
 The `/remote` application uses a phone-first native application pattern. Its four persistent bottom-navigation destinations are Home, Technicians, Displays, and Settings. Home is the default and prioritizes live health, refresh timing/state, connected displays, alerts/events, manual refresh, and shortcuts. Technician selection opens a dedicated single-column profile; display controls are isolated on Displays; goal editing uses touch-oriented cards; events, alerts, diagnostics, business rules, and read-only administration remain available through Settings, with system-oriented content grouped under Advanced. Controls target a minimum 48px touch area and the layout scales from portrait phones to tablets. This organization is presentation-only and does not alter APIs, calculations, synchronization, or display behavior.
 
+## 2026-09-23 — Mobile Displays hierarchy
+
+The Displays destination presents information in operator order: horizontal display selection, selected-display identity and connection state, current slide/rotation/client status, runtime health, subordinate recovery details, then primary controls. Previous, Next, Pause, and Resume remain visible as a two-column touch grid. Restart Rotation, direct slide selection, dashboard customization, and command acknowledgement remain available under a collapsed Advanced Controls section. The acknowledgement/revision value is diagnostic context and does not appear in the primary status area. The layout uses compact three-card status rows, a pale amber recovery card, and responsive 360–430 px spacing without changing command routing, acknowledgements, recovery, WebSockets, APIs, or backend behavior.
+
 ## 2026-08-13 — Television readability density pass
 
 At 1920×1080, room-distance readability takes priority over decorative whitespace. The stationary shell uses a
