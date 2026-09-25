@@ -3,6 +3,8 @@ import { StatusBadge } from "./StatusBadge";
 import { formatClock, freshness, refreshLabel } from "../lib/presentation";
 import { branding } from "../config/branding";
 
+const REFRESH_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" });
+
 export function Header({ refreshedAt, refreshing, hasError }) {
   const [now, setNow] = useState(Date.now());
 
@@ -13,9 +15,8 @@ export function Header({ refreshedAt, refreshing, hasError }) {
 
   const state = refreshedAt ? freshness(refreshedAt, now) : "waiting";
   const tone = hasError || state === "stale" || state === "critical" ? "warning" : state === "live" ? "live" : "neutral";
-  const refreshedTime = refreshedAt && Number.isFinite(new Date(refreshedAt).getTime())
-    ? new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(refreshedAt))
-    : "—";
+  const refreshedDate = refreshedAt ? new Date(refreshedAt) : null;
+  const refreshedTime = refreshedDate && Number.isFinite(refreshedDate.getTime()) ? REFRESH_TIME_FORMATTER.format(refreshedDate) : "—";
   const ageLabel = refreshLabel(refreshedAt, now).replace(/^Updated /, "");
   return <header className="header">
     <img className="header__logo" src={branding.logoUrl} alt={branding.companyName} />

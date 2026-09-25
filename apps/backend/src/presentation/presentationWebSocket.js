@@ -2,7 +2,7 @@
 
 const { WebSocketServer, WebSocket } = require("ws");
 
-function createPresentationWebSocket({ server, manager, commandBus, logger }) {
+function createPresentationWebSocket({ server, manager, commandBus, logger, displayPresence }) {
   const sockets = new Set();
   const wss = new WebSocketServer({ noServer: true });
   const send = (socket, message) => {
@@ -25,13 +25,17 @@ function createPresentationWebSocket({ server, manager, commandBus, logger }) {
   wss.on("connection", (socket, details) => {
     const client = { socket, ...details };
     sockets.add(client);
+    if (details.clientType === "display") displayPresence?.touch?.(details.displayId);
     send(socket, { type: "presentation/state", state: manager.getDisplayState(details.displayId) });
     socket.on("message", (raw) => {
-      if (details.clientType !== "remote") { send(socket, { type: "presentation/error", message: "Display clients cannot issue commands." }); return; }
       try {
         const command = JSON.parse(raw.toString());
         if (command.displayId !== details.displayId) throw new RangeError("Command target does not match subscription.");
+        // The physical display and the phone remote are equal control surfaces.
+        // The controller sends idempotent absolute slide-selection commands, so allowing
+        // both clients here keeps the backend as the shared state without double-skips.
         commandBus.dispatch(command);
+        if (details.clientType === "display") displayPresence?.touch?.(details.displayId);
       } catch (error) { send(socket, { type: "presentation/error", message: error.message }); }
     });
     socket.on("close", () => sockets.delete(client));

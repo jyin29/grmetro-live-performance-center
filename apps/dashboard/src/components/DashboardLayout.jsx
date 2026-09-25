@@ -15,10 +15,10 @@ import { createDiagnosticsState } from "../runtime/diagnostics";
 import { useSpreadsheetSlide } from "../hooks/useSpreadsheetSlide";
 
 export function DashboardLayout({ data, displayId, displaySettings, error, refreshing, retry, lastSuccessfulRefresh }) {
-  const presentation = usePresentationController(displayId);
-  // Dashboard-local controls must connect as a remote/controller client. The backend intentionally
-  // keeps the display socket read-only so a compromised display connection cannot issue commands.
-  const localControls = usePresentationController(displayId, "remote");
+  // One controller owns the physical display. Commands are sent through the controller's
+  // authoritative HTTP command path, so local controls do not need a fake second "remote"
+  // connection (which was why the tray incorrectly said Offline).
+  const presentation = usePresentationController(displayId, "display");
   const spreadsheetSlide = useSpreadsheetSlide();
   const rotationPaused = !presentation.isRunning || refreshing || Boolean(error);
   const startedAt = useRef(Date.now());
@@ -45,10 +45,10 @@ export function DashboardLayout({ data, displayId, displaySettings, error, refre
   return <div className="app-shell">
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
     <ManagementAttention insights={managementInsights(data, { hasError: Boolean(error), refreshing })} />
-    <SlideDeck data={data} spreadsheetSlide={spreadsheetSlide} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} onSelectSlide={localControls.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }} />
+    <SlideDeck data={data} spreadsheetSlide={spreadsheetSlide} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} onSelectSlide={presentation.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }} />
     <EventOverlay event={presentation.event} />
     <DiagnosticsOverlay diagnostics={diagnostics} />
-    <LocalDashboardControls controller={localControls} />
+    <LocalDashboardControls controller={presentation} />
     <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>{presentation.connectionState === "connected" ? "Display connected · Live updates enabled" : "Display reconnecting · Updates will resume automatically"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
   </div>;
 }
