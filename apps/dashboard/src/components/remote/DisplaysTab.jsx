@@ -47,7 +47,7 @@ function DisplaySelector({ displays, selectedDisplayId, slides, onSelectDisplay 
     {displays.map((display) => {
       const connection = displayConnection(display);
       const presenceClass = connection.tone === "connected" ? "is-display-online" : connection.tone === "disconnected" ? "is-display-offline" : "is-display-error";
-      const slide = display.currentSlide?.label || slides?.[display.activeSlideIndex]?.label || "Unknown slide";
+      const slide = display.currentSlide?.label || slides?.find((candidate) => candidate.index === display.activeSlideIndex)?.label || "Unknown slide";
       return <button
         type="button"
         key={display.displayId}
@@ -94,9 +94,9 @@ export function DisplayControls({ controller, acknowledgement, onCustomize }) {
           {controller.slides.map((slide, index) => <button
             type="button"
             key={slide.id}
-            className={controller.activeSlideIndex === index ? "is-active" : ""}
-            aria-pressed={controller.activeSlideIndex === index}
-            onClick={() => controller.selectSlide(index)}
+            className={controller.activeSlideId === slide.id ? "is-active" : ""}
+            aria-pressed={controller.activeSlideId === slide.id}
+            onClick={() => controller.selectSlide(slide.id)}
           ><small>{index + 1}</small><span>{slide.label}</span></button>)}
         </div>
         <button className="display-customize-link" type="button" onClick={onCustomize}>
@@ -135,7 +135,7 @@ export function DisplaysTab({ admin, controller, selectedDisplayId, onSelectDisp
       </header>
 
       <div className="display-status-grid" aria-label="Display status">
-        <MetricCard icon="slide" label="Current Slide" value={controller.activeSlide?.label || "Unknown"} />
+        <MetricCard icon="slide" label="Current Slide" value={controller.activeSlide?.label || "Unknown"} className="is-slide-name" />
         <MetricCard icon="rotation" label="Rotation" value={controller.isRunning ? "Running" : "Paused"} />
         <MetricCard icon="connected" label="Connected" value={selected?.connectedClients?.total ?? "—"} />
       </div>

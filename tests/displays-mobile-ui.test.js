@@ -2,16 +2,20 @@
 
 const { after, before, test } = require("node:test");
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+
+const displaysCss = readFileSync(new URL("../apps/dashboard/src/remote-displays.css", `file://${__filename}`), "utf8");
 
 let server;
 let React;
 let renderToStaticMarkup;
 let DisplaysTab;
+let DashboardSlideButtons;
 
 const slides = [
-  { id: "revenue", label: "Revenue" },
-  { id: "sales", label: "Sales" },
-  { id: "technicians", label: "Technicians" },
+  { id: "revenue", label: "Revenue", index: 0 },
+  { id: "sales", label: "Sales", index: 1 },
+  { id: "technicians", label: "Technicians", index: 2 },
 ];
 
 const admin = {
@@ -48,6 +52,7 @@ function controller(overrides = {}) {
   return {
     displayName: "Main Office",
     activeSlideIndex: 1,
+    activeSlideId: "sales",
     activeSlide: slides[1],
     slides,
     isRunning: true,
@@ -67,6 +72,7 @@ before(async () => {
   ({ renderToStaticMarkup } = await import("react-dom/server"));
   server = await createServer({ root: "apps/dashboard", server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   ({ DisplaysTab } = await server.ssrLoadModule("/src/components/remote/DisplaysTab.jsx"));
+  ({ DashboardSlideButtons } = await server.ssrLoadModule("/src/components/LocalDashboardControls.jsx"));
 });
 
 after(async () => server?.close());
@@ -105,4 +111,53 @@ test("Displays selector and hero preserve explicit offline state", () => {
   assert.match(markup, /Disconnected/);
   assert.match(markup, /aria-label="Pause rotation" disabled=""/);
   assert.doesNotMatch(markup, /aria-label="Resume rotation" disabled=""/);
+});
+
+test("Current Slide uses balanced two-line wrapping without arbitrary word breaks", () => {
+  for (const label of ["Technicians", "Recognition", "Operations"]) {
+    const markup = renderToStaticMarkup(React.createElement(DisplaysTab, {
+      admin,
+      controller: controller({ activeSlideIndex: 2, activeSlide: { id: label.toLowerCase(), label, index: 2 } }),
+      selectedDisplayId: "main-office",
+      onSelectDisplay() {},
+      onCustomize() {},
+    }));
+    assert.match(markup, /display-metric-card is-slide-name/);
+    assert.match(markup, new RegExp(`>${label}<`));
+  }
+  assert.match(displaysCss, /\.display-metric-card\.is-slide-name > strong/);
+  assert.match(displaysCss, /overflow-wrap:\s*normal/);
+  assert.match(displaysCss, /word-break:\s*normal/);
+  assert.match(displaysCss, /text-wrap:\s*balance/);
+  assert.match(displaysCss, /-webkit-line-clamp:\s*2/);
+});
+
+test("remote and local controls highlight the stable first slide ID after wrap", () => {
+  const wrapped = controller({ activeSlideIndex: 0, activeSlideId: "revenue", activeSlide: slides[0] });
+  const remoteMarkup = renderToStaticMarkup(React.createElement(DisplaysTab, {
+    admin,
+    controller: wrapped,
+    selectedDisplayId: "main-office",
+    onSelectDisplay() {},
+    onCustomize() {},
+  }));
+  const localMarkup = renderToStaticMarkup(React.createElement(DashboardSlideButtons, { controller: wrapped }));
+  assert.match(remoteMarkup, /class="is-active"[^>]*aria-pressed="true"[^>]*><small>1<\/small><span>Revenue<\/span>/);
+  assert.match(localMarkup, /class="is-active"[^>]*aria-pressed="true"[^>]*>Revenue<\/button>/);
+  assert.doesNotMatch(remoteMarkup, /class="is-active"[^>]*><small>[2-6]<\/small>/);
+});
+
+test("six-slide state highlights Spreadsheet by stable ID when it becomes available", () => {
+  const availableSlides = [...slides, { id: "operations", label: "Operations", index: 3 }, { id: "recognition", label: "Recognition", index: 4 }, { id: "spreadsheet", label: "Spreadsheet", index: 5 }];
+  const available = controller({ activeSlideIndex: 5, activeSlideId: "spreadsheet", activeSlide: availableSlides[5], slides: availableSlides });
+  const remoteMarkup = renderToStaticMarkup(React.createElement(DisplaysTab, {
+    admin,
+    controller: available,
+    selectedDisplayId: "main-office",
+    onSelectDisplay() {},
+    onCustomize() {},
+  }));
+  const localMarkup = renderToStaticMarkup(React.createElement(DashboardSlideButtons, { controller: available }));
+  assert.match(remoteMarkup, /class="is-active"[^>]*aria-pressed="true"[^>]*><small>6<\/small><span>Spreadsheet<\/span>/);
+  assert.match(localMarkup, /class="is-active"[^>]*aria-pressed="true"[^>]*>Spreadsheet<\/button>/);
 });

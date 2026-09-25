@@ -24,6 +24,8 @@ test("display controls remain scoped to the selected display", () => {
   assert.match(displaysSource, /disabled=\{!controller\.isRunning\}/);
   assert.match(displaysSource, /disabled=\{controller\.isRunning\}/);
   assert.match(source, /Refresh Dashboard/);
+  assert.match(displaysSource, /controller\.activeSlideId === slide\.id/);
+  assert.match(displaysSource, /controller\.selectSlide\(slide\.id\)/);
 });
 
 test("technician search and stable selection drive the expanded drilldown", async () => {

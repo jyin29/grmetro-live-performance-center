@@ -83,3 +83,22 @@
   .operations-layout-v2 .install-economics-row__metric b { font-size:18px; }
   .operations-layout-v2 .install-economics-row__metric i { height:5px; }
 }
+
+/* Install Economics uses the complete TV card body instead of content-sized desktop rows. */
+.operations-layout-v2 .operations-domain__economics { min-height:0; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list { flex:1; min-height:0; display:grid; grid-template-rows:repeat(var(--install-row-count),minmax(0,1fr)); align-content:stretch; gap:0; padding-top:10px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-row { min-height:0; height:auto; align-content:center; padding:10px 5px 12px; gap:9px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-row__metrics { gap:7px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-row__metric { gap:5px 9px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-row__metric i { height:8px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row { padding-block:13px 15px; gap:12px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row > strong { font-size:30px; line-height:1.05; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row__metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row__metric > span { font-size:16px; line-height:1.1; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row__metric b { font-size:29px; line-height:1.05; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row__metric .metric-goal-inline { font-size:27px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-short-list .install-economics-row__metric i { height:9px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-medium-list .install-economics-row > strong { font-size:25px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-medium-list .install-economics-row__metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-medium-list .install-economics-row__metric > span { font-size:14px; }
+.operations-layout-v2 .operations-domain__economics .install-economics-list.is-medium-list .install-economics-row__metric b { font-size:24px; }

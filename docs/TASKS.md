@@ -2141,3 +2141,16 @@ display, or five-slide sequencing architecture changed.
 - [x] Pass the full root and backend suites, PowerShell syntax validation, production build, Windows launcher/Setup EXE compilation, package verification, and whitespace checks.
 
 The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. The remote workspace still uses its existing no-op build/test script. Installation was not run: no autostart registration, Windows settings, running backend/Edge processes, or existing installed application was changed. A pre-manifest installation retains unknown unlisted files on its first manifest-based upgrade because there is no safe old-file inventory; subsequent upgrades clean manifest-listed obsolete application files. See [Windows packaging](./WINDOWS_PACKAGING.md). Existing live-data/business-approval blockers remain outside this repair.
+
+## 2026-09-25 — Physical TV stage and optional Spreadsheet rotation
+
+- [x] Render physical display routes on a centered 1920×1080 logical stage scaled by the smaller viewport ratio.
+- [x] Recalculate the stage through `ResizeObserver`, window resize, and visual-viewport resize without changing remote/admin layouts.
+- [x] Remove physical display scrolling and viewport-dependent max-width behavior while preserving 16:9 geometry.
+- [x] Publish canonical spreadsheet availability from the backend store and notify the presentation manager when it changes.
+- [x] Exclude unavailable Spreadsheet content from backend auto-rotation, Previous/Next, direct navigation, TV indicators, and remote/local controls.
+- [x] Restore Spreadsheet eligibility automatically after valid enabled content is saved and leave all other slide order unchanged.
+- [x] Cover 1080p, 4K, 720p, unusual viewports, absent/present spreadsheet content, navigation wrapping, rotation, and remote-route isolation.
+- [x] Keep the proven TV viewport diagnostic overlay hidden by default and expose it through a local Show/Hide Diagnostics control inside the physical dashboard Controls tray.
+- [x] Normalize presentation state to stable active/eligible slide IDs so filtered Spreadsheet eligibility cannot desynchronize TV content, counters, phone highlighting, or local Controls highlighting.
+- [x] Distribute Install Economics technician rows across the available TV card height and increase short-list names, metric labels, values, bars, and spacing without changing DisplayStage scaling or mobile layouts.

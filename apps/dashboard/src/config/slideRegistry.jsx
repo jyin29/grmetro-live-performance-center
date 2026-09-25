@@ -11,5 +11,5 @@ export const PRESENTATION_SLIDES = Object.freeze([
   { id: "technicians", label: "Technicians", Component: TechnicianPerformanceSlide },
   { id: "operations", label: "Operations", Component: OperationsHealthSlide },
   { id: "recognition", label: "Recognition", Component: RecognitionSlide },
-  { id: "spreadsheet", label: "Spreadsheet", Component: SpreadsheetSlide },
+  { id: "spreadsheet", label: "Spreadsheet", Component: SpreadsheetSlide, requiresSpreadsheet: true },
 ]);

@@ -9,7 +9,7 @@ function source(path) {
 test("healthy display avoids duplicate presence heartbeat ownership", () => {
   const app = source("apps/dashboard/src/App.jsx");
   assert.match(app, /Once DashboardLayout mounts/);
-  assert.match(app, /return <DashboardLayout/);
+  assert.match(app, /else content = <DashboardLayout/);
   assert.doesNotMatch(app, /return <>\s*<DisplayPresenceReporter[^>]*\/>\s*<DashboardLayout/);
 });
 

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { PresentationControllerProvider } from "./controller/PresentationController";
 import "./styles.css";
+import "./display-stage.css";
 import "./remote-mobile-fixes.css";
 import "./remote-polish.css";
 import "./diagnostics-polish.css";

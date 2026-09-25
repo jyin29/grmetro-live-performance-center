@@ -1656,13 +1656,15 @@ Maximum target:
 3840×2160
 ```
 
-The layout shall scale through:
+Physical display routes shall render inside one 1920×1080 logical stage. The stage scale is:
 
-- CSS clamp values
-- Responsive SVG
-- Consistent aspect ratio
-- Minimum text thresholds
-- Controlled spacing adjustments
+```text
+min(viewport width / 1920, viewport height / 1080)
+```
+
+The scaled stage remains centered in the browser viewport with a 16:9 aspect ratio, no scrolling, no distortion, and no dashboard max-width. Any unused area is limited to unavoidable letterboxing for a non-16:9 viewport. Browser zoom remains at 100%.
+
+The stage observes viewport-size changes and recalculates after Android TV viewport or orientation changes. Remote, administration, and customization routes do not use the stage wrapper.
 
 Do not create a general mobile dashboard layout.
 
@@ -1670,30 +1672,21 @@ Do not create a general mobile dashboard layout.
 
 # 68. 720p Adjustments
 
-At 1280×720:
-
-- Reduce header height
-- Reduce logo size
-- Reduce outer margins
-- Reduce card padding
-- Reduce technician row height
-- Preserve all five rows
-- Keep metric values readable
-- Avoid hiding important fields where possible
-
-The Top 3 cards may reduce supporting KPI text size slightly.
+At 1280×720 the 1920×1080 logical stage uses a scale of two thirds. All dashboard geometry, text, cards, charts, and spacing scale together.
 
 ---
 
 # 69. 4K Adjustments
 
-At 3840×2160:
+At 3840×2160 the 1920×1080 logical stage uses a scale of two. It fills the viewport without increasing information density or leaving a small centered dashboard.
 
-- Increase text and spacing proportionally
-- Avoid a small 1080p panel floating in the center
-- Preserve maximum readable line lengths
-- Keep card shadows subtle
-- Increase SVG rendering dimensions without adding more information
+The Spreadsheet presentation is eligible only when the spreadsheet API reports enabled content with at least one column and one row. When unavailable, it is absent from automatic rotation, Previous/Next wrapping, the TV indicator, and remote/local direct-slide controls. Saving valid spreadsheet content makes it eligible again without restarting the application; removing or disabling it immediately moves any display currently on that slide to the first eligible slide.
+
+Presentation snapshots expose the active and eligible slides by stable slide ID. Registry indices may remain an internal command transport detail, but the dashboard counter, phone highlighting, and local Controls highlighting shall all resolve from the same normalized eligible-slide selection. An unavailable registry index must never remain exposed as the active frontend selection.
+
+The Operations slide's Install Economics panel uses the visible technician count to divide its available body height into equal row tracks. Lists of five or fewer technicians use the short-list TV density tier: 30px technician names, 16px metric labels, approximately 29px values, larger progress bars, and two side-by-side metric columns. Six or seven technicians use the bounded medium tier; larger lists retain the compact fallback. These rules apply only inside the physical dashboard slide.
+
+Temporary TV viewport diagnostics are hidden by default and remain local to the physical dashboard browser. The dashboard Controls tray includes a Diagnostics subsection whose button alternates between `Show Diagnostics` and `Hide Diagnostics`. The existing corner overlay and console measurements remain unchanged; diagnostics visibility is not synchronized through backend presentation state and is never exposed on remote, administration, or customization routes.
 
 ---
 

@@ -5,7 +5,7 @@ const path = require("node:path");
 
 async function registeredSlides() {
   const source = await readFile(path.join(__dirname, "../apps/dashboard/src/config/slideRegistry.jsx"), "utf8");
-  return [...source.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", Component: ([^ }]+) \}/g)];
+  return [...source.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", Component: ([^ },]+)[^}]*\}/g)];
 }
 
 test("dashboard rotation uses one 30-second configuration and wraps to Slide 1", async () => {
@@ -46,9 +46,10 @@ test("one shared registry owns every rendered and controlled presentation slide"
     readFile(path.join(__dirname, "../apps/dashboard/src/components/SlideDeck.jsx"), "utf8"),
     readFile(path.join(__dirname, "../apps/dashboard/src/controller/PresentationController.jsx"), "utf8"),
   ]);
-  assert.match(deck, /PRESENTATION_SLIDES\.length/);
-  assert.match(deck, /PRESENTATION_SLIDES\.map/);
+  assert.match(deck, /filterEligibleSlides/);
+  assert.match(deck, /registeredSlide\.id === slide\.id/);
   assert.match(controller, /slideCount = PRESENTATION_SLIDES\.length/);
+  assert.match(controller, /eligibleSlideIndices/);
 });
 
 test("operations health presentation uses only existing dashboard and presentation state", async () => {
