@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "metadataUrl": "__REQUIRED_HTTPS_RELEASE_JSON_URL__",
+  "signatureUrl": "__REQUIRED_HTTPS_RELEASE_SIGNATURE_URL__",
+  "channel": "stable",
+  "allowedHosts": [
+    "__REQUIRED_EXACT_RELEASE_HOST__"
+  ],
+  "connectionTimeoutSeconds": 10,
+  "responseTimeoutSeconds": 60,
+  "maximumMetadataBytes": 262144,
+  "maximumArtifactBytes": 268435456,
+  "maximumRedirects": 3
+}

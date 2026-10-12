@@ -11,16 +11,19 @@ $updateScript = Join-Path $PSScriptRoot "update-performance-center.ps1"
 $stopScript = Join-Path $PSScriptRoot "stop-performance-center.ps1"
 $edgeScript = Join-Path $PSScriptRoot "launch-edge.ps1"
 $logPath = Join-Path $root "logs\supervisor.log"
+. (Join-Path $PSScriptRoot "runtime-paths.ps1")
+. (Join-Path $PSScriptRoot "launch-integration.ps1")
+$node = Get-GrMetroNodePath $root
 New-Item -ItemType Directory -Force -Path (Join-Path $root "logs") | Out-Null
 
 function Test-Backend { try { $r=Invoke-RestMethod "http://127.0.0.1:3000/api/v1/health" -TimeoutSec 2; return $r.status -eq "ok" } catch { return $false } }
 function Get-Admin { try { Invoke-RestMethod "http://127.0.0.1:3000/api/v1/admin" -TimeoutSec 3 } catch { $null } }
 function Get-Lan { try { (Get-NetIPConfiguration | Where-Object {$_.IPv4DefaultGateway} | ForEach-Object {$_.IPv4Address.IPAddress} | Where-Object {$_ -and $_ -notmatch '^127\.|^169\.254\.'} | Select-Object -First 1) } catch { "<this-PC-IP>" } }
-function Needs-Setup { (-not (Get-Command node -ErrorAction SilentlyContinue)) -or (-not (Test-Path (Join-Path $root "node_modules"))) -or (-not (Test-Path (Join-Path $root ".env"))) -or (-not (Test-Path (Join-Path $root "apps\dashboard\dist\index.html"))) }
+function Needs-Setup { (-not (Test-GrMetroPortableRuntime $root)) -or (-not (Test-Path (Join-Path $root "node_modules\playwright\package.json"))) -or (-not (Test-Path (Join-Path $root ".env"))) -or (-not (Test-Path (Join-Path $root "apps\dashboard\dist\index.html"))) }
 function Run-Wait($script,$args="") { $a="-NoProfile -ExecutionPolicy Bypass -File `"$script`" $args"; (Start-Process powershell.exe -ArgumentList $a -WorkingDirectory $root -WindowStyle Hidden -PassThru -Wait).ExitCode }
 function Start-Supervisor { if(Test-Backend){return}; Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$startScript`" -SkipBuild" -WorkingDirectory $root -WindowStyle Minimized | Out-Null }
 function Run-Admin($cmd) { Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$adminScript`" $cmd" -WorkingDirectory $root | Out-Null }
-function Version-Text { try {$pkg=Get-Content (Join-Path $root "package.json") -Raw|ConvertFrom-Json;$v=$pkg.version}catch{$v="?"}; try {$sha=(git -C $root rev-parse --short HEAD 2>$null).Trim()}catch{$sha="packaged"}; "v$v - $sha" }
+function Version-Text { try {$b=Get-Content (Join-Path $root "scripts\windows\package-build.json") -Raw|ConvertFrom-Json;$suffix=if($b.sourceState -eq 'working-tree'){' + working tree'}else{''};$version=if($b.releaseVersion){$b.releaseVersion}else{$b.applicationVersion};"v$version - $($b.commit)$suffix"}catch{"development"} }
 function ServiceTitan-State($admin) { if(-not $admin){return "unknown"}; $text=(($admin.diagnostics.serviceTitan|ConvertTo-Json -Compress -Depth 5)+" "+($admin.diagnostics.browser|ConvertTo-Json -Compress -Depth 5)).ToLowerInvariant(); if($text -match "login|sign.in|auth.*required|unauthorized|forbidden|session.*expired"){return "login-required"}; if($admin.diagnostics.serviceTitan.status -eq "connected" -and $admin.diagnostics.browser.connected -and $admin.diagnostics.browser.serviceTitanPageFound){return "healthy"}; "degraded" }
 function Recent-Activity { if(-not(Test-Path $logPath)){return @("No recovery events yet.")}; @(Get-Content $logPath -Tail 5) }
 
@@ -90,7 +93,7 @@ function Show-RemoteQr {
     $remote = "http://${lan}:3000/remote"
     $qrScript = Join-Path $root "scripts\show-remote-qr.js"
     if (-not (Test-Path $qrScript)) { throw "QR helper is missing." }
-    $command = "Set-Location -LiteralPath `"$root`"; Write-Host `"GRMetro Phone Remote`" -ForegroundColor Cyan; Write-Host `"$remote`"; Write-Host; node `"$qrScript`" `"$remote`""
+    $command = "Set-Location -LiteralPath `"$root`"; Write-Host `"GRMetro Phone Remote`" -ForegroundColor Cyan; Write-Host `"$remote`"; Write-Host; & `"$node`" `"$qrScript`" `"$remote`""
     Start-Process powershell.exe -ArgumentList @("-NoExit", "-Command", $command) -WorkingDirectory $root | Out-Null
   } catch {
     [System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Remote QR Code","OK","Error") | Out-Null
@@ -103,8 +106,8 @@ $login.Add_Click({Start-Process powershell.exe -ArgumentList "-NoProfile -Execut
 (C "QrButton").Add_Click({ Show-RemoteQr })
 (C "AdminButton").Add_Click({Start-Process "http://127.0.0.1:3000/admin"}); (C "LogsButton").Add_Click({if(Test-Path $logPath){Start-Process notepad.exe $logPath}}); (C "RefreshButton").Add_Click({Run-Admin "refresh-data"}); (C "RestartBackendButton").Add_Click({Run-Admin "restart-backend"}); (C "RestartBrowserButton").Add_Click({Run-Admin "restart-browser"}); (C "ConfigButton").Add_Click({Run-Wait $wizardScript "-Force"|Out-Null;Update-Status}); (C "FolderButton").Add_Click({Start-Process explorer.exe $root})
 (C "StopButton").Add_Click({$answer=[System.Windows.MessageBox]::Show($window,"Stop GRMetro completely?`n`nThis stops the self-healing supervisor, backend, and dedicated ServiceTitan Edge window. Your normal Edge windows are not touched. You can start GRMetro again from this app.","Stop GRMetro Performance Center","YesNo","Warning");if($answer -eq "Yes"){try{Busy "Stopping...";$code=Run-Wait $stopScript;if($code -ne 0){throw "GRMetro could not be stopped cleanly."};Start-Sleep -Milliseconds 700;Update-Status;[System.Windows.MessageBox]::Show($window,"GRMetro Performance Center is stopped. Click START PERFORMANCE CENTER whenever you want it running again.","GRMetro stopped","OK","Information")|Out-Null}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Stop failed","OK","Error")|Out-Null}finally{$progress.Visibility="Collapsed";Update-Status}}})
-$update.Add_Click({try{Busy "Checking for updates...";$json=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $updateScript -CheckOnly|Select-Object -Last 1;$r=$json|ConvertFrom-Json;if($r.updateAvailable){$updateTitle.Text="Install Update";$updateDetail.Text=$r.message;$answer=[System.Windows.MessageBox]::Show($window,"$($r.message)`n`nInstall now? Tests and a build will run before restart.","GRMetro Update","YesNo","Question");if($answer -eq "Yes"){Busy "Installing update...";$code=Run-Wait $updateScript;if($code -ne 0){throw "Update failed. Existing running system was left in place."};(C "VersionText").Text=Version-Text}}else{$updateTitle.Text="Check for Updates";$updateDetail.Text=$r.message}}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"Update","OK","Error")|Out-Null}finally{$progress.Visibility="Collapsed";Update-Status}})
-(C "ShortcutButton").Add_Click({$exe=Join-Path $root "GRMetro Performance Center.exe";$target=if(Test-Path $exe){$exe}else{Join-Path $root "GRMetro Performance Center.cmd"};$s=New-Object -ComObject WScript.Shell;$lnk=$s.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) "GRMetro Performance Center.lnk"));$lnk.TargetPath=$target;$lnk.WorkingDirectory=$root;if(Test-Path $exe){$lnk.IconLocation="$exe,0"};$lnk.Save();[System.Windows.MessageBox]::Show($window,"Desktop shortcut created.","GRMetro")|Out-Null})
+$update.Add_Click({$message="To update GRMetro, run a newer GRMetro Performance Center Setup EXE. Setup preserves local configuration and data while replacing application files transactionally.";[System.Windows.MessageBox]::Show($window,$message,"Application Updates","OK","Information")|Out-Null;$updateTitle.Text="Application Updates";$updateDetail.Text="Install with a newer Setup EXE";Update-Status})
+(C "ShortcutButton").Add_Click({try{$paths=Get-GrMetroLaunchIntegrationPaths $root;New-GrMetroHostShortcut $paths.DesktopShortcut $paths;[System.Windows.MessageBox]::Show($window,"Desktop shortcut created through the stable GRMetro Update Host.","GRMetro")|Out-Null}catch{[System.Windows.MessageBox]::Show($window,$_.Exception.Message,"GRMetro")|Out-Null}})
 (C "MinimizeButton").Add_Click({$window.Hide();Notify "GRMetro Performance Center" "Still running in the system tray."}); (C "CloseButton").Add_Click({$window.Hide()})
 $window.Add_Closing({param($s,$e)if(-not $script:allowClose){$e.Cancel=$true;$window.Hide()}})
 $timer=New-Object System.Windows.Threading.DispatcherTimer; $timer.Interval=[TimeSpan]::FromSeconds(5); $timer.Add_Tick({Update-Status}); $timer.Start(); Update-Status

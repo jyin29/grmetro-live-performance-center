@@ -69,7 +69,7 @@ test("zero, missing-data, and no-install scenarios preserve distinct metric sema
 });
 
 test("fixture source is sanitized and contains no authentication or personal contact fields", () => {
-  const fixturePath = path.join(__dirname, "../apps/backend/test/fixtures/scenarios.json");
+  const fixturePath = path.join(__dirname, "../apps/backend/src/providers/fixtures/scenarios.json");
   const fixtureText = fs.readFileSync(fixturePath, "utf8");
   const forbidden = ["phone", "email", "customer", "cookie", "csrf", "token", "session", "password", "address"];
   for (const term of forbidden) assert.equal(fixtureText.toLowerCase().includes(term), false, term);

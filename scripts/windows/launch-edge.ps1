@@ -1,7 +1,8 @@
 param(
   [int]$Port = 9223,
-  [string]$ProfilePath = "C:\edge-dashboard-profile",
-  [string]$StartUrl = "https://go.servicetitan.com"
+  [string]$ProfilePath = (Join-Path $env:LOCALAPPDATA 'GRMetro\Edge Profile'),
+  [string]$StartUrl = "https://go.servicetitan.com",
+  [switch]$CheckOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,13 +32,14 @@ function Find-Edge {
 
   $edge = $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
   if (-not $edge) {
-    throw "Microsoft Edge is installed but its executable could not be located automatically. Expected msedge.exe under Program Files, LocalAppData, PATH, or Windows App Paths."
+    throw "Microsoft Edge is required for ServiceTitan but could not be found. Install Microsoft Edge, then run GRMetro Setup again."
   }
   return $edge
 }
 
 $edge = Find-Edge
 Write-Host "Using Microsoft Edge: $edge"
+if ($CheckOnly) { exit 0 }
 New-Item -ItemType Directory -Force -Path $ProfilePath | Out-Null
 $debugUrl = "http://127.0.0.1:$Port/json/version"
 

@@ -1,10 +1,19 @@
-param([switch]$AutoStart)
+param([switch]$AutoStart,[switch]$SelfTest)
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$launcher = Join-Path $PSScriptRoot "performance-center-launcher-v2.ps1"
+
+if($SelfTest){
+  if(-not(Test-Path -LiteralPath $launcher -PathType Leaf)){throw 'Control Center launcher script is missing.'}
+  $tokens=$null;$errors=$null
+  $null=[Management.Automation.Language.Parser]::ParseFile($launcher,[ref]$tokens,[ref]$errors)
+  if($errors.Count -gt 0){throw 'Control Center launcher script did not pass syntax validation.'}
+  Write-Output 'GRMetro Control Center self-test passed.'
+  exit 0
+}
 $logs = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $crashLog = Join-Path $logs "control-center-crash.log"
-$launcher = Join-Path $PSScriptRoot "performance-center-launcher-v2.ps1"
 
 try {
   if (-not (Test-Path $launcher)) { throw "Missing launcher script: $launcher" }

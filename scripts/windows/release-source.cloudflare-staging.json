@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "metadataUrl": "https://grmetro-updates.grmetroheatingandcooling.workers.dev/staging/release.json",
+  "signatureUrl": "https://grmetro-updates.grmetroheatingandcooling.workers.dev/staging/release.json.sig",
+  "channel": "testing",
+  "allowedHosts": [
+    "grmetro-updates.grmetroheatingandcooling.workers.dev"
+  ],
+  "connectionTimeoutSeconds": 10,
+  "responseTimeoutSeconds": 60,
+  "maximumMetadataBytes": 262144,
+  "maximumArtifactBytes": 268435456,
+  "maximumRedirects": 1
+}

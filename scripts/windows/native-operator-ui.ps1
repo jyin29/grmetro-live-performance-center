@@ -48,7 +48,7 @@ function Show-GrMetroResult {
 
 function Invoke-GrMetroUtf8Node {
   param([string]$ScriptPath,[string]$Argument)
-  $node=(Get-Command node -ErrorAction Stop).Source
+  $node=Get-GrMetroNodePath $root
   $start=New-Object System.Diagnostics.ProcessStartInfo
   $start.FileName=$node
   $start.Arguments=('"{0}" "{1}"' -f $ScriptPath.Replace('"','\"'),$Argument.Replace('"','\"'))
@@ -70,7 +70,7 @@ function Invoke-GrMetroUtf8Node {
   return $stdout.TrimEnd()
 }
 
-function Show-NativeRemoteAccess {
+function Show-NativeRemoteQr {
   param([string]$RemoteUrl,[string]$Root)
   $qrScript=Join-Path $Root "scripts\show-remote-qr.js"
   $qr=""
@@ -79,6 +79,31 @@ function Show-NativeRemoteAccess {
   }
   $text = "$RemoteUrl`r`n`r`nScan this QR code with your phone:`r`n`r`n$qr"
   Show-GrMetroTextDialog -Title "GRMetro Phone Remote" -Heading "Phone Remote" -Text $text -TerminalPalette
+}
+
+function Get-GrMetroEdgePath {
+  $candidates=@(
+    (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
+    (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe')
+  )
+  try {$candidates += (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe' -ErrorAction Stop).'(default)'} catch {}
+  return $candidates | Where-Object {$_ -and (Test-Path -LiteralPath $_)} | Select-Object -First 1
+}
+
+function Show-NativeRemoteAccess {
+  param([string]$RemoteUrl,[string]$Root)
+  try {
+    Invoke-RestMethod 'http://127.0.0.1:3000/api/v1/health' -TimeoutSec 3 | Out-Null
+    $edge=Get-GrMetroEdgePath
+    if(-not$edge){throw 'Microsoft Edge is required to open the Phone Remote application window.'}
+    $profile=Join-Path $env:LOCALAPPDATA 'GRMetro\Remote App Profile'
+    New-Item -ItemType Directory -Force -Path $profile | Out-Null
+    $share=[Uri]::EscapeDataString($RemoteUrl)
+    $applicationUrl="http://127.0.0.1:3000/remote?nativeHost=1&share=$share"
+    Start-Process -FilePath $edge -ArgumentList @(("--app=`"{0}`"" -f $applicationUrl),("--user-data-dir=`"{0}`"" -f $profile),'--no-first-run') | Out-Null
+  } catch {
+    Show-GrMetroResult -Title 'Phone Remote unavailable' -Message "$($_.Exception.Message) Start the Performance Center and try again." -Success $false
+  }
 }
 
 function Show-NativeDiagnostics {

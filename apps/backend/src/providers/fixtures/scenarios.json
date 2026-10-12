@@ -1,0 +1,12 @@
+{
+  "normal": { "variant": "normal" },
+  "zero-values": { "variant": "zero" },
+  "missing-data": { "variant": "missing" },
+  "no-installs": { "variant": "noInstalls" },
+  "partial-technician-failure": { "variant": "partialFailure", "failedTechnicianIndex": 2 },
+  "stale-data": { "variant": "stale", "staleTechnicianIndex": 3 },
+  "ranking-changes": { "variant": "rankingChanges" },
+  "new-leader": { "variant": "newLeader", "event": "new-leader" },
+  "goal-reached": { "variant": "goalReached", "event": "goal-reached" },
+  "entered-top-3": { "variant": "enteredTopThree", "event": "entered-top-three" }
+}

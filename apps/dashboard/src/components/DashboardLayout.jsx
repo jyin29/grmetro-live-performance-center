@@ -13,14 +13,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { attachWakeRecovery } from "../runtime/wakeRecovery";
 import { createDiagnosticsState } from "../runtime/diagnostics";
 import { useSpreadsheetSlide } from "../hooks/useSpreadsheetSlide";
+import { useManagementDismissals } from "../hooks/useManagementDismissals";
+import { visibleManagementNotifications } from "../lib/managementNotifications";
 
-export function DashboardLayout({ data, displayId, displaySettings, error, refreshing, retry, lastSuccessfulRefresh, viewportDiagnosticsVisible = false, onToggleViewportDiagnostics }) {
+export function DashboardLayout({ data, displayId, displaySettings, onSetControlsLauncherVisible, error, refreshing, retry, lastSuccessfulRefresh, viewportDiagnosticsVisible = false, onToggleViewportDiagnostics }) {
   // One controller owns the physical display. Commands are sent through the controller's
   // authoritative HTTP command path, so local controls do not need a fake second "remote"
   // connection (which was why the tray incorrectly said Offline).
   const presentation = usePresentationController(displayId, "display");
   const spreadsheet = useSpreadsheetSlide(presentation.slideAvailabilityRevision);
+  const dismissals = useManagementDismissals();
   const rotationPaused = !presentation.isRunning || refreshing || Boolean(error);
+  // Wait for the shared dismissal state before rendering the banner so a page
+  // reload cannot briefly flash a warning the operator already dismissed.
+  const attentionInsights = dismissals.loaded
+    ? visibleManagementNotifications(managementInsights(data, { hasError: Boolean(error), refreshing }), dismissals.dismissedKeys)
+    : [];
+  const controlsLauncherVisible = displaySettings?.displayPreferences?.[displayId]?.controlsLauncherVisible !== false;
   const startedAt = useRef(Date.now());
   const recoveryRef = useRef({ presentation, retry });
   const [diagnosticsVisible, setDiagnosticsVisible] = useState(RUNTIME_SETTINGS.diagnosticsVisible);
@@ -44,11 +53,11 @@ export function DashboardLayout({ data, displayId, displaySettings, error, refre
 
   return <div className="app-shell">
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
-    <ManagementAttention insights={managementInsights(data, { hasError: Boolean(error), refreshing })} />
+    <ManagementAttention insights={attentionInsights} onDismiss={(insight) => dismissals.dismiss(insight).catch(() => {})} />
     <SlideDeck data={data} spreadsheetSlide={spreadsheet.slide} spreadsheetAvailable={spreadsheet.available} slides={presentation.slides} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} slideId={presentation.activeSlideId} onSelectSlide={presentation.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }} />
     <EventOverlay event={presentation.event} />
     <DiagnosticsOverlay diagnostics={diagnostics} />
-    <LocalDashboardControls controller={presentation} diagnosticsVisible={viewportDiagnosticsVisible} onToggleDiagnostics={onToggleViewportDiagnostics} />
+    <LocalDashboardControls controller={presentation} diagnosticsVisible={viewportDiagnosticsVisible} onToggleDiagnostics={onToggleViewportDiagnostics} launcherVisible={controlsLauncherVisible} onSetLauncherVisible={(visible) => onSetControlsLauncherVisible?.(displayId, visible)} />
     <footer className="footer"><span><i className="live-dot" />Live ServiceTitan data</span><span>{presentation.connectionState === "connected" ? "Display connected · Live updates enabled" : "Display reconnecting · Updates will resume automatically"}</span><time>{new Date(data.generatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</time></footer>
   </div>;
 }

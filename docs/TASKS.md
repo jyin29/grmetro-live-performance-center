@@ -2142,6 +2142,19 @@ display, or five-slide sequencing architecture changed.
 
 The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. The remote workspace still uses its existing no-op build/test script. Installation was not run: no autostart registration, Windows settings, running backend/Edge processes, or existing installed application was changed. A pre-manifest installation retains unknown unlisted files on its first manifest-based upgrade because there is no safe old-file inventory; subsequent upgrades clean manifest-listed obsolete application files. See [Windows packaging](./WINDOWS_PACKAGING.md). Existing live-data/business-approval blockers remain outside this repair.
 
+## 2026-09-24 — Portable one-file Windows deployment
+
+- [x] Build the dashboard and lockfile-defined production dependency tree in an isolated staging directory rather than on the destination computer.
+- [x] Pin and checksum an official Windows x64 Node runtime and embed it in the Setup EXE payload.
+- [x] Resolve the bundled runtime directly for backend, supervisor, QR, launcher, and recovery behavior without global Node/npm or repository paths.
+- [x] Replace Git-based installed updates with transactional newer-Setup-EXE updates.
+- [x] Detect Microsoft Edge during setup and store the dedicated CDP profile under the destination user's LocalAppData.
+- [x] Add an explicit native setup option for the private-network firewall rule used by phones and TVs.
+- [x] Validate the final package from a disposable spaced path with global Node/npm removed from `PATH`, including dependency loading, backend health, and built remote-page serving.
+- [x] Continue excluding environment files, local data, logs, credentials, browser sessions, and developer-specific paths while preserving them across manifest-driven upgrades.
+- [x] Remove dashboard source, test suites, Vite configuration, and build-only tooling from the final generated target manifest after the isolated production build completes.
+- [x] Keep clean installs and upgrades recoverable until the installed STA configuration wizard and runtime validation succeed; capture child PowerShell diagnostics and roll back pre-window wizard failures.
+
 ## 2026-09-25 — Physical TV stage and optional Spreadsheet rotation
 
 - [x] Render physical display routes on a centered 1920×1080 logical stage scaled by the smaller viewport ratio.
@@ -2154,3 +2167,101 @@ The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. 
 - [x] Keep the proven TV viewport diagnostic overlay hidden by default and expose it through a local Show/Hide Diagnostics control inside the physical dashboard Controls tray.
 - [x] Normalize presentation state to stable active/eligible slide IDs so filtered Spreadsheet eligibility cannot desynchronize TV content, counters, phone highlighting, or local Controls highlighting.
 - [x] Distribute Install Economics technician rows across the available TV card height and increase short-list names, metric labels, values, bars, and spacing without changing DisplayStage scaling or mobile layouts.
+
+## 2026-09-30 — Operator UI finishing pass
+
+- [x] Persist individual Management Attention dismissals centrally using content-sensitive identities.
+- [x] Add Settings controls to restore one or all dismissed warnings without changing KPI or health state.
+- [x] Enlarge and center the existing Recognition crown artwork within the champion card.
+- [x] Persist the Controls launcher visibility independently for every configured display.
+- [x] Keep hidden Controls recoverable through the local `C` shortcut and the selected display's phone controls.
+- [x] Remove the native control center's nested activity-list wheel surface so the outer WPF page scrolls normally.
+- [x] Preserve management-dismissal and display-preference data across portable-installer upgrades.
+
+## 2026-09-30 — Post-install UI and behavior adjustments
+
+- [x] Restore native action helper text after an eight-second success interval without hiding or overwriting errors.
+- [x] Move backend and ServiceTitan restart waiting and health polling out of the WPF dispatcher thread.
+- [x] Open the main native control center maximized while retaining normal window controls and restore behavior.
+- [x] Size the native header status column to its content instead of reserving a fixed wide area.
+- [x] Increase Slide 3 metric-card horizontal padding within the existing five-card 1920×1080 layout.
+- [x] Explain goal-backed Overall Rank coverage and omit unavailable overall-movement placeholders beside Revenue Rank.
+- [x] Add restrained silver and bronze placement accents while retaining the enlarged first-place crown.
+- [x] Open the complete Phone Remote in a standalone local Edge app window with an in-app LAN QR action.
+
+## 2026-10-01 — Cross-version upgrade inventory repair
+
+- [x] Parse installed manifests as historical inventories without applying current required-file rules.
+- [x] Support files newly added by an incoming version without requiring a prior backup.
+- [x] Preserve and restore files removed by the incoming version through the old inventory.
+- [x] Verify every application backup checksum before publishing a mutation-capable journal.
+- [x] Record prepared, applying, applied, and completed transaction phases.
+- [x] Preflight complete rollback sources before changing any installed file.
+- [x] Reproduce a version-2 upgrade from no `.env.example` to `.env.example`, including success, obsolete cleanup, forced failure, exact rollback, and persistent-data preservation.
+- [x] Classify stale version-1 `prepared` journals by full installed/stage/backup comparison before recovery.
+- [x] Stop only the installed GRMetro launcher, supervisor, bundled backend runtime, and scheduled-task instance before replacement.
+- [x] Preserve ServiceTitan and Phone Remote Edge processes/profiles while packaged files are replaced.
+- [x] Retain both the original upgrade exception and any independent rollback failure.
+- [x] Cover large dependency inventories, exclusive file locks, successful retry after lock release, targeted process quiescence, and stale-journal continuation.
+- [x] Recognize the production no-stage/partially-deleted-backup shape only through complete historical rollback-cleanup proof.
+- [x] Refuse no-stage recovery for backup mismatch, missing installed files, manifest drift, hash/read failure, unexpected backup paths, or partial application state.
+- [x] Evaluate nonmutating stale recovery before stopping GRMetro-owned processes.
+- [x] Treat transaction cleanup as successful when the validated root is absent after a transient recursive-delete error.
+- [x] Retry only bounded `ERROR_DIR_NOT_EMPTY` cleanup races and preserve remaining evidence on exhaustion.
+
+## 2026-10-06 — Integrated updater Phase 1 foundation
+
+- [x] Split the authoritative package transaction into explicit prepare and apply phases while retaining one Setup-compatible wrapper.
+- [x] Move targeted GRMetro process quiescence and prior-runtime restart into a shared side-effect-free module.
+- [x] Add routine application validation for bundled Node, production modules, Control Center self-test, backend release health, and compiled dashboard serving.
+- [x] Keep configuration wizard, `.env` creation, firewall, shortcuts, autostart, and ServiceTitan authentication outside routine update validation.
+- [x] Generate canonical schema-2 deployment metadata with four-component CalVer and an explicit `0.0.0.0` development identity.
+- [x] Report the same packaged deployment version through the native Control Center and backend health.
+- [x] Build a native external Update Host with independent transaction/process/validation modules outside the replaceable application tree.
+- [x] Recover pending transactions before launch and refuse corrupt recovery evidence without launching an uncertain application.
+- [x] Prove local Control Center handoff, delayed self-replacement, successful update, validation rollback, downgrade rejection, and persistent-data preservation in disposable fixtures.
+- [ ] Add signed remote release metadata, HTTPS download, release authentication, background update checks, and operator-facing release notes in Phase 2.
+
+## 2026-10-07 — Integrated updater Phase 2 trust and UX
+
+- [x] Add a provider-independent release source protocol with configurable native-owned URLs, channel, host allowlist, timeouts, redirect bounds, and size limits.
+- [x] Verify RSA-SHA256 detached signatures over exact `release.json` bytes using pinned key IDs and fail closed for unknown/test-only production keys.
+- [x] Validate signed CalVer, sequence, channel, artifact identity, publication time, updater protocol, and plain-text notes before trusting artifact fields.
+- [x] Persist highest trusted sequence and release-identity digests outside the application for replay and reused-identity protection.
+- [x] Require approved HTTPS URLs without credentials and reject file, UNC, unsupported, downgraded, replayed, and redirect-host inputs.
+- [x] Download to updater-owned `.partial` files with bounded connection/response time, exact size, maximum size, SHA-256, atomic promotion, and abandoned-partial cleanup.
+- [x] Revalidate ZIP inventory and packaged deployment identity before Phase 1 transaction preparation.
+- [x] Add a responsive native Updates card with installed/available versions, plain-text changes, manual and automatic checks, progress, and explicit Update Now approval.
+- [x] Use bounded background-check backoff and keep check/download/hash/stage/backup work outside the WPF dispatcher thread.
+- [x] Hand verified remote packages to the Phase 1 external Update Host for quiescence, apply, validation, commit, rollback, and relaunch.
+- [x] Add local release tooling that refuses dirty/reused/development production output and signs with an externally supplied private key.
+- [x] Keep the checked-in production release source disabled and public-key set empty pending approved hosting and key provisioning.
+- [ ] Provision the real HTTPS release host, production public key, release credential adapter if needed, and Authenticode certificate in a later deployment phase.
+
+## 2026-10-07 — Integrated updater Phase 3 migration candidate
+
+- [x] Add a concrete placeholder-based static HTTPS production source template without inventing a final hostname.
+- [x] Add intentional external RSA-3072/4096 key generation, public export, pair verification, and independent SHA-256 fingerprint tooling without creating a production key.
+- [x] Add optional SignTool/certificate-store Authenticode hooks for the native launcher, Update Host, and Setup EXE, with fail-closed production enforcement and unsigned-candidate labeling.
+- [x] Route Desktop, Start Menu, scheduled startup, application command fallback, and Control Center-created shortcuts through Update Host Launch.
+- [x] Snapshot shortcut bytes and scheduled-task XML and restore them if migration Setup fails.
+- [x] Preserve autostart/firewall choices, persistent application data, replay/cache state, and browser profiles during migration.
+- [x] Allow only explicitly provisioned migration Setup to replace feed policy and pinned keys; preserve existing trust during unprovisioned repair Setup.
+- [x] Keep routine ZIPs outside Update Host, source policy, key set, and replay-state ownership and retain minimum-protocol Setup gating.
+- [x] Add disposable launch migration, scheduled-task, integration rollback, trust provisioning, key fingerprint, test-key rejection, and unsigned Authenticode enforcement tests.
+- [x] Document the complete second-PC migration/interruption/two-routine-update operator checklist.
+- [x] Document the future controlled release, key rotation, Authenticode, and manual publication workflow.
+- [ ] Select and provision the real static HTTPS hostname, production release key, and approved Authenticode certificate before production deployment.
+
+## 2026-10-08 — Cloudflare staging integration
+
+- [x] Validate the real Cloudflare Worker origin against the provider-independent signed-feed URL and allowlist policy.
+- [x] Add a nonsecret `testing`-channel source policy for the confirmed Worker hostname while retaining disabled checked-in defaults.
+- [x] Align local release ZIP output with the Worker's lower-case immutable object-key convention.
+- [x] Confirm absent metadata/signature and disallowed paths return 404 without exposing any dashboard/backend route.
+- [x] Document the minimal metadata-404 `Cache-Control: no-store` Worker correction and safe ZIP/signature/metadata publication order.
+- [x] Remove real employee names and ServiceTitan technician IDs plus internal repository documents from public application artifacts.
+- [x] Load private destination technician configuration before backend shared modules and retain only generic deployment fallbacks in the ZIP.
+- [x] Audit the remaining public ZIP implementation content and retain existing updater/transaction architecture unchanged.
+- [x] Generate and verify the authorized external RSA-3072 staging key, scope it to the testing channel, and build a provisioned unsigned `/staging/` migration candidate.
+- [ ] Commit the complete accumulated source snapshot before creating the first signed `2026.10.8.1` testing release.

@@ -1,0 +1,65 @@
+# GRMetro Windows release workflow
+
+Publication remains a separate, explicitly authorized action. The release command prepares verified local output but never uploads it.
+
+## One-time provisioning
+
+1. Choose the real static HTTPS release origin and exact host name.
+2. Copy `scripts/windows/release-source.production.template.json` outside the repository and replace every required placeholder.
+3. Intentionally generate an RSA-3072 or RSA-4096 release key outside the repository:
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/provision-release-signing-key.ps1 `
+     -Action Generate `
+     -KeyId grmetro-release-YYYY `
+     -PrivateKeyPath X:\secure\grmetro-release-private.xml `
+     -PublicKeyPath X:\secure\grmetro-release-public.json `
+     -KeySize 3072 `
+     -ChannelScope stable `
+     -ConfirmProductionKeyGeneration
+   ```
+
+4. Back up the private key in approved secure storage. Keep it off production PCs and outside the repository.
+5. Independently record the public SHA-256 fingerprint printed by the tool.
+6. Verify the pair with `-Action VerifyPair` before building a migration Setup.
+7. When an approved Authenticode certificate exists, install/access it through the approved Windows certificate store or hardware provider and record its certificate thumbprint and RFC 3161 HTTPS timestamp URL.
+
+## Migration Setup build
+
+Build with explicit release-source and public-key inputs plus `-ProvisionReleaseTrust`. Setup validates them before embedding. Defaults remain disabled/empty when those parameters are absent. A provisioning migration may replace release-source policy and pinned public keys; ordinary application ZIPs cannot. Existing replay/cache state remains outside replacement.
+
+When Authenticode is available, also provide SignTool, certificate thumbprint, timestamp URL, and `-RequireAuthenticode`. The build signs and verifies:
+
+- `GRMetro Performance Center.exe`
+- `GRMetro Update Host.exe`
+- `GRMetro Performance Center Setup.exe`
+
+The official bundled Node runtime retains its vendor signature and is not re-signed as GRMetro code.
+
+For controlled Cloudflare staging, use `scripts/windows/release-source.cloudflare-staging.json` and a separately generated external staging key with a staging-specific key ID. Do not reuse that key as the production release key. Cloudflare publication details and the required metadata-404 cache header are documented in `docs/CLOUDFLARE_RELEASE_HOSTING.md`.
+
+`testOnly` marks disposable automated-test keys and causes normal installed hosts to reject them. Persistent staging and production trust roots use `testOnly: false` because they are intentionally installed, then use mandatory `allowedChannels` for separation: the staging key allows only `testing`; a future production key allows only `stable`. Signature verification fails when metadata channel is outside the selected key's scope, even if the RSA signature itself is valid.
+
+## Routine release
+
+1. Finish and review feature work.
+2. Run all tests, build, packaging validation, privacy scan, and credential scan.
+3. Commit the complete source release.
+4. Choose the next immutable CalVer `YYYY.M.D.N`.
+5. Write bounded plain-text release notes.
+6. Run the local release command with the external release private key and final HTTPS artifact URL.
+7. For production publication, require Authenticode parameters and `-RequireAuthenticode`.
+8. Verify local output, release metadata signature, SHA-256, package identity, Authenticode status, and public-key fingerprint.
+9. Upload only:
+   - `grmetro-performance-center-YYYY.M.D.N.zip`;
+   - `release.json`;
+   - `release.json.sig`.
+10. Confirm the static origin serves exact bytes over HTTPS.
+11. Check for updates from a staging Control Center before authorizing production use.
+12. Production operator opens the Control Center, reviews changes, and selects Update Now.
+
+Unsigned output contains `NOT-PRODUCTION-READY-UNSIGNED.txt` and must not be published or deployed as a production release.
+
+## Key rotation and protocol changes
+
+Pinned-key or Update Host protocol changes require a new migration Setup. Provision both old and new public keys during an overlap release when practical, publish releases under the new `keyId`, then remove the retired key through a later migration Setup. Routine application ZIPs never replace the Update Host or its public-key set.

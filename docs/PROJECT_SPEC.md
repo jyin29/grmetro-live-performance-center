@@ -6306,9 +6306,23 @@ Default port:
 3000
 ```
 
-The Windows firewall may require an inbound rule.
+The packaged Windows setup shall offer a narrowly scoped private-network inbound rule for the bundled backend runtime on port 3000 so phones and televisions can connect. Creating the rule requires normal Windows administrator approval.
 
-Deployment documentation shall include this step.
+The portable Windows installer shall include the compiled frontend, production dependencies, and a pinned application-local Node runtime. A destination computer shall not require Git, npm, a repository checkout, development dependencies, or manual build commands. Microsoft Edge remains a system prerequisite because ServiceTitan authentication uses a dedicated manually authenticated Edge profile over CDP. Environment files, application data, logs, and browser authentication/session material shall be created or preserved only on the destination computer and shall never be embedded in Setup.
+
+The Windows deployment shall use one authoritative application transaction engine for Setup and routine application updates. Setup owns fresh installation, repair, configuration, firewall, shortcuts, autostart, and Update Host/protocol changes. A stable native Update Host is installed outside the replaceable `Performance Center` directory and owns pending-transaction recovery before launch plus routine prepare, quiesce, apply, side-effect-free validation, commit, rollback, and restart orchestration. Routine validation shall not rerun configuration or Windows integration work and shall not treat ServiceTitan authentication as an application commit requirement.
+
+Packaged deployments shall carry a canonical four-component CalVer release identity (`YYYY.M.D.N`) independently of npm SemVer. Ordinary unversioned developer packages use the explicit `0.0.0.0` development identity and cannot be mistaken for a production release. The Control Center, Update Host, backend health, diagnostics, and rollback reporting shall resolve the same packaged metadata.
+
+Routine update discovery shall use a provider-independent signed HTTPS feed consisting of exact-byte `release.json` metadata and a detached RSA-SHA256 signature. The installed Update Host shall pin approved public keys by fixed key ID, enforce an approved-host allowlist, reject credentials and unsafe URL schemes, validate CalVer/channel/protocol/replay state, download to updater-owned partial files, require the signed byte length and SHA-256, validate the portable package manifest, and only then prepare the shared application transaction. Network failure shall never interrupt the running application, and installation shall always require explicit operator approval.
+
+Updater trust state, source configuration, operation state, and cache belong under `%LOCALAPPDATA%\GRMetro\Update State` outside both the replaceable application and Update Host program directories. Application packages shall not contain or modify this state. Private release signing keys and release-service credentials shall never be packaged or exposed to frontend code.
+
+After an updater migration Setup succeeds, Desktop, Start Menu, scheduled startup, and Control Center-created shortcuts shall target the stable external Update Host with `-Mode Launch`. The host shall recover or refuse every pending transaction before launching the replaceable application. Setup shall snapshot and restore prior shortcuts and the GRMetro scheduled-task definition if migration fails, while preserving the saved autostart and firewall choices.
+
+Only a full Setup may replace the Update Host, updater protocol, pinned public keys, or release-source policy. A Setup without explicit trust provisioning shall preserve an existing production source policy and public-key set. Explicit provisioning inputs must contain a valid enabled HTTPS policy, exact host allowlist, RSA-3072-or-stronger non-test public keys, and independently recorded SHA-256 public-key fingerprints. Routine application ZIPs shall remain unable to target updater-owned paths.
+
+Production release tooling shall expose optional Authenticode signing through external SignTool/certificate-store inputs and RFC 3161 HTTPS timestamping. When production signing is required, the native application launcher, Update Host, and Setup EXE must all verify as valid before output is accepted. Unsigned development/migration candidates shall be labeled nonproduction and shall never be represented as Defender bypasses or trusted production binaries.
 
 ---
 

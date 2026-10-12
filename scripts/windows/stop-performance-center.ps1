@@ -20,7 +20,7 @@ foreach($process in $backends) { Stop-Process -Id $process.ProcessId -Force -Err
 
 # Stop only the dedicated ServiceTitan Edge profile, never the user's normal Edge windows.
 if(-not $KeepServiceTitanBrowser) {
-  $profile = 'C:\edge-dashboard-profile'
+$profile = Join-Path $env:LOCALAPPDATA 'GRMetro\Edge Profile'
   $edge = @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*$profile*" })
   foreach($process in $edge) { Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue }
 }

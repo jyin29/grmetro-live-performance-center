@@ -39,7 +39,7 @@ function installDashboardStaticRoutes(app) {
 }
 
 function createApp({ config, logger, cache, tvManager, scheduler, applicationVersion = "1.0.0", buildVersion,
-  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, presentationRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore }) {
+  browserStatusProvider, serviceTitanStatusProvider, serviceTitanClient, clock, adminRuntime, presentationRuntime, goalStore, displaySettingsStore, spreadsheetSlideStore, managementDismissalStore }) {
   if (!config || !logger) throw new Error("createApp requires config and logger.");
   const app = express();
   app.disable("x-powered-by");
@@ -51,7 +51,7 @@ function createApp({ config, logger, cache, tvManager, scheduler, applicationVer
   app.use("/api/v1/dashboard", createDashboardRoutes({ cache }));
   app.use("/api/v1/tvs", createTvRoutes({ tvManager, rateLimiter, clock }));
   if (presentationRuntime) app.use("/api/v1/presentation", createPresentationRoutes(presentationRuntime));
-  if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, rateLimiter, clock }));
+  if (scheduler) app.use("/api/v1/management", createManagementRoutes({ scheduler, goalStore, displaySettingsStore, spreadsheetSlideStore, managementDismissalStore, rateLimiter, clock }));
   if (adminRuntime) app.use("/api/v1/admin", createAdminRoutes({ cache, applicationVersion, buildVersion, clock, ...adminRuntime }));
   if (config.developmentRoutesEnabled && !config.isProduction) app.use("/api/v1/dev", createDevelopmentRoutes({ scheduler, serviceTitanClient }));
   app.use("/api", notFound);

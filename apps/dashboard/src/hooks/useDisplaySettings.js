@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { fetchDisplaySettings } from "../api/managementApi";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchDisplaySettings, setControlsLauncherVisible as saveControlsLauncherVisible } from "../api/managementApi";
 
 const POLL_MS = 30_000;
 
@@ -26,5 +26,12 @@ export function useDisplaySettings() {
     return () => { active = false; window.clearInterval(interval); };
   }, []);
 
-  return state;
+  const setControlsLauncherVisible = useCallback(async (displayId, visible) => {
+    const result = await saveControlsLauncherVisible(displayId, visible);
+    const settings = result.settings ?? null;
+    serializedRef.current = JSON.stringify(settings);
+    setState({ settings, error: null });
+    return result;
+  }, []);
+  return { ...state, setControlsLauncherVisible };
 }

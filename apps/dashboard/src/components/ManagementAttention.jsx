@@ -1,6 +1,6 @@
 const SYMBOLS = Object.freeze({ critical: "!", warning: "!", informational: "i" });
 
-export function ManagementAttention({ insights = [] }) {
+export function ManagementAttention({ insights = [], onDismiss }) {
   if (!insights.length) return null;
 
   return <aside className="management-attention" aria-label="Management attention" aria-live="polite">
@@ -9,6 +9,7 @@ export function ManagementAttention({ insights = [] }) {
       {insights.map((insight) => <article className={`management-insight management-insight--${insight.priority}`} key={insight.id}>
         <span className="management-insight__symbol" aria-hidden="true">{SYMBOLS[insight.priority]}</span>
         <div><p>{insight.eyebrow} · {insight.priority}</p><strong>{insight.title}</strong><span>{insight.detail}</span></div>
+        {onDismiss && <button className="management-insight__dismiss" type="button" aria-label={`Dismiss ${insight.title}`} title="Dismiss this notification" onClick={() => onDismiss(insight)}>×</button>}
       </article>)}
     </div>
   </aside>;

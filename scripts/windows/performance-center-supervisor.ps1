@@ -4,6 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot 'runtime-paths.ps1')
+$node = Get-GrMetroNodePath $root
 $logs = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $supervisorLog = Join-Path $logs "supervisor.log"
@@ -130,7 +132,7 @@ function Show-StartupSummary($admin) {
   Write-Host " Scan this QR code with your phone:" -ForegroundColor Cyan
   $qr = Join-Path $root "scripts\show-remote-qr.js"
   if(Test-Path $qr) {
-    & node $qr $remote
+    & $node $qr $remote
     if($LASTEXITCODE -ne 0) { Write-Host " QR unavailable - run Setup once after pulling this update." -ForegroundColor Yellow }
   } else { Write-Host " QR renderer script is missing." -ForegroundColor Yellow }
   Write-Host ""
@@ -173,7 +175,7 @@ function Start-Backend {
   $env:MOCK_MODE = "false"
   $env:ENABLE_DEVELOPMENT_ROUTES = "false"
   $env:HOST = "0.0.0.0"
-  $script:backend = Start-Process -FilePath "node" -ArgumentList "apps/backend/src/index.js" -WorkingDirectory $root -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+  $script:backend = Start-Process -FilePath $node -ArgumentList "apps/backend/src/index.js" -WorkingDirectory $root -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
   Write-SupervisorLog "backend-start" "Started backend PID $($script:backend.Id); waiting for backend HTTP health on port 3000."
   return $script:backend
 }

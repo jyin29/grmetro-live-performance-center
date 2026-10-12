@@ -17,11 +17,15 @@
     "launch:windows": "powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File scripts/windows/performance-center-launcher-host.ps1",
     "build:windows-exe": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/build-launcher-exe.ps1",
     "package:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/build-installer.ps1",
+    "release:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/create-windows-release.ps1",
     "update:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/update-performance-center.ps1",
     "configure:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/env-wizard.ps1 -Force",
     "test:recovery": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/recovery-test.ps1",
     "edge:dashboard": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/launch-edge.ps1",
     "generate:qr": "node scripts/generate-qr-codes.js"
+  },
+  "dependencies": {
+    "qrcode-terminal": "0.12.0"
   },
   "engines": {"node": ">=22.0.0","npm": ">=10.0.0"}
 }

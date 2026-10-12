@@ -1,4 +1,6 @@
 "use strict";
+const path = require("node:path");
+require("dotenv").config({ path: path.resolve(__dirname, "../../../.env"), quiet: true });
 
 const packageJson = require("../package.json");
 const { createApp } = require("./app");
@@ -22,9 +24,12 @@ const { createEventEngine } = require("./events/eventEngine");
 const { GoalStore } = require("./goals/goalStore");
 const { DisplaySettingsStore } = require("./settings/displaySettingsStore");
 const { SpreadsheetSlideStore } = require("./settings/spreadsheetSlideStore");
+const { ManagementDismissalStore } = require("./settings/managementDismissalStore");
+const { readReleaseIdentity } = require("./releaseIdentity");
 
 function start() {
   const startedAt = new Date();
+  const releaseIdentity = readReleaseIdentity({ fallbackVersion: packageJson.version });
   const config = loadConfig();
   const logger = createLogger({ level: config.logLevel });
   const browserManager = createBrowserManagerForConfig(config, logger);
@@ -32,6 +37,7 @@ function start() {
   const goalStore = new GoalStore();
   const displaySettingsStore = new DisplaySettingsStore();
   const spreadsheetSlideStore = new SpreadsheetSlideStore();
+  const managementDismissalStore = new ManagementDismissalStore();
   let scheduler;
   const provider = createRefreshProvider({
     config,
@@ -87,18 +93,19 @@ function start() {
     cache,
     tvManager,
     scheduler,
-    applicationVersion: packageJson.version,
-    buildVersion: process.env.BUILD_VERSION || null,
+    applicationVersion: releaseIdentity.applicationVersion,
+    buildVersion: releaseIdentity.buildVersion,
     browserStatusProvider,
     serviceTitanStatusProvider,
     serviceTitanClient,
     goalStore,
     displaySettingsStore,
     spreadsheetSlideStore,
+    managementDismissalStore,
     presentationRuntime: { presentationManager, commandBus: presentationCommandBus, displayPresence },
     adminRuntime: { presentationManager, displayPresence, eventEngine, startedAt, connectionStatusProvider, scheduler, browserStatusProvider, serviceTitanStatusProvider },
   });
-  const server = app.listen(config.port, config.host, () => logger.info("Backend application started", { application: packageJson.name, version: packageJson.version, nodeEnv: config.nodeEnv, host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan" }));
+  const server = app.listen(config.port, config.host, () => logger.info("Backend application started", { application: packageJson.name, version: releaseIdentity.applicationVersion, nodeEnv: config.nodeEnv, host: config.host, port: config.port, refreshProvider: config.mockMode ? "mock" : "servicetitan" }));
   presentationWebSocket = createPresentationWebSocket({ server, manager: presentationManager, commandBus: presentationCommandBus, logger, displayPresence });
   installGracefulShutdown({ server, logger, scheduler: { stop() {
     scheduler?.stop();
@@ -112,7 +119,7 @@ function start() {
   expirationMonitor.start();
   browserManager?.start();
   scheduler?.start();
-  return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient, presentationManager, presentationWebSocket, eventEngine, displaySettingsStore, spreadsheetSlideStore };
+  return { server, cache, scheduler, tvManager, expirationMonitor, browserManager, serviceTitanClient, presentationManager, presentationWebSocket, eventEngine, displaySettingsStore, spreadsheetSlideStore, managementDismissalStore };
 }
 
 if (require.main === module) start();

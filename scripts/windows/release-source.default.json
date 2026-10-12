@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "enabled": false,
+  "metadataUrl": "",
+  "signatureUrl": "",
+  "channel": "stable",
+  "allowedHosts": [],
+  "connectionTimeoutSeconds": 10,
+  "responseTimeoutSeconds": 30,
+  "maximumMetadataBytes": 262144,
+  "maximumArtifactBytes": 268435456,
+  "maximumRedirects": 3
+}

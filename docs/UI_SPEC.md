@@ -2209,3 +2209,45 @@ stable card ordering is presentation order only and must not manufacture differe
 Overall Rank and Revenue Rank separately and state `Not qualified` when the weighted Overall Rank lacks its configured
 minimum valid weight. Sales places its consolidated four-metric pipeline matrix on the wide left (approximately 68%)
 and its five vertically separated Closing % rows on the narrower right (approximately 32%).
+
+## 2026-09-30 — Operator attention and display preferences
+
+Each Management Attention item has an individual dismiss control. Dismissals use the complete rendered warning
+identity and are stored centrally, so they survive rotation, reloads, and reconnects across all displays while a
+materially changed warning appears again. The mobile Settings area lists dismissed warnings and supports individual
+or complete restoration. Dismissal changes presentation only; the underlying KPI quality and health checks remain
+unchanged.
+
+The floating television Controls launcher is visible by default and may be hidden independently for each configured
+display. The local Controls tray remains reachable with the `C` key, and the phone Displays page can restore the
+launcher for its selected display. The preference changes no slide command, rotation, diagnostics, or recovery state.
+
+Recognition retains the existing crown artwork but presents it as a centered, wide champion-card header. The native
+Windows control center delegates wheel input to its outer page scroller; the read-only activity history does not add a
+nested wheel-scrolling surface.
+
+## 2026-09-30 — Post-install operator polish
+
+Native action success details remain readable for eight seconds and then return to the tile's exact normal helper
+text. Detail revisions cancel older pending resets, so a later operation or error cannot be overwritten. Backend and
+ServiceTitan restarts execute in hidden child PowerShell processes; process waiting and health/CDP polling never run
+on the WPF dispatcher. The main control center opens in the normal maximized Windows state and retains its standard
+title bar, restore, minimize, maximize, and close behavior. Its header uses a flexible identity column and a
+content-sized status column.
+
+The native Phone Remote tool opens the existing `/remote` application in a standalone Microsoft Edge app-mode window
+with a separate local GRMetro remote profile. The hosted remote exposes a Show Phone QR action whose code contains the
+clean LAN `/remote` URL. This reuses the complete web remote and adds no duplicate presentation-command logic or
+WebView2 dependency.
+
+On the Technicians slide, metric sections use larger horizontal insets without changing card width. Technician
+identity precedes one labeled rank block. Overall Rank appears only when the backend qualifies it; otherwise Revenue
+Rank remains the explicit fallback and the card shows actual goal-backed KPI-weight coverage. Overall-rank movement
+appears only when available, so unavailable movement no longer leaves an orphan dash beside Revenue Rank. The
+Recognition podium retains the large first-place crown and adds restrained silver and bronze corner accents.
+
+## 2026-10-07 — Native application update status
+
+The Windows Control Center includes an `APPLICATION UPDATE` card beneath primary system status. It shows the canonical installed release, background-check state, available release and signed plain-text summary, and explicit `Check for Updates`, `View Changes`, and `Update Now` actions. View Changes renders remote notes only as read-only text. Automatic checks are nonmodal and never install or download an update. Manual checks may show actionable errors.
+
+Check, download, hashing, signature verification, package validation, staging, and rollback-backup preparation run outside the WPF dispatcher. The card polls bounded operation state and displays download percentage or indeterminate phase progress. The Control Center closes only after the external Update Host reports `ready-to-install`; the host then shows native stopping, installing, validating, completing, success, or rollback feedback. ServiceTitan connection state is reported separately and is not an application-update success requirement.

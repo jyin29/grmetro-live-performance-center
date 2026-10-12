@@ -1,6 +1,6 @@
 "use strict";
 
-const scenarios = require("../../test/fixtures/scenarios.json");
+const scenarios = require("./fixtures/scenarios.json");
 const technicians = require("../../../../shared/technicians");
 const kpis = require("../../../../shared/kpis");
 const { normalizeKpis } = require("../data/normalization/kpi");

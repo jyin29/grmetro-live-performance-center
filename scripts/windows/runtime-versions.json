@@ -1,0 +1,7 @@
+{
+  "node": {
+    "version": "24.18.1",
+    "windowsX64Url": "https://nodejs.org/dist/v24.18.1/node-v24.18.1-win-x64.zip",
+    "windowsX64Sha256": "ec56b84a7551893ab2324ebdfdc4ab974a63b4781162600b68a1293cc3e53765"
+  }
+}

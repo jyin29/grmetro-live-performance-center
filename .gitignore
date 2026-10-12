@@ -64,10 +64,15 @@ data/goals.json.tmp
 apps/backend/data/goals.json
 data/display-settings.json
 data/display-settings.json.tmp
+data/management-dismissals.json
+data/management-dismissals.json.tmp
 apps/backend/data/display-settings.json
+apps/backend/data/management-dismissals.json
+apps/backend/data/management-dismissals.json.tmp
 apps/backend/data/spreadsheet-slide.json
 
 # Local company/deployment configuration
+/data/company-config.json
 config/*.local.json
 config/*.private.json
 apps/backend/config/*.local.json

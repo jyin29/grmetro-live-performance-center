@@ -1,5 +1,10 @@
-param([switch]$Force)
+param([switch]$Force,[switch]$ValidateOnly)
 $ErrorActionPreference="Stop"
+trap {
+  [Console]::Error.WriteLine("GRMetro configuration wizard initialization failed: $($_.Exception.Message)")
+  if($_.ScriptStackTrace){[Console]::Error.WriteLine($_.ScriptStackTrace)}
+  exit 1
+}
 Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $envPath=Join-Path $root ".env"
@@ -8,6 +13,7 @@ if(-not(Test-Path $example)){throw "Missing .env.example"}
 function Read-EnvMap([string]$path){$map=@{};if(Test-Path $path){foreach($line in Get-Content $path){if($line -match '^\s*([^#=\s]+)=(.*)$'){$map[$matches[1]]=$matches[2]}}};return $map}
 function Set-EnvValue([string[]]$lines,[string]$key,[string]$value){$found=$false;$result=@();foreach($line in $lines){if($line -match ('^\s*'+[regex]::Escape($key)+'=')){$result+="$key=$value";$found=$true}else{$result+=$line}};if(-not$found){$result+="$key=$value"};return $result}
 function Get-AutostartChoice([Nullable[bool]]$isChecked){if($isChecked -eq $true){return "yes"};return "no"}
+function Get-FirewallChoice([Nullable[bool]]$isChecked){if($isChecked -eq $true){return "yes"};return "no"}
 $current=Read-EnvMap $envPath
 if(-not$Force -and $current['SERVICETITAN_BUSINESS_UNIT_IDS'] -and $current['SERVICETITAN_TECHNICIANS_JSON']){exit 0}
 [xml]$xaml=@'
@@ -19,6 +25,7 @@ if(-not$Force -and $current['SERVICETITAN_BUSINESS_UNIT_IDS'] -and $current['SER
 <TextBlock Text="Technician configuration" FontWeight="SemiBold" Margin="0,18,0,0"/><TextBlock Text='JSON array, for example [{"id":123,"name":"Tech One","shortName":"Tech One","initials":"TO"}]' TextWrapping="Wrap" Foreground="#7A8796" FontSize="12" Margin="0,2,0,6"/><TextBox x:Name="Technicians" Height="150" Padding="8" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
 <TextBlock Text="Timezone" FontWeight="SemiBold" Margin="0,18,0,6"/><TextBox x:Name="Timezone" Height="34" Padding="8,5"/>
 <CheckBox x:Name="Autostart" Content="Start GRMetro automatically when I sign in to Windows" Margin="0,20,0,0" IsChecked="False"/>
+<CheckBox x:Name="Firewall" Content="Allow phones and TVs on my private network to connect" Margin="0,10,0,0" IsChecked="True"/>
 <TextBlock x:Name="ErrorText" Foreground="#B42318" Margin="0,14,0,0" TextWrapping="Wrap"/>
 </StackPanel></Border>
 <Grid Grid.Row="2" Margin="0,20,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Button x:Name="Cancel" Content="Cancel" Width="100" Height="38" HorizontalAlignment="Left"/><Button x:Name="Save" Content="Save and Continue" Width="150" Height="38" Grid.Column="1" Background="#1570EF" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/></Grid>
@@ -26,10 +33,13 @@ if(-not$Force -and $current['SERVICETITAN_BUSINESS_UNIT_IDS'] -and $current['SER
 '@
 $reader=New-Object System.Xml.XmlNodeReader $xaml
 $window=[Windows.Markup.XamlReader]::Load($reader)
-$bu=$window.FindName("BusinessUnits");$tech=$window.FindName("Technicians");$tz=$window.FindName("Timezone");$auto=$window.FindName("Autostart");$errorText=$window.FindName("ErrorText")
+$bu=$window.FindName("BusinessUnits");$tech=$window.FindName("Technicians");$tz=$window.FindName("Timezone");$auto=$window.FindName("Autostart");$firewall=$window.FindName("Firewall");$errorText=$window.FindName("ErrorText")
+foreach($control in @($bu,$tech,$tz,$auto,$firewall,$errorText,$window.FindName("Save"),$window.FindName("Cancel"))){if($null-eq$control){throw "Configuration wizard markup is missing a required control."}}
 $bu.Text=$current['SERVICETITAN_BUSINESS_UNIT_IDS'];$tech.Text=$current['SERVICETITAN_TECHNICIANS_JSON'];$tz.Text=if($current['TIMEZONE']){$current['TIMEZONE']}else{"America/New_York"}
 $autostartPath=Join-Path $root ".grmetro-autostart-choice"
 if(Test-Path $autostartPath){$auto.IsChecked=((Get-Content -LiteralPath $autostartPath -Raw).Trim() -eq "yes")}
+$firewallPath=Join-Path $root ".grmetro-firewall-choice"
+if(Test-Path $firewallPath){$firewall.IsChecked=((Get-Content -LiteralPath $firewallPath -Raw).Trim() -eq "yes")}
 $script:saved=$false
 $window.FindName("Cancel").Add_Click({$window.Close()})
 $window.FindName("Save").Add_Click({
@@ -42,7 +52,9 @@ $window.FindName("Save").Add_Click({
   $lines=@(Set-EnvValue $lines "TIMEZONE" $tz.Text.Trim())
   Set-Content -Path $envPath -Value $lines -Encoding UTF8
   Set-Content -LiteralPath $autostartPath -Value (Get-AutostartChoice $auto.IsChecked) -Encoding ASCII
+  Set-Content -LiteralPath $firewallPath -Value (Get-FirewallChoice $firewall.IsChecked) -Encoding ASCII
   $script:saved=$true;$window.DialogResult=$true;$window.Close()
 })
+if($ValidateOnly){$window.Close();Write-Output "GRMetro configuration wizard validation passed.";exit 0}
 [void]$window.ShowDialog()
 if(-not$script:saved){exit 2}

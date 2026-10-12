@@ -44,7 +44,7 @@ function DashboardPage({ displayId }) {
   if (loading) content = <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header refreshing/><LoadingView/></div></>;
   else if (error && !data) content = <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header hasError/><ErrorView message={error.message} onRetry={retry}/></div></>;
   else if (!data?.technicians?.length) content = <><DisplayPresenceReporter displayId={displayId}/><div className="app-shell"><Header refreshedAt={data?.refreshedAt}/><EmptyState/></div></>;
-  else content = <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} viewportDiagnosticsVisible={viewportDiagnosticsVisible} onToggleViewportDiagnostics={() => setViewportDiagnosticsVisible((visible) => !visible)}/>;
+  else content = <DashboardLayout data={data} displayId={displayId} displaySettings={displaySettings.settings} onSetControlsLauncherVisible={displaySettings.setControlsLauncherVisible} error={error} refreshing={refreshing} retry={retry} lastSuccessfulRefresh={lastSuccessfulRefresh} viewportDiagnosticsVisible={viewportDiagnosticsVisible} onToggleViewportDiagnostics={() => setViewportDiagnosticsVisible((visible) => !visible)}/>;
   return <DisplayStage diagnosticsVisible={viewportDiagnosticsVisible}>{content}</DisplayStage>;
 }
 

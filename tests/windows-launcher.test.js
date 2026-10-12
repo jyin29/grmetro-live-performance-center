@@ -34,6 +34,7 @@ test("control center handles first-run setup and supervised startup", () => {
 
 test("control center exposes day-to-day recovery and operator shortcuts", () => {
   const launcher = source("scripts/windows/performance-center-launcher-v2.ps1");
+  const integration = source("scripts/windows/launch-integration.ps1");
   for (const label of ["Phone Remote", "Admin Diagnostics", "Recovery Logs", "Refresh Data", "Restart Backend", "Restart ServiceTitan", "Desktop Shortcut"]) {
     assert.match(launcher, new RegExp(label));
   }
@@ -41,7 +42,8 @@ test("control center exposes day-to-day recovery and operator shortcuts", () => 
   assert.match(launcher, /Show-NativeRemoteAccess/);
   assert.match(launcher, /Show-NativeDiagnostics/);
   assert.match(launcher, /Show-NativeRecoveryLogs/);
-  assert.match(launcher, /CreateShortcut/);
+  assert.match(launcher, /New-GrMetroHostShortcut/);
+  assert.match(integration, /CreateShortcut/);
   assert.match(launcher, /\$window\.WindowState='Minimized'/);
   assert.match(launcher, /Check for Updates/);
   assert.match(launcher, /Setup &amp; Configuration/);

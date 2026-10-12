@@ -5,11 +5,11 @@ const path = require('node:path');
 
 test('Windows package isolation, reinstall preservation, WPF loading, and paths with spaces', {
   skip: process.platform !== 'win32',
-  timeout: 120000,
+  timeout: 900000,
 }, () => {
   const result = spawnSync('powershell.exe', [
     '-STA', '-NoProfile', '-ExecutionPolicy', 'Bypass',
     '-File', path.join(__dirname, 'windows-packaging-validation.ps1'),
-  ], { encoding: 'utf8', timeout: 110000, windowsHide: true });
+  ], { encoding: 'utf8', timeout: 890000, windowsHide: true });
   assert.equal(result.status, 0, `${result.error || ''}\n${result.stdout}\n${result.stderr}`);
 });

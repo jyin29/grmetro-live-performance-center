@@ -18,7 +18,7 @@ export function DashboardSlideButtons({ controller }) {
   </div>;
 }
 
-export function LocalDashboardControls({ controller, diagnosticsVisible = false, onToggleDiagnostics }) {
+export function LocalDashboardControls({ controller, diagnosticsVisible = false, onToggleDiagnostics, launcherVisible = true, onSetLauncherVisible }) {
   const [open, setOpen] = useState(false);
   const trayRef = useRef(null);
 
@@ -53,6 +53,7 @@ export function LocalDashboardControls({ controller, diagnosticsVisible = false,
   }, [open]);
 
   if (!open) {
+    if (!launcherVisible) return null;
     return <button className="local-dashboard-controls__launcher" type="button" onClick={() => setOpen(true)} aria-label="Open dashboard controls" title="Dashboard controls (C)">
       <span aria-hidden="true">•••</span><span>Controls</span>
     </button>;
@@ -82,6 +83,10 @@ export function LocalDashboardControls({ controller, diagnosticsVisible = false,
     <section className="local-dashboard-controls__diagnostics" aria-label="Diagnostics controls">
       <div><small>Diagnostics</small><span>TV viewport and browser measurements</span></div>
       <button type="button" aria-pressed={diagnosticsVisible} onClick={onToggleDiagnostics}>{diagnosticsVisible ? "Hide Diagnostics" : "Show Diagnostics"}</button>
+    </section>
+    <section className="local-dashboard-controls__appearance" aria-label="Display preferences">
+      <div><small>Appearance</small><span>{launcherVisible ? "Floating Controls button is visible" : "Press C to reopen Controls"}</span></div>
+      <label><span>Show Controls Launcher</span><input type="checkbox" checked={launcherVisible} onChange={(event) => onSetLauncherVisible?.(event.target.checked)} /></label>
     </section>
     <p className="local-dashboard-controls__hint">Keyboard: C controls · ←/→ slides · Space pause</p>
   </aside>;

@@ -39,6 +39,10 @@ Live Rotation
 
 A remote override automatically expires after two minutes, returning that television to the synchronized live rotation.
 
+The installed Windows Control Center includes a signed-release updater foundation. It checks only an administrator-provisioned HTTPS feed, shows signed plain-text release notes, and installs a verified prebuilt package only after explicit operator approval. Fresh installation, repair, updater-protocol changes, and trust-root changes continue to use the full Setup EXE. The checked-in release source is disabled until production hosting and signing keys are provisioned.
+
+An updater migration Setup installs a stable Update Host outside the application tree and migrates normal shortcuts and optional scheduled startup through its recovery-first Launch mode. Routine releases replace only application files. The real HTTPS origin, production release public key, and Authenticode certificate must be explicitly provisioned before production use; unsigned candidates are for controlled second-PC testing only.
+
 ---
 
 # Version 1.0 Features
@@ -174,7 +178,7 @@ grmetro-live-performance-center/
 
 ## Backend Computer
 
-Recommended:
+For development and building Setup:
 
 ```text
 Windows 10 or Windows 11
@@ -184,6 +188,8 @@ Git
 8 GB RAM
 Reliable office-network connection
 ```
+
+For a packaged installation, copy only `GRMetro Performance Center Setup.exe` to a normal Windows 10/11 computer. The installer includes the Node runtime, production dependencies, and compiled frontend. The destination does not need Node.js, npm, Git, VS Code, Codex, this repository, or manual PowerShell commands. Windows PowerShell 5.1 and the Windows .NET Framework/WPF components are built into supported Windows versions. Microsoft Edge remains required for the manually authenticated ServiceTitan session and is detected during Setup.
 
 Only the backend computer needs access to ServiceTitan.
 

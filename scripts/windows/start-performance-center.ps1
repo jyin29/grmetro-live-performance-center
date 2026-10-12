@@ -3,21 +3,20 @@ param(
   [switch]$NoBrowser
 )
 
-$ErrorActionPreference = "Stop"
-$supervised = Join-Path $PSScriptRoot "start-supervised-performance-center.ps1"
+$ErrorActionPreference = 'Stop'
+$supervised = Join-Path $PSScriptRoot 'start-supervised-performance-center.ps1'
 
-Write-Host "GRMetro Live Performance Center" -ForegroundColor Cyan
-Write-Host "Using final independent-TV architecture with the Windows self-healing supervisor." -ForegroundColor DarkGray
-Write-Host "The central PC no longer owns a display location; each TV uses its own permanent display URL." -ForegroundColor DarkGray
+Write-Host 'GRMetro Live Performance Center' -ForegroundColor Cyan
+Write-Host 'Using the portable runtime and Windows self-healing supervisor.' -ForegroundColor DarkGray
 
-if($NoBrowser){
-  Write-Warning "-NoBrowser is retained for compatibility, but final deployment normally requires the ServiceTitan browser. Starting supervisor without relaunching Edge."
-  $root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-  Set-Location $root
-  if(-not $SkipBuild){npm run build;if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}}
-  & (Join-Path $PSScriptRoot "performance-center-supervisor.ps1") -NoBrowserRecovery
+if ($NoBrowser) {
+  Write-Warning '-NoBrowser is retained for recovery use. ServiceTitan normally requires the dedicated browser.'
+  $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+  . (Join-Path $PSScriptRoot 'runtime-paths.ps1')
+  if (-not (Test-GrMetroPortableRuntime $root)) { throw 'The bundled GRMetro runtime is unavailable. Run the latest Setup EXE again.' }
+  & (Join-Path $PSScriptRoot 'performance-center-supervisor.ps1') -NoBrowserRecovery
   exit $LASTEXITCODE
 }
 
-if($SkipBuild){ & $supervised -SkipBuild } else { & $supervised }
+& $supervised -SkipBuild
 exit $LASTEXITCODE

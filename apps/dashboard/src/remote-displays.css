@@ -83,6 +83,28 @@
   .display-detail-panel { padding: 22px; }
 }
 
+.dismissed-notifications-list { display: grid; gap: 10px; }
+.dismissed-notifications-list article { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px; background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(29,57,62,.055); }
+.dismissed-notifications-list article > div { min-width: 0; display: grid; gap: 3px; }
+.dismissed-notifications-list small { color: var(--teal); font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.dismissed-notifications-list strong { font-size: 16px; }
+.dismissed-notifications-list span { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.dismissed-notifications-list button,.dismissed-notifications-reset { min-height: 42px; padding: 0 14px; border: 0; border-radius: 11px; color: var(--teal); background: #eaf6f5; font-weight: 850; }
+.dismissed-notifications-reset { width: 100%; margin-top: 12px; color: #fff; background: var(--teal); }
+
+.native-remote-access { position:sticky; z-index:30; top:0; display:flex; align-items:center; justify-content:space-between; gap:16px; margin:-2px -2px 12px; padding:11px 14px; color:#fff; background:#172033; border-radius:0 0 14px 14px; box-shadow:0 8px 22px rgba(23,32,51,.16); }
+.native-remote-access > div { display:grid; gap:1px; }
+.native-remote-access span { color:#9dc9ee; font-size:9px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; }
+.native-remote-access strong { font-size:15px; }
+.native-remote-access button { min-height:40px; padding:0 14px; border:1px solid rgba(255,255,255,.28); border-radius:10px; color:#fff; background:#087f83; font-weight:850; }
+.native-remote-qr { position:fixed; z-index:1000; inset:0; display:grid; place-items:center; padding:24px; background:rgba(14,24,38,.64); }
+.native-remote-qr__panel { position:relative; width:min(100%,430px); max-height:calc(100vh - 48px); overflow:auto; padding:26px; background:#fff; border-radius:22px; box-shadow:0 24px 70px rgba(0,0,0,.28); text-align:center; }
+.native-remote-qr__panel h2 { margin:5px 0 18px; color:#172033; font-size:27px; }
+.native-remote-qr__panel p { margin:14px 0; overflow-wrap:anywhere; color:#647287; font-size:12px; }
+.native-remote-qr__code { display:block; width:min(100%,300px); margin:auto; border:10px solid #fff; box-shadow:0 0 0 1px #dce3ec; }
+.native-remote-qr__close { position:absolute; top:12px; right:12px; width:38px; height:38px; border:0; border-radius:50%; color:#344054; background:#edf1f5; font-size:25px; line-height:1; }
+.native-remote-qr__panel > .operations-primary { width:100%; min-height:46px; border:0; border-radius:12px; }
+
 @media (prefers-reduced-motion: reduce) {
   .display-advanced-controls > summary svg { transition: none; }
 }

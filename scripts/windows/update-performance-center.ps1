@@ -1,35 +1,42 @@
-param([switch]$CheckOnly)
-$ErrorActionPreference="Stop"
-$root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-Set-Location $root
-$result=[ordered]@{supported=$false;updateAvailable=$false;current=$null;latest=$null;message=""}
-if(-not(Test-Path (Join-Path $root ".git")) -or -not(Get-Command git -ErrorAction SilentlyContinue)){$result.message="Packaged install: install a newer GRMetro Setup package to update.";if($CheckOnly){$result|ConvertTo-Json -Compress;exit 0};throw $result.message}
-$result.supported=$true
-$current=(git rev-parse --short HEAD 2>$null).Trim();$result.current=$current
-$branch=(git rev-parse --abbrev-ref HEAD 2>$null).Trim()
-git fetch origin $branch --quiet
-if($LASTEXITCODE -ne 0){throw "Could not contact GitHub to check for updates."}
-$latest=(git rev-parse --short "origin/$branch" 2>$null).Trim();$result.latest=$latest
-$behind=[int](git rev-list --count "HEAD..origin/$branch" 2>$null)
-$result.updateAvailable=$behind -gt 0
-$result.message=if($result.updateAvailable){"$behind update commit(s) available."}else{"You are up to date."}
-if($CheckOnly){$result|ConvertTo-Json -Compress;exit 0}
-if(-not$result.updateAvailable){$result|ConvertTo-Json -Compress;exit 0}
-$status=git status --porcelain
-if($status){throw "Update stopped because this folder has uncommitted changes. Commit or stash them first."}
-$envBackup=$null;if(Test-Path ".env"){$envBackup=Join-Path $env:TEMP ("grmetro-env-"+[guid]::NewGuid().ToString()+".bak");Copy-Item ".env" $envBackup}
-try{
-  git pull --ff-only origin $branch
-  if($LASTEXITCODE -ne 0){throw "git pull failed."}
-  npm install
-  if($LASTEXITCODE -ne 0){throw "npm install failed."}
-  npm test
-  if($LASTEXITCODE -ne 0){throw "Tests failed after update. The running system was not restarted."}
-  npm run build
-  if($LASTEXITCODE -ne 0){throw "Build failed after update. The running system was not restarted."}
-  if($envBackup){Copy-Item $envBackup ".env" -Force}
-  $admin=Join-Path $PSScriptRoot "admin-control.ps1"
-  if(Test-Path $admin){Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$admin`" full-recovery" -WorkingDirectory $root}
-  $result.current=(git rev-parse --short HEAD).Trim();$result.latest=$result.current;$result.updateAvailable=$false;$result.message="Update installed and recovery restart requested."
-  $result|ConvertTo-Json -Compress
-}finally{if($envBackup -and(Test-Path $envBackup)){Remove-Item $envBackup -Force -ErrorAction SilentlyContinue}}
+param(
+  [switch]$CheckOnly,[switch]$InstallRemote,[string]$PackageZip,[string]$ExpectedReleaseVersion,
+  [int]$ParentProcessId=0,[string]$StatusPath,[string]$UpdateHostPath,
+  [switch]$AllowDevelopmentPackage,[switch]$NoLaunch
+)
+$ErrorActionPreference='Stop'
+$root=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+$defaultHost=Join-Path $env:LOCALAPPDATA 'GRMetro\Update Host\GRMetro Update Host.exe'
+if(-not$UpdateHostPath){$UpdateHostPath=$defaultHost}
+if([IO.Path]::GetFullPath($UpdateHostPath)-ne[IO.Path]::GetFullPath($defaultHost)-and$env:GRMETRO_UPDATER_TEST_MODE-ne'true'){throw 'Update Host path override is disabled outside disposable tests.'}
+if(-not(Test-Path -LiteralPath $UpdateHostPath -PathType Leaf)){throw 'The stable GRMetro Update Host is not installed. Use the latest Setup EXE.'}
+
+if($CheckOnly){
+  $output=@(& $UpdateHostPath -Mode Check -InstallRoot $root -Quiet)
+  if($LASTEXITCODE-ne0){throw 'GRMetro Update Host could not check the configured release source.'}
+  $json=@($output|Where-Object{$_ -and $_.Trim().StartsWith('{')})|Select-Object -Last 1
+  if(-not$json){throw 'GRMetro Update Host returned no update-check result.'}
+  $json;exit 0
+}
+
+if($InstallRemote){
+  if($ParentProcessId-lt1){throw 'Remote update handoff requires the initiating Control Center process ID.'}
+  if(-not$StatusPath){$stateRoot=Join-Path $env:LOCALAPPDATA 'GRMetro\Update State';New-Item -ItemType Directory -Force -Path $stateRoot|Out-Null;$StatusPath=Join-Path $stateRoot ('operation-'+[guid]::NewGuid().ToString('N')+'.json')}
+  $arguments=@('-Mode','PrepareRemote','-InstallRoot',('"{0}"'-f$root),'-ParentProcessId',[string]$ParentProcessId,'-StatusPath',('"{0}"'-f[IO.Path]::GetFullPath($StatusPath)),'-Quiet')
+  if($ExpectedReleaseVersion){$arguments+=@('-ExpectedReleaseVersion',$ExpectedReleaseVersion)}
+  if($NoLaunch){$arguments+='-NoLaunch'}
+  Start-Process -FilePath $UpdateHostPath -ArgumentList $arguments -WorkingDirectory ([IO.Path]::GetDirectoryName($UpdateHostPath))|Out-Null
+  [ordered]@{handoffStarted=$true;remote=$true;statusPath=[IO.Path]::GetFullPath($StatusPath);expectedRelease=$ExpectedReleaseVersion}|ConvertTo-Json -Compress;exit 0
+}
+
+if($PackageZip){
+  $arguments=@('-Mode','ApplyLocal','-InstallRoot',('"{0}"'-f$root),'-PackageZip',('"{0}"'-f[IO.Path]::GetFullPath($PackageZip)))
+  if($ExpectedReleaseVersion){$arguments+=@('-ExpectedReleaseVersion',$ExpectedReleaseVersion)}
+  if($ParentProcessId-gt0){$arguments+=@('-ParentProcessId',[string]$ParentProcessId)}
+  if($AllowDevelopmentPackage){$arguments+='-AllowDevelopmentPackage'}
+  if($NoLaunch){$arguments+='-NoLaunch'}
+  Start-Process -FilePath $UpdateHostPath -ArgumentList $arguments -WorkingDirectory ([IO.Path]::GetDirectoryName($UpdateHostPath))|Out-Null
+  [ordered]@{handoffStarted=$true;remote=$false;package=[IO.Path]::GetFullPath($PackageZip)}|ConvertTo-Json -Compress;exit 0
+}
+
+& $UpdateHostPath -Mode Check -InstallRoot $root -Quiet
+exit $LASTEXITCODE

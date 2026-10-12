@@ -4,6 +4,7 @@ import {
   formatMemoryHealth,
   formatRecoveryReason,
 } from "../../lib/displayRuntimeHealth";
+import { useDisplaySettings } from "../../hooks/useDisplaySettings";
 
 const DISPLAY_ICONS = {
   monitor: "M4 5h16v11H4z M9 20h6 M12 16v4",
@@ -65,7 +66,7 @@ function DisplaySelector({ displays, selectedDisplayId, slides, onSelectDisplay 
   </div>;
 }
 
-export function DisplayControls({ controller, acknowledgement, onCustomize }) {
+export function DisplayControls({ controller, acknowledgement, onCustomize, controlsLauncherVisible = true, onSetControlsLauncherVisible }) {
   const acknowledgementText = acknowledgement?.applied
     ? `Applied - r${acknowledgement.appliedRevision}`
     : acknowledgement?.targetRevision != null
@@ -104,6 +105,11 @@ export function DisplayControls({ controller, acknowledgement, onCustomize }) {
           <span><strong>Customize dashboard</strong><small>Metrics and data slides</small></span>
           <b aria-hidden="true">›</b>
         </button>
+        <button className="display-customize-link display-launcher-toggle" type="button" onClick={() => onSetControlsLauncherVisible?.(!controlsLauncherVisible)}>
+          <DisplayIcon name="monitor" />
+          <span><strong>{controlsLauncherVisible ? "Hide TV Controls Launcher" : "Show TV Controls Launcher"}</strong><small>{controlsLauncherVisible ? "Remove the floating button" : "Restore local access on this display"}</small></span>
+          <b aria-hidden="true">›</b>
+        </button>
         <div className="display-command-detail">
           <span>Command acknowledgement</span>
           <strong>{acknowledgementText}</strong>
@@ -113,12 +119,15 @@ export function DisplayControls({ controller, acknowledgement, onCustomize }) {
   </>;
 }
 
-export function DisplaysTab({ admin, controller, selectedDisplayId, onSelectDisplay, onCustomize }) {
+export function DisplaysTab({ admin, controller, selectedDisplayId, onSelectDisplay, onCustomize, controlsLauncherVisible, onSetControlsLauncherVisible }) {
   const displays = admin?.displays || [];
+  const displaySettings = useDisplaySettings();
   const selected = displays.find((item) => item.displayId === selectedDisplayId);
   const connection = displayConnection(selected);
   const health = selected?.runtimeHealth;
   const memoryPercent = Number.isFinite(health?.memoryPercent) ? Math.max(0, Math.min(100, health.memoryPercent)) : null;
+  const effectiveLauncherVisible = typeof controlsLauncherVisible === "boolean" ? controlsLauncherVisible : displaySettings.settings?.displayPreferences?.[selectedDisplayId]?.controlsLauncherVisible !== false;
+  const setLauncherVisible = onSetControlsLauncherVisible || ((visible) => displaySettings.setControlsLauncherVisible(selectedDisplayId, visible));
 
   return <div className="displays-mobile displays-mobile-v2">
     <div className="settings-title displays-page-title"><span className="mobile-eyebrow">Live screens</span><h2>Displays</h2></div>
@@ -158,7 +167,7 @@ export function DisplaysTab({ admin, controller, selectedDisplayId, onSelectDisp
         <span><small>Last Recovery</small><strong>{formatRecoveryReason(health?.lastRelaunchReason)}</strong></span>
       </div>
 
-      <DisplayControls controller={controller} acknowledgement={selected?.acknowledgement} onCustomize={onCustomize} />
+      <DisplayControls controller={controller} acknowledgement={selected?.acknowledgement} onCustomize={onCustomize} controlsLauncherVisible={effectiveLauncherVisible} onSetControlsLauncherVisible={setLauncherVisible} />
     </section>
   </div>;
 }

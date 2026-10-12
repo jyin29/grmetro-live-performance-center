@@ -1,6 +1,10 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+if exist "%LOCALAPPDATA%\GRMetro\Update Host\GRMetro Update Host.exe" (
+  start "" "%LOCALAPPDATA%\GRMetro\Update Host\GRMetro Update Host.exe" -Mode Launch
+  exit /b 0
+)
 if not exist "%~dp0GRMetro Performance Center.exe" (
   powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0scripts\windows\build-launcher-exe.ps1" >nul 2>nul
 )

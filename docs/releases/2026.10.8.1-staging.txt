@@ -1,0 +1,6 @@
+First controlled GRMetro integrated-updater staging release.
+Includes the accumulated dashboard, television readability, slide eligibility, display-state, mobile remote, management notification, and recognition improvements.
+Includes portable bundled-Node deployment, configuration wizard fixes, private-data exclusions, transactional version-2 upgrades, rollback recovery, obsolete-file cleanup, and targeted GRMetro process handling.
+Includes the native Update Host, recovery-first shortcuts and autostart, canonical release identity, signed metadata verification, replay protection, Cloudflare staging feed integration, and native Control Center update workflow.
+Preserves private environment configuration, company configuration, goals, display preferences, spreadsheet data, logs, ServiceTitan authentication, Edge profiles, phone remote profile, five-TV behavior, and LAN-only operation.
+This is an unsigned testing-channel candidate for controlled second-PC validation and is not approved for production deployment.
