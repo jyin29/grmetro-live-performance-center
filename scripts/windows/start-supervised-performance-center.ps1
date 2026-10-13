@@ -1,4 +1,4 @@
-param([switch]$SkipBuild)
+param([switch]$SkipBuild,[string]$ProfilePath)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location $root
@@ -10,7 +10,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $root 'apps\dashboard\dist\index.htm
 if (-not (Test-Path -LiteralPath (Join-Path $root '.env'))) { throw 'Missing configuration. Open Setup & Configuration first.' }
 
 Write-Host 'Starting ServiceTitan browser...' -ForegroundColor Cyan
-& (Join-Path $PSScriptRoot 'launch-edge.ps1')
+$edgeArguments=@{}
+if($ProfilePath){$edgeArguments.ProfilePath=$ProfilePath}
+& (Join-Path $PSScriptRoot 'launch-edge.ps1') @edgeArguments
 if ($LASTEXITCODE -ne 0) { throw 'ServiceTitan browser launcher failed.' }
 Write-Host 'Starting self-healing supervisor...' -ForegroundColor Cyan
 Write-Host 'Each Google TV independently loads its permanent /?display=<id> URL.' -ForegroundColor DarkGray

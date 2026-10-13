@@ -67,10 +67,16 @@ test("native diagnostics and recovery logs use readable status views", () => {
 
 test("operator stop kills only GRMetro supervisor, backend, and dedicated Edge", () => {
   const source = read("scripts/windows/stop-performance-center.ps1");
+  const profile = read("scripts/windows/servicetitan-profile.ps1");
   assert.match(source, /performance-center-supervisor\\\.ps1/);
   assert.match(source, /apps\[\\\\\/\]backend/);
-  assert.match(source, /LOCALAPPDATA.*GRMetro\\Edge Profile/);
-  assert.match(source, /\$_.CommandLine -like "\*\$profile\*"/);
+  assert.match(source, /Resolve-GrMetroServiceTitanProfilePath/);
+  assert.match(source, /Test-GrMetroEdgeCommandLineUsesProfile/);
+  assert.match(profile, /C:\\edge-dashboard-profile/);
+  assert.match(profile, /LOCALAPPDATA.*GRMetro\\Edge Profile/);
+  assert.match(profile, /Both the legacy and LocalAppData ServiceTitan Edge profiles contain data/);
+  assert.ok(source.indexOf("Resolve-GrMetroServiceTitanProfilePath") < source.indexOf("New-Item -ItemType Directory"));
+  assert.ok(source.indexOf("Resolve-GrMetroServiceTitanProfilePath") < source.indexOf("Get-CimInstance Win32_Process"));
   assert.match(source, /if\(-not \$KeepServiceTitanBrowser\)/);
   assert.match(source, /Stop-Process/);
   assert.doesNotMatch(source, /Get-Process\s+node\s*\|\s*Stop-Process/i);
@@ -176,6 +182,9 @@ test("package build creates an isolated deterministic portable payload", () => {
   assert.match(source, /windowsX64Sha256/);
   assert.match(source, /-SourceState \$sourceState/);
   assert.match(source, /New-GrMetroReleaseMetadata/);
+  assert.match(source, /\[switch\]\$PackageOnly/);
+  assert.match(source, /rev-parse HEAD/);
+  assert.match(source, /if\(\$PackageOnly\)[\s\S]*No Setup EXE/);
   assert.match(source, /build-update-host\.ps1/);
   assert.match(source, /Write-GrMetroPortablePackageManifest/);
   assert.match(source, /windows-portable-package-validation\.ps1/);

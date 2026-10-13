@@ -1,11 +1,12 @@
 param(
   [int]$Port = 9223,
-  [string]$ProfilePath = (Join-Path $env:LOCALAPPDATA 'GRMetro\Edge Profile'),
+  [string]$ProfilePath,
   [string]$StartUrl = "https://go.servicetitan.com",
   [switch]$CheckOnly
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'servicetitan-profile.ps1')
 
 function Find-Edge {
   $candidatePaths = @()
@@ -40,6 +41,7 @@ function Find-Edge {
 $edge = Find-Edge
 Write-Host "Using Microsoft Edge: $edge"
 if ($CheckOnly) { exit 0 }
+$ProfilePath = Resolve-GrMetroServiceTitanProfilePath -ExplicitPath $ProfilePath
 New-Item -ItemType Directory -Force -Path $ProfilePath | Out-Null
 $debugUrl = "http://127.0.0.1:$Port/json/version"
 

@@ -2265,3 +2265,17 @@ The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. 
 - [x] Audit the remaining public ZIP implementation content and retain existing updater/transaction architecture unchanged.
 - [x] Generate and verify the authorized external RSA-3072 staging key, scope it to the testing channel, and build a provisioned unsigned `/staging/` migration candidate.
 - [ ] Commit the complete accumulated source snapshot before creating the first signed `2026.10.8.1` testing release.
+
+## 2026-10-13 — Legacy production manual-upgrade compatibility
+
+- [x] Resolve the ServiceTitan Edge profile through one shared policy for launch, restart, and shutdown operations.
+- [x] Preserve an established `C:\edge-dashboard-profile` when the newer LocalAppData profile is empty, while keeping the LocalAppData default for fresh installations.
+- [x] Honor explicit profile-path overrides, reject ambiguous dual established profiles, and target only Edge processes using the exact selected profile.
+- [x] Add a manual compatibility entry point for the audited `55f42c0` identity plus schema-2 installed manifest without fabricating release metadata.
+- [x] Validate package hash, target identity, archive, installed inventory, root safety, and transaction state before any production mutation.
+- [x] Prepare and verify rollback data before stopping only GRMetro-owned processes; preserve persistent data and Windows integration outside the application manifest.
+- [x] Roll back validation/apply failures and retain sanitized failure evidence outside the replaceable application tree.
+- [x] Cover disposable legacy identity/profile fixtures, malformed packages, successful application, validation rollback, interrupted-transaction rejection, and private-file preservation.
+- [x] Add an application-only portable build mode that embeds the full clean commit identity without generating Setup or provisioning updater trust.
+
+No production application, authenticated browser profile, process, shortcut, task, firewall rule, or Cloudflare object was changed while implementing this compatibility path. A replacement portable release has not been built yet.

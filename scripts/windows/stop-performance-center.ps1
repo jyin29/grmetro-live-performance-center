@@ -1,6 +1,9 @@
-param([switch]$KeepServiceTitanBrowser)
+param([switch]$KeepServiceTitanBrowser,[string]$ProfilePath)
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot 'servicetitan-profile.ps1')
+$profile=$null
+if(-not $KeepServiceTitanBrowser){$profile=Resolve-GrMetroServiceTitanProfilePath -ExplicitPath $ProfilePath}
 $logs = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $log = Join-Path $logs "supervisor.log"
@@ -20,8 +23,7 @@ foreach($process in $backends) { Stop-Process -Id $process.ProcessId -Force -Err
 
 # Stop only the dedicated ServiceTitan Edge profile, never the user's normal Edge windows.
 if(-not $KeepServiceTitanBrowser) {
-$profile = Join-Path $env:LOCALAPPDATA 'GRMetro\Edge Profile'
-  $edge = @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*$profile*" })
+  $edge = @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-GrMetroEdgeCommandLineUsesProfile ([string]$_.CommandLine) $profile })
   foreach($process in $edge) { Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue }
 }
 

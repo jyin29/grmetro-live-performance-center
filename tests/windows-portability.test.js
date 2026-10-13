@@ -49,10 +49,13 @@ test("portable package keeps browser sessions and machine data outside its manif
 
 test("Edge prerequisite and LAN firewall behavior are explicit", () => {
   const edge = read("scripts/windows/launch-edge.ps1");
+  const profile = read("scripts/windows/servicetitan-profile.ps1");
   const wizard = read("scripts/windows/env-wizard.ps1");
   const installer = read("scripts/windows/install-grmetro-performance-center.ps1");
   assert.match(edge, /Microsoft Edge is required/);
-  assert.match(edge, /LOCALAPPDATA.*GRMetro\\Edge Profile/);
+  assert.match(edge, /Resolve-GrMetroServiceTitanProfilePath/);
+  assert.match(profile, /C:\\edge-dashboard-profile/);
+  assert.match(profile, /LOCALAPPDATA.*GRMetro\\Edge Profile/);
   assert.match(wizard, /Allow phones and TVs on my private network/);
   assert.match(installer, /configure-private-firewall\.ps1/);
   assert.match(installer, /-Verb RunAs/);

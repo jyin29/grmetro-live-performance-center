@@ -4,7 +4,7 @@ The first packaging stage turns the repository into a single-machine Windows app
 
 ## What it does
 
-- Uses the dedicated Microsoft Edge profile at `C:\edge-dashboard-profile`.
+- Reuses an established dedicated ServiceTitan Edge profile and defaults new installations to `%LOCALAPPDATA%\GRMetro\Edge Profile`.
 - Starts Edge with CDP remote debugging on port `9223`.
 - Builds the Vite dashboard and lets the backend serve the compiled dashboard at `http://127.0.0.1:3000`.
 - Starts the Node backend in production mode.
@@ -32,6 +32,8 @@ The root command launcher, generated launcher EXE, and `npm run launch:windows` 
 
 `npm run build:windows-exe` generates the launcher and icon. `npm run package:windows` builds in an isolated temporary tree and generates the ZIP and self-extracting Setup EXE under `dist/windows-installer`. These build commands do not install the application, register autostart, start Edge, or restart the existing backend.
 
+For a reviewed application-only manual deployment, `build-installer.ps1 -PackageOnly -OutputDirectory <path>` runs the same isolated dependency, dashboard, bundled-runtime, identity, and manifest pipeline but stops after producing the portable ZIP. It does not build Setup, the external Update Host, trust provisioning, shortcuts, tasks, firewall integration, or installer bootstrap files. Nondevelopment package identity records the full committed Git SHA; a dirty source remains marked `working-tree` and is rejected by the manual legacy wrapper.
+
 The generated Setup EXE contains a pinned official Windows x64 Node runtime, lockfile-resolved production dependencies, and the compiled Vite dashboard. Node.js, npm, Git, the repository, development dependencies, and a compiler are build-computer concerns only. They are not target-computer prerequisites. The pinned Node archive is accepted only when its SHA-256 checksum matches `runtime-versions.json`.
 
 ## Package contents
@@ -51,13 +53,19 @@ After building, the portability validator installs the ZIP into a disposable pat
 - Network access to ServiceTitan and a trusted private LAN for phones and TV displays.
 - Administrator approval only when the user keeps the default private-network firewall option enabled. Setup creates a narrowly scoped inbound TCP rule for the bundled Node executable on port 3000. Declining the UAC request leaves the application installed but LAN clients may be blocked.
 
-The dedicated Edge profile is created under `%LOCALAPPDATA%\GRMetro\Edge Profile`. It is never embedded in Setup and is not part of application upgrade transactions. The operator signs into ServiceTitan manually and completes MFA in that window.
+The shared ServiceTitan profile resolver honors an explicit `-ProfilePath` first. Without an override, it preserves an established legacy `C:\edge-dashboard-profile`, otherwise reuses an established `%LOCALAPPDATA%\GRMetro\Edge Profile`, and defaults a fresh installation to the LocalAppData path. If both locations contain profile data, startup, restart, and operator shutdown stop with an explicit ambiguity error instead of selecting or migrating either profile. The resolver never copies, resets, deletes, or edits profile contents. The selected profile is never embedded in Setup and is not part of application upgrade transactions. The operator signs into ServiceTitan manually and completes MFA in that window.
 
 The standalone Phone Remote window uses a separate `%LOCALAPPDATA%\GRMetro\Remote App Profile`; it never shares,
 clears, packages, or modifies the dedicated ServiceTitan authentication profile. Its embedded page remains the same
 locally served `/remote` production build, and its QR action encodes the LAN URL rather than the loopback app URL.
 
 ## Reinstall and upgrade preservation
+
+### Audited legacy manual upgrade
+
+`manual-legacy-upgrade.ps1` is a narrow compatibility entry point for an audited installation that already has a complete schema-2 package manifest but still carries pre-release `package-build.json` identity. It requires the expected installed Git commit, target CalVer, and portable ZIP SHA-256 as explicit inputs. Its read-only preflight validates the exact per-user installation root, rejects reparse points and pending transactions, verifies every historical manifest file is present, recognizes the legacy identity without manufacturing CalVer fields, validates the target release identity and complete archive, and makes no installed-file changes.
+
+An apply requires explicit confirmations for Defender review and a separately verified post-success restoration source. The shared transaction engine then stages the new package and verifies the complete rollback backup before shared process control stops only GRMetro-owned processes. It replaces only manifest-listed application files, validates the installed runtime/backend/dashboard, commits transaction cleanup, and then starts the Control Center. Any failure before commit invokes the existing checksum-verified rollback, restores the prior running state when safe, and writes a bounded nonsecret diagnostic record beside the installation. It does not run Setup integration and therefore does not rewrite `.env`, data, logs, browser profiles, shortcuts, firewall rules, autostart preference, scheduled-task registration, Update Host trust, or replay state. Installations with modern release identity continue to use the normal Update Host and are rejected by this compatibility entry point.
 
 ### Shared application transaction and Update Host foundation
 

@@ -1,7 +1,8 @@
 param(
   [string]$ReleaseVersion='0.0.0.0',[ValidateSet('development','testing','stable')][string]$Channel='development',[int]$UpdaterProtocol=1,
   [string]$ReleaseSourceConfigPath,[string]$ReleasePublicKeysPath,[switch]$ProvisionReleaseTrust,
-  [string]$SignToolPath,[string]$CertificateThumbprint,[string]$TimestampUrl,[switch]$RequireAuthenticode
+  [string]$SignToolPath,[string]$CertificateThumbprint,[string]$TimestampUrl,[switch]$RequireAuthenticode,
+  [switch]$PackageOnly,[string]$OutputDirectory
 )
 $ErrorActionPreference="Stop"
 $root=(Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -16,13 +17,16 @@ if($LASTEXITCODE -ne 0){throw "Could not build launcher EXE."}
 $launcherExe=Join-Path $root 'GRMetro Performance Center.exe'
 $null=Invoke-GrMetroAuthenticodeSigning -Files @($launcherExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
 $updateHostOut=Join-Path $root 'dist\windows-update-host'
-if(Test-Path -LiteralPath $updateHostOut){Remove-Item -LiteralPath $updateHostOut -Recurse -Force}
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'build-update-host.ps1') -OutputDirectory $updateHostOut
-if($LASTEXITCODE -ne 0){throw 'Could not build the stable GRMetro Update Host.'}
-$updateHostExe=Join-Path $updateHostOut 'GRMetro Update Host.exe'
-$null=Invoke-GrMetroAuthenticodeSigning -Files @($updateHostExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
+if(-not$PackageOnly){
+  if(Test-Path -LiteralPath $updateHostOut){Remove-Item -LiteralPath $updateHostOut -Recurse -Force}
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'build-update-host.ps1') -OutputDirectory $updateHostOut
+  if($LASTEXITCODE -ne 0){throw 'Could not build the stable GRMetro Update Host.'}
+  $updateHostExe=Join-Path $updateHostOut 'GRMetro Update Host.exe'
+  $null=Invoke-GrMetroAuthenticodeSigning -Files @($updateHostExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
+}
 
 if($ProvisionReleaseTrust){
+  if($PackageOnly){throw 'Release trust provisioning requires a full migration Setup build.'}
   if(-not$ReleaseSourceConfigPath-or-not$ReleasePublicKeysPath){throw 'Explicit release-source and public-key files are required when provisioning production update trust.'}
   $source=Read-GrMetroReleaseSource $ReleaseSourceConfigPath;if(-not$source.Enabled){throw 'Provisioned production release source must be enabled.'}
   $keys=Get-GrMetroPinnedReleaseKeys $ReleasePublicKeysPath;if($keys.Count-lt1){throw 'Provisioned production public-key set must not be empty.'}
@@ -30,10 +34,12 @@ if($ProvisionReleaseTrust){
   Copy-Item -LiteralPath $ReleaseSourceConfigPath -Destination (Join-Path $updateHostOut 'release-source.default.json') -Force
   Copy-Item -LiteralPath $ReleasePublicKeysPath -Destination (Join-Path $updateHostOut 'release-public-keys.json') -Force
 }
-$provisioning=[ordered]@{schemaVersion=1;applyOnSetup=[bool]$ProvisionReleaseTrust;updaterProtocol=$UpdaterProtocol}
-[IO.File]::WriteAllText((Join-Path $updateHostOut 'provisioning-policy.json'),(($provisioning|ConvertTo-Json -Compress)+[Environment]::NewLine),(New-Object Text.UTF8Encoding $false))
+if(-not$PackageOnly){
+  $provisioning=[ordered]@{schemaVersion=1;applyOnSetup=[bool]$ProvisionReleaseTrust;updaterProtocol=$UpdaterProtocol}
+  [IO.File]::WriteAllText((Join-Path $updateHostOut 'provisioning-policy.json'),(($provisioning|ConvertTo-Json -Compress)+[Environment]::NewLine),(New-Object Text.UTF8Encoding $false))
+}
 
-$out=Join-Path $root "dist\windows-installer"
+$out=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $root "dist\windows-installer"}
 New-Item -ItemType Directory -Force -Path $out|Out-Null
 $unsignedMarker=Join-Path $out 'NOT-PRODUCTION-READY-UNSIGNED.txt'
 if($CertificateThumbprint){Remove-Item -LiteralPath $unsignedMarker -Force -ErrorAction SilentlyContinue}else{[IO.File]::WriteAllText($unsignedMarker,"This Windows build is unsigned and must not be deployed as a production release.`r`n",(New-Object Text.UTF8Encoding $false));Write-Warning 'Building unsigned Windows development/migration artifacts. They are NOT PRODUCTION READY.'}
@@ -159,7 +165,7 @@ try {
   $sourceState='packaged'
   $gitCommand=Get-Command git.exe -ErrorAction SilentlyContinue
   if($gitCommand){
-    $candidate=(& $gitCommand.Source -C $root rev-parse --short HEAD 2>$null)
+    $candidate=(& $gitCommand.Source -C $root rev-parse HEAD 2>$null)
     if($LASTEXITCODE -eq 0 -and $candidate){
       $commit=$candidate.Trim();$sourceState='committed'
       $changes=@(& $gitCommand.Source -C $root status --porcelain --untracked-files=all | Where-Object{$_ -notmatch '^\?\? data/'} )
@@ -173,6 +179,11 @@ try {
   $zip=Join-Path $out "grmetro-performance-center-package.zip"
   if(Test-Path $zip){Remove-Item $zip -Force}
   [IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip)
+  if($PackageOnly){
+    Write-Host "Built application-only package $zip" -ForegroundColor Green
+    Write-Host 'No Setup EXE, Update Host bundle, trust policy, shortcut, task, firewall, or installer integration was created.' -ForegroundColor DarkGray
+    return
+  }
   $updateHostZip=Join-Path $out 'grmetro-update-host.zip'
   if(Test-Path -LiteralPath $updateHostZip){Remove-Item -LiteralPath $updateHostZip -Force}
   [IO.Compression.ZipFile]::CreateFromDirectory($updateHostOut,$updateHostZip)

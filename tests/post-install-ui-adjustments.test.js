@@ -43,7 +43,9 @@ test("ServiceTitan restart runs in a hidden child operation outside the WPF disp
   assert.match(control, /Wait-GrMetroCondition \{ ServiceTitan-Healthy \} 45/);
   assert.match(launcher, /Set-NativeOperationInterlock[\s\S]*\$primary,\$login,\$refreshButton,\$restartBackendButton,\$restartBrowserButton/);
   const edge = read("scripts/windows/restart-servicetitan-edge.ps1");
-  assert.match(edge, /GRMetro\\Edge Profile/);
+  assert.match(edge, /Resolve-GrMetroServiceTitanProfilePath/);
+  assert.match(edge, /Test-GrMetroEdgeCommandLineUsesProfile/);
+  assert.match(edge, /launch-edge\.ps1"\) -ProfilePath \$profile/);
   assert.doesNotMatch(edge, /Remove-Item|Clear-/);
 });
 

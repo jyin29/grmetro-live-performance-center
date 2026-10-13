@@ -240,6 +240,7 @@
                   "scripts/windows/install-performance-center-autostart.ps1",
                   "scripts/windows/launch-edge.ps1",
                   "scripts/windows/launch-integration.ps1",
+                  "scripts/windows/manual-legacy-upgrade.ps1",
                   "scripts/windows/native-operator-ui.ps1",
                   "scripts/windows/package-files.ps1",
                   "scripts/windows/process-control.ps1",
@@ -247,6 +248,7 @@
                   "scripts/windows/package-manifest.json",
                   "scripts/windows/runtime-versions.json",
                   "scripts/windows/runtime-paths.ps1",
+                  "scripts/windows/servicetitan-profile.ps1",
                   "scripts/windows/performance-center-launcher.ps1",
                   "scripts/windows/performance-center-launcher-host.ps1",
                   "scripts/windows/performance-center-launcher-v2.ps1",
@@ -283,6 +285,7 @@
                   "tests/display-runtime-health.test.js",
                   "tests/foundation.test.js",
                   "tests/long-run-memory.test.js",
+                  "tests/manual-legacy-upgrade.test.js",
                   "tests/mock-mode.test.js",
                   "tests/native-windows-control-center.test.js",
                   "tests/operations-console.test.js",
@@ -295,6 +298,7 @@
                   "tests/windows-installer.test.js",
                   "tests/windows-launcher.test.js",
                   "tests/windows-packaging-validation.ps1",
-                  "tests/windows-packaging-validation.test.js"
+                  "tests/windows-packaging-validation.test.js",
+                  "tests/windows-manual-legacy-upgrade-validation.ps1"
               ]
 }
