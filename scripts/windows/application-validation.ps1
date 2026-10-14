@@ -1,5 +1,56 @@
 # Side-effect-free application validation for routine updates and Setup.
 # It never runs configuration, firewall, shortcut, autostart, or ServiceTitan login work.
+function Test-GrMetroPrivateConfigurationCompatibility {
+  param([string]$PackageZip,[string]$InstallRoot,[string]$NodePath)
+  $root=[IO.Path]::GetFullPath($InstallRoot).TrimEnd('\')
+  $environmentPath=Join-Path $root '.env'
+  if(-not(Test-Path -LiteralPath $environmentPath -PathType Leaf)){throw 'Installed private configuration is missing.'}
+  $node=if($NodePath){[IO.Path]::GetFullPath($NodePath)}else{Join-Path $root 'runtime\node\node.exe'}
+  $dotenv=Join-Path $root 'node_modules\dotenv\package.json'
+  if(-not(Test-Path -LiteralPath $node -PathType Leaf)-or-not(Test-Path -LiteralPath $dotenv -PathType Leaf)){throw 'Installed runtime cannot validate private configuration.'}
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $temporary=Join-Path ([IO.Path]::GetTempPath()) ('grmetro-config-preflight-'+[guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $temporary|Out-Null
+  $archive=$null
+  try{
+    $archive=[IO.Compression.ZipFile]::OpenRead([IO.Path]::GetFullPath($PackageZip))
+    $targets=[ordered]@{
+      'shared/technicianConfiguration.js'=(Join-Path $temporary 'technicianConfiguration.js')
+      'scripts/validate-private-configuration.js'=(Join-Path $temporary 'validate-private-configuration.js')
+    }
+    foreach($relative in $targets.Keys){
+      $entry=$archive.GetEntry($relative);if(-not$entry){$entry=$archive.GetEntry($relative.Replace('/','\'))}
+      if(-not$entry){throw "Private configuration validator is missing from the package: $relative"}
+      [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$targets[$relative],$false)
+    }
+    $archive.Dispose();$archive=$null
+    $start=New-Object Diagnostics.ProcessStartInfo
+    $start.FileName=$node;$start.WorkingDirectory=$temporary;$start.UseShellExecute=$false;$start.CreateNoWindow=$true;$start.RedirectStandardOutput=$true;$start.RedirectStandardError=$true
+    $start.Arguments=@(
+      ('"{0}"'-f$targets['scripts/validate-private-configuration.js']),
+      ('"{0}"'-f$environmentPath),
+      ('"{0}"'-f$root),
+      ('"{0}"'-f$targets['shared/technicianConfiguration.js'])
+    )-join' '
+    $process=New-Object Diagnostics.Process;$process.StartInfo=$start
+    try{
+      if(-not$process.Start()){throw 'Private configuration compatibility validator could not start.'}
+      if(-not$process.WaitForExit(15000)){try{Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}catch{};throw 'Private configuration compatibility validator timed out.'}
+      $stdout=$process.StandardOutput.ReadToEnd();$null=$process.StandardError.ReadToEnd();$exitCode=$process.ExitCode
+    }finally{if($process){$process.Dispose()}}
+    $status=$null;try{$status=$stdout|ConvertFrom-Json}catch{}
+    if($exitCode-ne0-or-not$status-or-not$status.ok){throw 'Installed technician configuration is incompatible with this package.'}
+    return [pscustomobject]@{Compatible=$true;TechnicianCount=[int]$status.technicianCount;EnvironmentUnchanged=$true;ServiceTitanContacted=$false}
+  }finally{
+    if($archive){$archive.Dispose()}
+    if(Test-Path -LiteralPath $temporary){
+      $resolved=[IO.Path]::GetFullPath($temporary);$tempRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+      if([IO.Path]::GetDirectoryName($resolved)-ne$tempRoot-or[IO.Path]::GetFileName($resolved)-notlike'grmetro-config-preflight-*'){throw 'Unsafe private configuration preflight cleanup path.'}
+      [IO.Directory]::Delete($resolved,$true)
+    }
+  }
+}
+
 function Invoke-GrMetroApplicationValidation {
   param(
     [string]$InstallRoot,

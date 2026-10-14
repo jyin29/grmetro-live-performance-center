@@ -2279,3 +2279,12 @@ The existing spreadsheet-library chunk exceeds Vite's 500 kB warning threshold. 
 - [x] Add an application-only portable build mode that embeds the full clean commit identity without generating Setup or provisioning updater trust.
 
 No production application, authenticated browser profile, process, shortcut, task, firewall rule, or Cloudflare object was changed while implementing this compatibility path. A replacement portable release has not been built yet.
+
+## 2026-10-14 — PowerShell 5.1 technician configuration compatibility
+
+- [x] Identify the production object as the exact `value` plus `Count` wrapper emitted by the historical Windows PowerShell 5.1 wizard pipeline.
+- [x] Normalize canonical arrays and matching legacy wrappers through one technician validator while preserving order and identities.
+- [x] Reject empty, malformed, ambiguous, extra-field, count-mismatch, and duplicate-ID inputs without exposing private values.
+- [x] Make the wizard emit canonical array JSON and safely display either supported input shape.
+- [x] Run the target package's own parser against installed private configuration during read-only manual-upgrade preflight.
+- [x] Keep preflight temporary, nonmutating, offline from ServiceTitan, and ahead of transaction preparation and process shutdown.

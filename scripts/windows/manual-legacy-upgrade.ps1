@@ -65,7 +65,7 @@ function Write-GrMetroManualEvidence([string]$Path,[string]$Stage,[string]$Insta
 }
 
 function Test-GrMetroManualLegacyUpgrade {
-  param([string]$Root,[string]$Zip,[string]$ExpectedHash,[string]$ExpectedVersion,[string]$ExpectedCommit,[switch]$AllowTestRoot)
+  param([string]$Root,[string]$Zip,[string]$ExpectedHash,[string]$ExpectedVersion,[string]$ExpectedCommit,[switch]$AllowTestRoot,[scriptblock]$PrivateConfigurationAction={param($package,$install) Test-GrMetroPrivateConfigurationCompatibility -PackageZip $package -InstallRoot $install})
   $install=Assert-GrMetroManualLegacyInstallRoot $Root -AllowTestRoot:$AllowTestRoot
   $package=[IO.Path]::GetFullPath($Zip)
   if(-not(Test-Path -LiteralPath $package -PathType Leaf)){throw 'The reviewed portable package ZIP is missing.'}
@@ -86,13 +86,15 @@ function Test-GrMetroManualLegacyUpgrade {
   if([string]$target.sourceState-ne'committed'-or[string]$target.commit-notmatch'^[A-Fa-f0-9]{7,40}$'){throw 'Manual legacy deployment requires a package built from an identified committed source snapshot.'}
   if([int]$target.updaterProtocol-gt1){throw "Release $($target.releaseVersion) requires a newer manual deployment protocol."}
   $null=Test-GrMetroPackageArchive $package $install
-  return [pscustomobject]@{InstallRoot=$install;PackageZip=$package;PackageSha256=$actualHash;InstalledCommit=[string]$legacyIdentity.commit;InstalledManifestFiles=$installedFiles.Count;Target=$target;RecoveryAction=$recovery}
+  $privateConfiguration=&$PrivateConfigurationAction $package $install
+  return [pscustomobject]@{InstallRoot=$install;PackageZip=$package;PackageSha256=$actualHash;InstalledCommit=[string]$legacyIdentity.commit;InstalledManifestFiles=$installedFiles.Count;Target=$target;RecoveryAction=$recovery;PrivateConfiguration=$privateConfiguration}
 }
 
 function Invoke-GrMetroManualLegacyUpgrade {
   param(
     [string]$Root,[string]$Zip,[string]$ExpectedHash,[string]$ExpectedVersion,[string]$ExpectedCommit,
     [switch]$ValidateOnly,[switch]$ConfirmDefenderReview,[switch]$ConfirmRollbackSource,[switch]$AllowTestRoot,
+    [scriptblock]$PrivateConfigurationAction={param($package,$install) Test-GrMetroPrivateConfigurationCompatibility -PackageZip $package -InstallRoot $install},
     [scriptblock]$CaptureProcessStateAction={param($install);$owned=@(Get-GrMetroOwnedUpgradeProcesses $install);[pscustomobject]@{OperatorWasRunning=[bool]@($owned|Where-Object{$_.Role-eq'operator'});RuntimeWasRunning=[bool]@($owned|Where-Object{$_.Role-in@('supervisor','backend')})}},
     [scriptblock]$StopProcessesAction={param($install) Stop-GrMetroUpgradeProcesses $install},
     [scriptblock]$ValidationAction={param($install,$version) Invoke-GrMetroApplicationValidation -InstallRoot $install -ExpectedReleaseVersion $version},
@@ -100,7 +102,7 @@ function Invoke-GrMetroManualLegacyUpgrade {
     [scriptblock]$StartAction={param($install) Start-GrMetroInstalledApplication $install},
     [scriptblock]$RestartAfterFailureAction={param($install,$state) Restart-GrMetroAfterFailedUpgrade $install $state}
   )
-  $preflight=Test-GrMetroManualLegacyUpgrade $Root $Zip $ExpectedHash $ExpectedVersion $ExpectedCommit -AllowTestRoot:$AllowTestRoot
+  $preflight=Test-GrMetroManualLegacyUpgrade $Root $Zip $ExpectedHash $ExpectedVersion $ExpectedCommit -AllowTestRoot:$AllowTestRoot -PrivateConfigurationAction $PrivateConfigurationAction
   if($ValidateOnly){return $preflight}
   if(-not$ConfirmDefenderReview){throw 'Manual deployment requires explicit confirmation that Defender review completed without a detection.'}
   if(-not$ConfirmRollbackSource){throw 'Manual deployment requires an independently verified post-success rollback source.'}

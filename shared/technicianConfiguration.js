@@ -10,13 +10,27 @@ function validateTechnician(item, index) {
   return Object.freeze({ id, name, shortName, initials });
 }
 
+function technicianItems(parsed) {
+  if (Array.isArray(parsed)) return parsed;
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("SERVICETITAN_TECHNICIANS_JSON must be a non-empty array or supported legacy wrapper.");
+  }
+  const keys = Object.keys(parsed).sort();
+  const legacyWrapper = keys.length === 2 && keys[0] === "Count" && keys[1] === "value";
+  if (!legacyWrapper || !Array.isArray(parsed.value) || !Number.isSafeInteger(parsed.Count) || parsed.Count !== parsed.value.length) {
+    throw new Error("SERVICETITAN_TECHNICIANS_JSON uses an unsupported or inconsistent object format.");
+  }
+  return parsed.value;
+}
+
 function parseTechnicianConfiguration(value) {
   if (!value || !String(value).trim()) return null;
   let parsed;
   try { parsed = JSON.parse(value); }
   catch { throw new Error("SERVICETITAN_TECHNICIANS_JSON must be valid JSON."); }
-  if (!Array.isArray(parsed) || !parsed.length) throw new Error("SERVICETITAN_TECHNICIANS_JSON must be a non-empty array.");
-  const technicians = parsed.map(validateTechnician);
+  const items = technicianItems(parsed);
+  if (!items.length) throw new Error("SERVICETITAN_TECHNICIANS_JSON must contain at least one technician.");
+  const technicians = items.map(validateTechnician);
   const ids = technicians.map((item) => item.id);
   if (new Set(ids).size !== ids.length) throw new Error("SERVICETITAN_TECHNICIANS_JSON contains duplicate technician IDs.");
   return Object.freeze(technicians);
@@ -27,4 +41,4 @@ function loadTechnicianConfiguration(environment = process.env, fallback = []) {
   return configured || Object.freeze(fallback.map(validateTechnician));
 }
 
-module.exports = { loadTechnicianConfiguration, parseTechnicianConfiguration };
+module.exports = { loadTechnicianConfiguration, parseTechnicianConfiguration, technicianItems };

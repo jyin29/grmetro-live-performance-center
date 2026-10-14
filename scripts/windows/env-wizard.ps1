@@ -12,6 +12,16 @@ $example=Join-Path $root ".env.example"
 if(-not(Test-Path $example)){throw "Missing .env.example"}
 function Read-EnvMap([string]$path){$map=@{};if(Test-Path $path){foreach($line in Get-Content $path){if($line -match '^\s*([^#=\s]+)=(.*)$'){$map[$matches[1]]=$matches[2]}}};return $map}
 function Set-EnvValue([string[]]$lines,[string]$key,[string]$value){$found=$false;$result=@();foreach($line in $lines){if($line -match ('^\s*'+[regex]::Escape($key)+'=')){$result+="$key=$value";$found=$true}else{$result+=$line}};if(-not$found){$result+="$key=$value"};return $result}
+function Convert-TechnicianConfigurationJson([string]$value){
+  $parsed=$value|ConvertFrom-Json
+  $items=$null
+  if($parsed -is [array]){$items=@($parsed)}
+  elseif($parsed -and @($parsed.PSObject.Properties.Name|Sort-Object)-join'|' -eq 'Count|value' -and $parsed.value -is [array] -and $parsed.Count -is [int] -and [int]$parsed.Count -eq @($parsed.value).Count){$items=@($parsed.value)}
+  else{throw 'unsupported'}
+  if($items.Count-lt1){throw 'empty'}
+  foreach($item in $items){if(-not($item.id)-or-not([string]$item.name).Trim()){throw 'record'}}
+  return ConvertTo-Json -InputObject @($items) -Compress -Depth 10
+}
 function Get-AutostartChoice([Nullable[bool]]$isChecked){if($isChecked -eq $true){return "yes"};return "no"}
 function Get-FirewallChoice([Nullable[bool]]$isChecked){if($isChecked -eq $true){return "yes"};return "no"}
 $current=Read-EnvMap $envPath
@@ -35,7 +45,7 @@ $reader=New-Object System.Xml.XmlNodeReader $xaml
 $window=[Windows.Markup.XamlReader]::Load($reader)
 $bu=$window.FindName("BusinessUnits");$tech=$window.FindName("Technicians");$tz=$window.FindName("Timezone");$auto=$window.FindName("Autostart");$firewall=$window.FindName("Firewall");$errorText=$window.FindName("ErrorText")
 foreach($control in @($bu,$tech,$tz,$auto,$firewall,$errorText,$window.FindName("Save"),$window.FindName("Cancel"))){if($null-eq$control){throw "Configuration wizard markup is missing a required control."}}
-$bu.Text=$current['SERVICETITAN_BUSINESS_UNIT_IDS'];$tech.Text=$current['SERVICETITAN_TECHNICIANS_JSON'];$tz.Text=if($current['TIMEZONE']){$current['TIMEZONE']}else{"America/New_York"}
+$bu.Text=$current['SERVICETITAN_BUSINESS_UNIT_IDS'];$tech.Text=try{Convert-TechnicianConfigurationJson $current['SERVICETITAN_TECHNICIANS_JSON']}catch{$current['SERVICETITAN_TECHNICIANS_JSON']};$tz.Text=if($current['TIMEZONE']){$current['TIMEZONE']}else{"America/New_York"}
 $autostartPath=Join-Path $root ".grmetro-autostart-choice"
 if(Test-Path $autostartPath){$auto.IsChecked=((Get-Content -LiteralPath $autostartPath -Raw).Trim() -eq "yes")}
 $firewallPath=Join-Path $root ".grmetro-firewall-choice"
@@ -45,10 +55,10 @@ $window.FindName("Cancel").Add_Click({$window.Close()})
 $window.FindName("Save").Add_Click({
   $errorText.Text=""
   if($bu.Text -notmatch '^\s*\d+(\s*,\s*\d+)*\s*$'){$errorText.Text="Enter one or more numeric business unit IDs separated by commas.";return}
-  try{$parsed=$tech.Text|ConvertFrom-Json;if($null -eq $parsed -or @($parsed).Count -lt 1){throw "array"}}catch{$errorText.Text="Technician configuration must be a non-empty valid JSON array.";return}
+  try{$techniciansJson=Convert-TechnicianConfigurationJson $tech.Text}catch{$errorText.Text="Technician configuration must be a non-empty valid JSON array or supported legacy wrapper.";return}
   $lines=if(Test-Path $envPath){@(Get-Content $envPath)}else{@(Get-Content $example)}
   $lines=@(Set-EnvValue $lines "SERVICETITAN_BUSINESS_UNIT_IDS" $bu.Text.Trim())
-  $lines=@(Set-EnvValue $lines "SERVICETITAN_TECHNICIANS_JSON" (($tech.Text|ConvertFrom-Json|ConvertTo-Json -Compress -Depth 10)))
+  $lines=@(Set-EnvValue $lines "SERVICETITAN_TECHNICIANS_JSON" $techniciansJson)
   $lines=@(Set-EnvValue $lines "TIMEZONE" $tz.Text.Trim())
   Set-Content -Path $envPath -Value $lines -Encoding UTF8
   Set-Content -LiteralPath $autostartPath -Value (Get-AutostartChoice $auto.IsChecked) -Encoding ASCII

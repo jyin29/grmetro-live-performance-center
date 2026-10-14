@@ -230,6 +230,7 @@
                   "scripts/deployment-goals.js",
                   "scripts/deployment-technicians.js",
                   "scripts/show-remote-qr.js",
+                  "scripts/validate-private-configuration.js",
                   "scripts/windows/admin-control.ps1",
                   "scripts/windows/application-validation.ps1",
                   "scripts/windows/build-installer.ps1",

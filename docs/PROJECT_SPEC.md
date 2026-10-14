@@ -6324,6 +6324,8 @@ Only a full Setup may replace the Update Host, updater protocol, pinned public k
 
 Production release tooling shall expose optional Authenticode signing through external SignTool/certificate-store inputs and RFC 3161 HTTPS timestamping. When production signing is required, the native application launcher, Update Host, and Setup EXE must all verify as valid before output is accepted. Unsigned development/migration candidates shall be labeled nonproduction and shall never be represented as Defender bypasses or trusted production binaries.
 
+Private technician configuration uses an ordered `SERVICETITAN_TECHNICIANS_JSON` array. Existing Windows PowerShell 5.1 deployments may contain the lossless `{"value":[...],"Count":N}` wrapper produced by the historical wizard pipeline. Both shapes resolve to the same internal ordered technician array only when the wrapper has exactly those two properties and `Count` matches the array length. Incompatible private configuration must be rejected by a read-only target-package preflight before an upgrade transaction or process shutdown begins. Validation errors must not expose configuration keys, technician identities, or raw values.
+
 ---
 
 # 191. TV Connectivity Requirement
