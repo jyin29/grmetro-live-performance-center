@@ -47,10 +47,14 @@ test("admin API exposes safe read-only configuration and runtime state", async (
     assert.equal(response.status, 200);
     assert.equal(body.displays[0].currentSlide.label, "Revenue");
     assert.deepEqual(body.displays[0].connectedClients, { total: 1, socketTotal: 3, displays: 1, remotes: 2 });
+    assert.equal(body.displays[0].heartbeatOnline, false);
+    assert.equal(body.displays[0].socketOnline, true);
+    assert.equal(body.displays[0].displayOnline, true);
     assert.equal(body.businessRules.rules.length, businessRules.rules.length);
     assert.equal(body.events.pendingEvents, 2);
     assert.equal(body.presentation.slides.length, 6);
     assert.equal(body.system.connectedRemotes, 2);
+    assert.equal(body.system.connectedDisplaySockets, 1);
     const serialized = JSON.stringify(body).toLowerCase();
     for (const secret of ["csrf", "cookie", "debugger", "authorization", "rawservicetitanresponse"]) {
       assert.equal(serialized.includes(secret), false);
@@ -259,4 +263,49 @@ test("development drilldown route validates input, gates production, and returns
   });
   const prod = fixture({ nodeEnv: "production", config: { developmentRoutesEnabled: true } });
   await run(prod.app, async (base) => assert.equal((await fetch(`${base}/api/v1/dev/servicetitan/drilldown`, { method: "POST", headers:{"content-type":"application/json"}, body:"{}" })).status, 404));
+});
+
+test("admin display presence treats either a recent heartbeat or an active display socket as online", async () => {
+  const displays = [
+    { displayId: "heartbeat-only", displayName: "Heartbeat", activeSlideIndex: 0, revision: 4 },
+    { displayId: "socket-only", displayName: "Socket", activeSlideIndex: 0, revision: 5 },
+    { displayId: "offline", displayName: "Offline", activeSlideIndex: 0, revision: 6 },
+  ];
+  const setup = fixture({ adminRuntime: {
+    presentationManager: { getDisplayStates: () => displays },
+    displayPresence: {
+      isOnline: (id) => id === "heartbeat-only",
+      getAppliedRevision: () => null,
+      getRuntimeHealth: () => null,
+    },
+    connectionStatusProvider: () => ({
+      total: 3, displays: 1, remotes: 2,
+      byDisplay: {
+        "heartbeat-only": { displays: 0, remotes: 1, total: 1 },
+        "socket-only": { displays: 1, remotes: 1, total: 2 },
+      },
+    }),
+  } });
+  setup.cache.storeSuccessfulPayload({ technicians: [], slides: {} });
+  await run(setup.app, async (base) => {
+    const { body } = await json(base, "/api/v1/admin");
+    const byId = Object.fromEntries(body.displays.map((display) => [display.displayId, display]));
+    assert.deepEqual(
+      [byId["heartbeat-only"].heartbeatOnline, byId["heartbeat-only"].socketOnline, byId["heartbeat-only"].displayOnline],
+      [true, false, true]
+    );
+    assert.deepEqual(
+      [byId["socket-only"].heartbeatOnline, byId["socket-only"].socketOnline, byId["socket-only"].displayOnline],
+      [false, true, true]
+    );
+    assert.deepEqual(
+      [byId.offline.heartbeatOnline, byId.offline.socketOnline, byId.offline.displayOnline],
+      [false, false, false]
+    );
+    assert.deepEqual(byId["socket-only"].connectedClients, { displays: 1, remotes: 1, total: 1, socketTotal: 2 });
+    assert.equal(body.system.connectedDisplays, 2);
+    assert.equal(body.system.connectedDisplaySockets, 1);
+    assert.equal(body.system.connectedRemotes, 2);
+    assert.equal(body.system.connectedClients, 3);
+  });
 });

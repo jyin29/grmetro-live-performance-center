@@ -2030,6 +2030,8 @@ The drilldown is a responsive, read-only operations view backed exclusively by t
 - [x] Reuse the read-only Administration platform projection.
 - [x] Combine runtime diagnostics in one responsive view.
 - [x] Add background dashboard, WebSocket, administration, and countdown updates without page refresh.
+
+Progress note (2026-10-19): Corrected administration presence telemetry after physical BrowseHere testing showed that Android TV HTTP heartbeat timers can be throttled while the presentation WebSocket remains active. The safe administration projection now exposes heartbeat and socket presence independently, considers either signal sufficient for display availability, and reports per-display and system socket totals without changing presentation commands or TV state.
 - [x] Add tests for tabs, live updates, display controls, technician selection, management, and diagnostics.
 
 The Operations Console is an active-management surface; the five-slide television dashboard remains unchanged.
