@@ -1,0 +1,58 @@
+/* TV-only hierarchy and decoration polish. The mobile remote is outside .display-stage. */
+.display-stage .pace-row > strong { color:#162a32; font-size:clamp(30px,1.85vw,37px); font-weight:950; letter-spacing:-.025em; }
+.display-stage .pace-row__track { height:clamp(30px,2vw,40px); }
+.display-stage .revenue-table-columns__remaining,
+.display-stage .pace-row__support--remaining { text-align:center; }
+
+.display-stage .sales-pipeline__row > strong,
+.display-stage .closing-row strong { color:#142a32; font-weight:950; letter-spacing:-.02em; }
+.display-stage .sales-pipeline__row > strong { font-size:clamp(28px,1.75vw,35px); }
+.display-stage .closing-row strong { font-size:clamp(27px,1.7vw,34px); }
+.display-stage .closing-row__bar { height:clamp(28px,1.9vw,37px); border-radius:999px; }
+.display-stage .closing-row__bar span { border-radius:inherit; }
+
+.display-stage .performance-card__header { gap:clamp(9px,.7vw,14px); }
+.display-stage .performance-card__identity { align-self:center; }
+.display-stage .performance-card__identity h3 { color:#142a32; font-size:clamp(29px,1.82vw,36px); font-weight:950; line-height:1.02; }
+.display-stage .performance-card__ranking { min-width:86px; }
+
+.display-stage .operations-activity-matrix__metric,
+.display-stage .install-economics-row__metric i { border-radius:999px; }
+.display-stage .operations-activity-matrix__metric > span,
+.display-stage .install-economics-row__metric i span { border-radius:inherit; }
+
+.display-stage .recognition-slide .podium { overflow:visible; padding-top:88px; }
+.display-stage .recognition-slide .podium-card { position:relative; isolation:isolate; overflow:visible; }
+.display-stage .recognition-slide .podium-card::after { content:none; }
+.display-stage .recognition-slide .podium-card--champion { overflow:visible !important; border-top-width:9px; box-shadow:0 24px 62px rgba(159,115,0,.20),0 0 0 3px rgba(212,175,55,.13) !important; }
+.display-stage .recognition-slide .podium-card--2 { border-color:rgba(130,147,157,.44); border-top-color:#83949d; box-shadow:var(--shadow),0 0 0 2px rgba(154,169,178,.10); }
+.display-stage .recognition-slide .podium-card--3 { border-color:rgba(157,99,64,.38); border-top-color:#a96c47; box-shadow:var(--shadow),0 0 0 2px rgba(169,108,71,.08); }
+.podium-decoration { position:absolute; z-index:5; pointer-events:none; }
+.podium-decoration--gold { top:-88px; left:50%; width:min(88%,430px); height:116px; transform:translateX(-50%); color:#d0a41d; filter:drop-shadow(0 8px 10px rgba(111,79,0,.2)); }
+.podium-crown { position:absolute; left:50%; bottom:3px; width:min(76%,300px); transform:translateX(-50%); fill:currentColor; }
+.podium-crown path:nth-of-type(2) { fill:#b9880d; }
+.podium-crown circle { fill:#f6d767; stroke:#9a7210; stroke-width:3; }
+.podium-spark { position:absolute; color:#e7bf38; font-style:normal; text-shadow:0 0 15px rgba(231,191,56,.5); animation:podiumTwinkle 2.6s ease-in-out infinite; }
+.podium-spark--one { top:14px; left:2%; font-size:31px; }
+.podium-spark--two { top:46px; left:14%; font-size:22px; animation-delay:.55s; }
+.podium-spark--three { top:8px; right:2%; font-size:29px; animation-delay:.9s; }
+.podium-spark--four { top:51px; right:14%; font-size:20px; animation-delay:1.25s; }
+.podium-streamer { position:absolute; top:50px; width:54px; height:75px; border:5px solid currentColor; border-bottom:0; opacity:.5; }
+.podium-streamer--left { left:-14px; border-right:0; border-radius:42px 0 0 0; transform:rotate(-20deg); }
+.podium-streamer--right { right:-14px; border-left:0; border-radius:0 42px 0 0; transform:rotate(20deg); }
+.podium-decoration--silver,
+.podium-decoration--bronze { top:-36px; left:50%; width:74%; height:54px; transform:translateX(-50%); }
+.podium-decoration--silver { color:#81929b; }
+.podium-decoration--bronze { color:#a76843; }
+.podium-accent-line { position:absolute; left:12%; right:12%; top:28px; height:4px; border-radius:999px; background:currentColor; opacity:.65; }
+.podium-accent-spark { position:absolute; top:0; left:50%; transform:translateX(-50%); font-size:29px; text-shadow:0 0 12px currentColor; }
+.podium-accent-dot { position:absolute; top:22px; left:8%; width:11px; height:11px; border:3px solid currentColor; border-radius:50%; box-shadow:235px 5px 0 -2px currentColor; }
+@keyframes podiumTwinkle { 0%,100% { opacity:.42; transform:scale(.82) rotate(0); } 50% { opacity:1; transform:scale(1.12) rotate(16deg); } }
+@media (max-height:800px) {
+  .display-stage .recognition-slide .podium { padding-top:62px; }
+  .podium-decoration--gold { top:-66px; height:90px; }
+  .podium-decoration--silver,.podium-decoration--bronze { top:-27px; transform:translateX(-50%) scale(.86); }
+  .display-stage .pace-row > strong { font-size:27px; }
+  .display-stage .pace-row__track { height:25px; }
+}
+@media (prefers-reduced-motion:reduce) { .podium-spark { animation:none; } }

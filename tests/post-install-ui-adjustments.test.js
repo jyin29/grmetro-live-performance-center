@@ -7,7 +7,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const read = (relative) => readFileSync(path.join(root, relative), "utf8");
-let server; let React; let renderToStaticMarkup; let TechnicianPerformanceCard; let nativeRemote;
+let server; let React; let renderToStaticMarkup; let TechnicianPerformanceCard; let RevenueOverviewSlide; let nativeRemote;
 
 before(async () => {
   const { createServer } = await import("vite");
@@ -15,6 +15,7 @@ before(async () => {
   ({ renderToStaticMarkup } = await import("react-dom/server"));
   server = await createServer({ root: "apps/dashboard", server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   ({ TechnicianPerformanceCard } = await server.ssrLoadModule("/src/components/TechnicianPerformanceCard.jsx"));
+  ({ RevenueOverviewSlide } = await server.ssrLoadModule("/src/components/slides/RevenueOverviewSlide.jsx"));
   nativeRemote = await server.ssrLoadModule("/src/components/NativeRemoteAccess.jsx");
 });
 
@@ -57,22 +58,49 @@ test("native control center opens maximized with content-sized header status", (
   assert.doesNotMatch(launcher, /WindowStyle="None"|ResizeMode="NoResize"/);
 });
 
-test("Technician fallback rank explains actual coverage and omits orphan movement", () => {
+test("Technician fallback rank keeps the useful rank and removes qualification clutter", () => {
   const technician = { id: 1, name: "Alex K", initials: "AK", overall: { qualifies: false, validWeight: .3, rank: null, rankChange: null }, kpis: { revenue: { id: "revenue", hasData: true, value: 2572, format: "currency", rank: 1, rankLabel: "#1", dataQuality: "confirmed" } } };
   const markup = renderToStaticMarkup(React.createElement(TechnicianPerformanceCard, { technician, data: { technicians: [technician] }, metricVisibility: { revenue: true } }));
   assert.match(markup, /Revenue Rank/);
-  assert.match(markup, /Overall rank pending · 30% goal-backed KPI coverage/);
-  assert.doesNotMatch(markup, /Not qualified|No movement/);
+  assert.match(markup, /#1/);
+  assert.doesNotMatch(markup, /Overall rank pending|goal-backed KPI coverage|Not qualified|No movement/);
   const css = read("apps/dashboard/src/final-tv-readability.css");
   assert.match(css, /technician-metric[^}]*padding:7px 15px 8px/);
   assert.match(css, /performance-card__rank-context:empty/);
 });
 
-test("Recognition adds restrained silver and bronze accents while retaining the crown", () => {
-  const css = read("apps/dashboard/src/final-tv-readability.css");
-  assert.match(css, /podium-card--2::after \{ content:"SILVER"/);
-  assert.match(css, /podium-card--3::after \{ content:"BRONZE"/);
-  assert.match(css, /champion-crown[^}]*scaleX\(1\.65\)/);
+test("Recognition uses scalable tiered podium decoration without placement ribbons", () => {
+  const css = read("apps/dashboard/src/tv-slide-polish.css");
+  const component = read("apps/dashboard/src/components/slides/RecognitionSlide.jsx");
+  assert.match(component, /podium-crown/);
+  assert.match(component, /podium-decoration--gold/);
+  assert.match(component, /"silver" : "bronze"/);
+  assert.doesNotMatch(component, /👑|SILVER|BRONZE/);
+  assert.match(css, /podium-decoration--gold/);
+  assert.match(css, /podium-decoration--silver/);
+  assert.match(css, /podium-decoration--bronze/);
+});
+
+test("Revenue slide renders unavailable values as N/A while preserving real zeroes", () => {
+  const metric = (overrides) => ({ id: "revenue", value: null, hasData: false, format: "currency", goal: null, remaining: null, percentComplete: null, rank: 2, ...overrides });
+  const data = { period: "today", slides: { revenue: { rows: [
+    { technicianId: 1, name: "Available", shortName: "Available", metrics: [metric({ value: 0, hasData: true, goal: 0, remaining: 0, percentComplete: 0, rank: 1 })] },
+    { technicianId: 2, name: "Unavailable", shortName: "Unavailable", metrics: [metric({})] },
+  ] } }, historicalComparison: {}, historicalTrends: {} };
+  const markup = renderToStaticMarkup(React.createElement(RevenueOverviewSlide, { data }));
+  assert.match(markup, />\$0</);
+  assert.match(markup, />0%</);
+  assert.ok((markup.match(/>N\/A</g) || []).length >= 4);
+  assert.doesNotMatch(markup, />No data</);
+});
+
+test("TV slide polish strengthens hierarchy without affecting mobile selectors", () => {
+  const css = read("apps/dashboard/src/tv-slide-polish.css");
+  assert.match(css, /\.display-stage \.pace-row > strong/);
+  assert.match(css, /pace-row__support--remaining \{ text-align:center/);
+  assert.match(css, /closing-row__bar[^}]*border-radius:999px/);
+  assert.match(css, /operations-activity-matrix__metric[^}]*border-radius:999px/);
+  assert.doesNotMatch(css, /\.operations-console|\.remote-page/);
 });
 
 test("native Phone Remote hosts the real local remote and carries a clean LAN QR", () => {

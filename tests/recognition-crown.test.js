@@ -4,13 +4,14 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 
-test("Recognition keeps its crown artwork and expands it into a centered card header", () => {
+test("Recognition renders a centered custom crown above the champion card", () => {
   const component = readFileSync(new URL("../apps/dashboard/src/components/slides/RecognitionSlide.jsx", `file://${__filename}`), "utf8");
-  const css = readFileSync(new URL("../apps/dashboard/src/final-tv-readability.css", `file://${__filename}`), "utf8");
-  assert.match(component, /champion-topper/);
-  assert.match(component, /champion-crown/);
-  assert.match(css, /podium-card--champion \.champion-topper[^}]*width:100%/);
-  assert.match(css, /font-size:clamp\(170px,13vw,250px\)/);
-  assert.match(css, /transform:scaleX\(1\.65\)/);
-  assert.match(css, /justify-content:center/);
+  const css = readFileSync(new URL("../apps/dashboard/src/tv-slide-polish.css", `file://${__filename}`), "utf8");
+  assert.match(component, /<svg className="podium-crown"/);
+  assert.match(component, /podium-streamer--left/);
+  assert.match(component, /podium-spark--four/);
+  assert.doesNotMatch(component, /👑/);
+  assert.match(css, /podium-decoration--gold[^}]*top:-88px/);
+  assert.match(css, /podium-crown[^}]*position:absolute/);
+  assert.match(css, /podium-card--champion[^}]*overflow:visible/);
 });

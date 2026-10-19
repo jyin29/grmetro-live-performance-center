@@ -2222,7 +2222,7 @@ The floating television Controls launcher is visible by default and may be hidde
 display. The local Controls tray remains reachable with the `C` key, and the phone Displays page can restore the
 launcher for its selected display. The preference changes no slide command, rotation, diagnostics, or recovery state.
 
-Recognition retains the existing crown artwork but presents it as a centered, wide champion-card header. The native
+Recognition replaces the earlier emoji crown with a centered scalable crown above the champion card. The native
 Windows control center delegates wheel input to its outer page scroller; the read-only activity history does not add a
 nested wheel-scrolling surface.
 
@@ -2242,9 +2242,9 @@ WebView2 dependency.
 
 On the Technicians slide, metric sections use larger horizontal insets without changing card width. Technician
 identity precedes one labeled rank block. Overall Rank appears only when the backend qualifies it; otherwise Revenue
-Rank remains the explicit fallback and the card shows actual goal-backed KPI-weight coverage. Overall-rank movement
+Rank remains the explicit fallback without secondary qualification or coverage prose. Overall-rank movement
 appears only when available, so unavailable movement no longer leaves an orphan dash beside Revenue Rank. The
-Recognition podium retains the large first-place crown and adds restrained silver and bronze corner accents.
+Recognition places a custom scalable crown above the first-place card, integrated with its gold top border and supported by restrained sparkles, streamers, and glow. Second and third place use smaller silver and bronze line-and-spark accents without text ribbons. Decorations remain outside metric content, with first-place emphasis stronger than second and third.
 
 ## 2026-10-07 — Native application update status
 
