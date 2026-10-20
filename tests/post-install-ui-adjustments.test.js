@@ -7,7 +7,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const read = (relative) => readFileSync(path.join(root, relative), "utf8");
-let server; let React; let renderToStaticMarkup; let TechnicianPerformanceCard; let RevenueOverviewSlide; let nativeRemote;
+let server; let React; let renderToStaticMarkup; let TechnicianPerformanceCard; let RevenueOverviewSlide; let RecognitionSlide; let nativeRemote;
 
 before(async () => {
   const { createServer } = await import("vite");
@@ -16,6 +16,7 @@ before(async () => {
   server = await createServer({ root: "apps/dashboard", server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   ({ TechnicianPerformanceCard } = await server.ssrLoadModule("/src/components/TechnicianPerformanceCard.jsx"));
   ({ RevenueOverviewSlide } = await server.ssrLoadModule("/src/components/slides/RevenueOverviewSlide.jsx"));
+  ({ RecognitionSlide } = await server.ssrLoadModule("/src/components/slides/RecognitionSlide.jsx"));
   nativeRemote = await server.ssrLoadModule("/src/components/NativeRemoteAccess.jsx");
 });
 
@@ -79,6 +80,13 @@ test("Recognition uses scalable tiered podium decoration without placement ribbo
   assert.match(css, /podium-decoration--gold/);
   assert.match(css, /podium-decoration--silver/);
   assert.match(css, /podium-decoration--bronze/);
+});
+
+test("Recognition preserves two tied second-place rankings", () => {
+  const technician = (id, name, rank, revenue) => ({ id, name, initials: name.slice(0, 2).toUpperCase(), overall: { qualifies: true, rank, rankLabel: `#${rank}`, rankChange: 0 }, kpis: { revenue: { id: "revenue", value: revenue, hasData: true, format: "currency", rank }, closingRate: { id: "closingRate", value: 50, hasData: true, format: "percentage" } } });
+  const data = { period: "today", technicians: [technician(1, "First", 1, 10000), technician(2, "Second A", 2, 9000), technician(3, "Second B", 2, 9000)] };
+  const markup = renderToStaticMarkup(React.createElement(RecognitionSlide, { data }));
+  assert.equal((markup.match(/>#2</g) || []).length, 2);
 });
 
 test("Revenue slide renders unavailable values as N/A while preserving real zeroes", () => {

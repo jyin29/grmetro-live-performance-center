@@ -5,17 +5,18 @@ const PERIOD_LABELS = { today: "Today", yesterday: "Yesterday", wtd: "Week to Da
 
 function CrownMark() {
   return <svg className="podium-crown" viewBox="0 0 240 112" aria-hidden="true" focusable="false">
-    <path className="podium-crown__face" fill="#FFD700" stroke="#D49419" strokeWidth="2" strokeLinejoin="round" d="M18 30 69 66 120 13l51 53 51-36-15 65H33Z" />
-    <path className="podium-crown__base" fill="#D49419" d="M39 84h162l-5 18H44Z" />
-    <circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="18" cy="28" r="8"/><circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="120" cy="12" r="9"/><circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="222" cy="28" r="8"/>
+    <path className="podium-crown__face" fill="#D8AE48" stroke="#9A6815" strokeWidth="2" strokeLinejoin="round" d="M20 34 67 66 116 19Q120 15 124 19l49 47 47-32-15 58Q120 104 35 92Z" />
+    <path className="podium-crown__shadow" fill="#B67D1C" d="M35 82q85 17 170 0l-2 13q-83 13-166 0Z" />
+    <path className="podium-crown__highlight" fill="none" stroke="#F1D68A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="m34 39 32 22 48-45" />
+    <path className="podium-crown__base" fill="#B78224" d="M39 86h162l-5 17H44Z" />
+    <path className="podium-crown__base-highlight" fill="#E2BE63" d="M43 86h154l-1 5H44Z" />
+    <circle className="podium-crown__jewel" fill="#DDBB62" stroke="#9A6815" strokeWidth="3" cx="20" cy="32" r="7"/><circle className="podium-crown__jewel" fill="#DDBB62" stroke="#9A6815" strokeWidth="3" cx="120" cy="16" r="8"/><circle className="podium-crown__jewel" fill="#DDBB62" stroke="#9A6815" strokeWidth="3" cx="220" cy="32" r="7"/>
   </svg>;
 }
 
 function PodiumDecoration({ rank }) {
   if (rank === 1) return <div className="podium-decoration podium-decoration--gold" aria-hidden="true">
-    <span className="podium-spark podium-spark--one">✦</span><span className="podium-spark podium-spark--two">✧</span>
-    <span className="podium-streamer podium-streamer--left"/><CrownMark/><span className="podium-streamer podium-streamer--right"/>
-    <span className="podium-spark podium-spark--three">✦</span><span className="podium-spark podium-spark--four">✧</span>
+    <CrownMark/>
   </div>;
   return <div className={`podium-decoration podium-decoration--${rank === 2 ? "silver" : "bronze"}`} aria-hidden="true">
     <span className="podium-accent-line"/><span className="podium-accent-spark">✦</span><span className="podium-accent-dot"/>
