@@ -5,9 +5,9 @@ const PERIOD_LABELS = { today: "Today", yesterday: "Yesterday", wtd: "Week to Da
 
 function CrownMark() {
   return <svg className="podium-crown" viewBox="0 0 240 112" aria-hidden="true" focusable="false">
-    <path d="M18 30 69 66 120 13l51 53 51-36-15 65H33Z" />
-    <path d="M39 84h162l-5 18H44Z" />
-    <circle cx="18" cy="28" r="8"/><circle cx="120" cy="12" r="9"/><circle cx="222" cy="28" r="8"/>
+    <path className="podium-crown__face" fill="#FFD700" stroke="#D49419" strokeWidth="2" strokeLinejoin="round" d="M18 30 69 66 120 13l51 53 51-36-15 65H33Z" />
+    <path className="podium-crown__base" fill="#D49419" d="M39 84h162l-5 18H44Z" />
+    <circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="18" cy="28" r="8"/><circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="120" cy="12" r="9"/><circle className="podium-crown__jewel" fill="#F5B942" stroke="#D49419" strokeWidth="3" cx="222" cy="28" r="8"/>
   </svg>;
 }
 

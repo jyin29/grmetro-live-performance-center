@@ -28,11 +28,12 @@
 .display-stage .recognition-slide .podium-card--2 { border-color:rgba(130,147,157,.44); border-top-color:#83949d; box-shadow:var(--shadow),0 0 0 2px rgba(154,169,178,.10); }
 .display-stage .recognition-slide .podium-card--3 { border-color:rgba(157,99,64,.38); border-top-color:#a96c47; box-shadow:var(--shadow),0 0 0 2px rgba(169,108,71,.08); }
 .podium-decoration { position:absolute; z-index:5; pointer-events:none; }
-.podium-decoration--gold { top:-88px; left:50%; width:min(88%,430px); height:116px; transform:translateX(-50%); color:#d0a41d; filter:drop-shadow(0 8px 10px rgba(111,79,0,.2)); }
-.podium-crown { position:absolute; left:50%; bottom:3px; width:min(76%,300px); transform:translateX(-50%); fill:currentColor; }
-.podium-crown path:nth-of-type(2) { fill:#b9880d; }
-.podium-crown circle { fill:#f6d767; stroke:#9a7210; stroke-width:3; }
-.podium-spark { position:absolute; color:#e7bf38; font-style:normal; text-shadow:0 0 15px rgba(231,191,56,.5); animation:podiumTwinkle 2.6s ease-in-out infinite; }
+.podium-decoration--gold { top:-88px; left:50%; width:min(88%,430px); height:116px; transform:translateX(-50%); color:#FFD700; filter:drop-shadow(0 8px 10px rgba(111,79,0,.2)); }
+.podium-crown { position:absolute; left:50%; bottom:3px; width:min(76%,300px); transform:translateX(-50%); fill:#FFD700; }
+.podium-crown .podium-crown__face { fill:#FFD700 !important; stroke:#D49419 !important; }
+.podium-crown .podium-crown__base { fill:#D49419 !important; }
+.podium-crown .podium-crown__jewel { fill:#F5B942 !important; stroke:#D49419 !important; stroke-width:3; }
+.podium-spark { position:absolute; color:#F5B942; font-style:normal; text-shadow:0 0 15px rgba(245,185,66,.5); animation:podiumTwinkle 2.6s ease-in-out infinite; }
 .podium-spark--one { top:14px; left:2%; font-size:31px; }
 .podium-spark--two { top:46px; left:14%; font-size:22px; animation-delay:.55s; }
 .podium-spark--three { top:8px; right:2%; font-size:29px; animation-delay:.9s; }
