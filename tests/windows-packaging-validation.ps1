@@ -26,6 +26,7 @@ try {
   $manifestText = Get-Content -LiteralPath (Join-Path $repository $manifestPath) -Raw
   $manifest = $manifestText | ConvertFrom-Json
   $files = @(Get-GrMetroPackageFiles $manifest)
+  Assert ($files -contains 'apps/dashboard/src/tv-slide-polish.css') 'Packaging source manifest omitted the TV slide polish stylesheet.'
   $obsoletePath = 'scripts/windows/obsolete-tool.ps1'
   # Keep repeated transaction scenarios fast while retaining every required file.
   $transactionFiles = @('package.json','package-lock.json','.env.example','apps/backend/src/index.js','scripts/windows/package-manifest.json','scripts/windows/package-files.ps1','scripts/windows/process-control.ps1','scripts/windows/launch-integration.ps1','scripts/windows/release-identity.ps1','scripts/windows/application-validation.ps1','scripts/windows/env-wizard.ps1','GRMetro Performance Center.exe')

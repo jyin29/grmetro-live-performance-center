@@ -199,6 +199,7 @@
                   "apps/dashboard/src/spreadsheet-slide.css",
                   "apps/dashboard/src/styles.css",
                   "apps/dashboard/src/technician-performance-tv.css",
+                  "apps/dashboard/src/tv-slide-polish.css",
                   "apps/dashboard/src/ultimateRemoteBridge.js",
                   "apps/dashboard/test/admin.test.jsx",
                   "apps/dashboard/test/dashboardApi.test.js",
