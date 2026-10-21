@@ -31,3 +31,21 @@ test("spreadsheet store publishes absent and present eligibility changes", () =>
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("spreadsheet store exposes continuation eligibility as content changes", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "grmetro-spreadsheet-pagination-store-"));
+  const filePath = path.join(directory, "spreadsheet-slide.json");
+  try {
+    const store = new SpreadsheetSlideStore({ filePath });
+    const columns = Array.from({ length: 2 }, (_, index) => ({ id: `c${index}`, label: `Column ${index}`, type: "text" }));
+    store.save({ enabled: true, columns, rows: [{ c0: "one", c1: "two" }] });
+    assert.equal(store.hasContinuation(), false);
+    assert.equal(store.getContinuationPageCount(), 0);
+    store.save({ enabled: true, columns, rows: Array.from({ length: 31 }, (_, index) => ({ c0: `row ${index}`, c1: index })) });
+    assert.equal(store.hasContinuation(), true);
+    assert.equal(store.getPagination().pageCount, 3);
+    assert.equal(store.getContinuationPageCount(), 2);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

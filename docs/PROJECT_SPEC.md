@@ -14153,6 +14153,10 @@ Before implementation begins, confirm:
 - [ ] Every TV has independent state
 - [ ] Overrides expire after two minutes
 - [ ] ServiceTitan refresh occurs every sixty seconds
+
+## 2026-10-21 — Optional spreadsheet continuation
+
+The previously approved optional Spreadsheet presentation remains Slide 6. A conditional Slide 7 is reserved exclusively for overflow from that same spreadsheet. It is eligible only when the complete imported row-and-column inventory cannot fit on Slide 6. It repeats headers and cycles all continuation pages using the existing rotation interval; when no overflow exists, it is omitted from every presentation-control surface. This later, specific approval supersedes earlier fixed-slide-count language only for the optional Spreadsheet and its continuation. The five ServiceTitan business slides and their order remain unchanged.
 - [ ] Backend uses memory only
 - [ ] Live mode is synchronized through a rotation epoch
 - [ ] No HTML scraping is permitted

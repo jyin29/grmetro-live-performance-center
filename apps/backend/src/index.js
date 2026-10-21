@@ -56,7 +56,12 @@ function start() {
     rotationMilliseconds: PRESENTATION_ROTATION_MILLISECONDS,
     eventEngine,
     slideIds: presentationSlides.map(({ id }) => id),
-    getEligibleSlideIndices: () => presentationSlides.flatMap((slide, index) => slide.id === "spreadsheet" && !spreadsheetSlideStore.isAvailable() ? [] : [index]),
+    getEligibleSlideIndices: () => presentationSlides.flatMap((slide, index) => {
+      if (slide.id === "spreadsheet" && !spreadsheetSlideStore.isAvailable()) return [];
+      if (slide.id === "spreadsheet-continuation" && !spreadsheetSlideStore.hasContinuation()) return [];
+      return [index];
+    }),
+    getSlideDurationMultiplier: (index) => presentationSlides[index]?.id === "spreadsheet-continuation" ? Math.max(1, spreadsheetSlideStore.getContinuationPageCount()) : 1,
     getSlideAvailabilityRevision: () => spreadsheetSlideStore.getPublicState().revision,
     subscribeSlideEligibility: (listener) => spreadsheetSlideStore.subscribe(listener),
   });

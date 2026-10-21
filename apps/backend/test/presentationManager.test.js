@@ -15,6 +15,7 @@ function setup(options = {}) {
     clock: () => new Date(now), setTimeoutFn(callback, delay) { const id = ++nextTimer; timers.set(id, { callback, at: now + delay }); return id; },
     clearTimeoutFn(id) { timers.delete(id); }, getEligibleSlideIndices: options.getEligibleSlideIndices,
     getSlideAvailabilityRevision: options.getSlideAvailabilityRevision, subscribeSlideEligibility: options.subscribeSlideEligibility,
+    getSlideDurationMultiplier: options.getSlideDurationMultiplier,
     slideIds: options.slideIds });
   const bus = createPresentationCommandBus({ handleCommand: manager.handleCommand });
   const command = (type, displayId = "main", payload = {}) => bus.dispatch({ type, displayId, payload });
@@ -116,4 +117,28 @@ test("spreadsheet eligibility controls direct navigation, wrapping, and automati
   assert.deepEqual(manager.getDisplayState("main").eligibleSlideIndices, [0, 1, 2, 3, 4]);
   manager.destroy();
   assert.equal(eligibilityListener, null);
+});
+
+test("spreadsheet continuation holds one rotation interval per continuation page", () => {
+  let continuationPages = 3; let eligibilityListener;
+  const { manager, command, advance } = setup({
+    slideCount: 7,
+    slideIds: ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet", "spreadsheet-continuation"],
+    getEligibleSlideIndices: () => [0, 1, 2, 3, 4, 5, 6],
+    getSlideDurationMultiplier: (index) => index === 6 ? continuationPages : 1,
+    subscribeSlideEligibility(listener) { eligibilityListener = listener; return () => { eligibilityListener = null; }; },
+  });
+  command(PRESENTATION_COMMANDS.GO_TO_SLIDE, "main", { index: 6 });
+  assert.equal(manager.getDisplayState("main").nextRotationAt, "2026-08-12T12:01:30.000Z");
+  advance(89_999);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "spreadsheet-continuation");
+  advance(1);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "revenue");
+  command(PRESENTATION_COMMANDS.GO_TO_SLIDE, "main", { index: 6 });
+  continuationPages = 2;
+  eligibilityListener();
+  assert.equal(manager.getDisplayState("main").nextRotationAt, "2026-08-12T12:02:30.000Z");
+  advance(60_000);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "revenue");
+  manager.destroy();
 });

@@ -52,7 +52,7 @@ test("admin API exposes safe read-only configuration and runtime state", async (
     assert.equal(body.displays[0].displayOnline, true);
     assert.equal(body.businessRules.rules.length, businessRules.rules.length);
     assert.equal(body.events.pendingEvents, 2);
-    assert.equal(body.presentation.slides.length, 6);
+    assert.equal(body.presentation.slides.length, 7);
     assert.equal(body.system.connectedRemotes, 2);
     assert.equal(body.system.connectedDisplaySockets, 1);
     const serialized = JSON.stringify(body).toLowerCase();

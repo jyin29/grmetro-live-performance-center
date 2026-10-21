@@ -17,9 +17,11 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
   setTimeoutFn = setTimeout, clearTimeoutFn = clearTimeout, eventEngine,
   getEligibleSlideIndices = () => Array.from({ length: slideCount }, (_, index) => index),
   getSlideAvailabilityRevision = () => null, subscribeSlideEligibility,
+  getSlideDurationMultiplier = () => 1,
   slideIds = Array.from({ length: slideCount }, (_, index) => String(index)) } = {}) {
   const states = new Map();
   const timers = new Map();
+  const timerDurations = new Map();
   const listeners = new Set();
 
   function timestamp() { return clock().toISOString(); }
@@ -51,14 +53,17 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
   function cancelTimer(displayId) {
     if (timers.has(displayId)) clearTimeoutFn(timers.get(displayId));
     timers.delete(displayId);
+    timerDurations.delete(displayId);
   }
+  function slideDuration(index) { const multiplier = Math.max(1, Math.floor(Number(getSlideDurationMultiplier(index)) || 1)); return rotationMilliseconds * multiplier; }
   function armTimer(displayId, incrementRevision = true) {
     const state = requireDisplay(displayId);
     cancelTimer(displayId);
     if (incrementRevision) state.timerRevision += 1;
+    const duration = slideDuration(state.activeSlideIndex);
     state.rotationStartedAt = timestamp();
-    state.nextRotationAt = state.isRunning && !eventState.activeEvent ? new Date(clock().getTime() + rotationMilliseconds).toISOString() : null;
-    if (state.isRunning && !eventState.activeEvent) timers.set(displayId, setTimeoutFn(() => advance(displayId), rotationMilliseconds));
+    state.nextRotationAt = state.isRunning && !eventState.activeEvent ? new Date(clock().getTime() + duration).toISOString() : null;
+    if (state.isRunning && !eventState.activeEvent) { timerDurations.set(displayId, duration); timers.set(displayId, setTimeoutFn(() => advance(displayId), duration)); }
   }
   function update(displayId, changes, restartTimer = true) {
     const state = requireDisplay(displayId);
@@ -105,6 +110,7 @@ function createPresentationManager({ displays, slideCount, rotationMilliseconds,
     for (const { id } of displays) {
       const state = requireDisplay(id);
       if (!eligible.includes(state.activeSlideIndex)) update(id, { activeSlideIndex: eligible[0] }, true);
+      else if (state.isRunning && !eventState.activeEvent && timerDurations.get(id) !== slideDuration(state.activeSlideIndex)) { state.lastUpdated = timestamp(); state.revision += 1; armTimer(id); emit(id); }
       else { state.lastUpdated = timestamp(); state.revision += 1; emit(id); }
     }
   }) || (() => {});

@@ -1,5 +1,6 @@
-export function filterEligibleSlides(slides, spreadsheetAvailable) {
-  return slides.filter((slide) => !slide.requiresSpreadsheet || spreadsheetAvailable === true);
+export function filterEligibleSlides(slides, spreadsheetAvailable, spreadsheetContinuationAvailable = false) {
+  return slides.filter((slide) => (!slide.requiresSpreadsheet || spreadsheetAvailable === true)
+    && (!slide.requiresSpreadsheetContinuation || spreadsheetContinuationAvailable === true));
 }
 
 function indexedSlides(registry) {

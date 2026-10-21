@@ -40,7 +40,7 @@ test("presentation controller keeps navigation and running state independent", a
 
 test("one shared registry owns every rendered and controlled presentation slide", async () => {
   const slides = await registeredSlides();
-  assert.deepEqual(slides.map(([, id]) => id), ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet"]);
+  assert.deepEqual(slides.map(([, id]) => id), ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet", "spreadsheet-continuation"]);
   assert.ok(slides.every((match) => match[3].endsWith("Slide")));
   const [deck, controller] = await Promise.all([
     readFile(path.join(__dirname, "../apps/dashboard/src/components/SlideDeck.jsx"), "utf8"),

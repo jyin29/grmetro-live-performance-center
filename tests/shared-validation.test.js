@@ -20,7 +20,7 @@ test("approved shared configuration has the required fixed cardinality and order
     "installs", "installAverageTicket", "installRevenue"
   ]);
   assert.deepEqual(slides.map(({ id, durationSeconds }) => [id, durationSeconds]), [
-    ["revenue", 15], ["sales", 15], ["technicians", 15], ["operations", 15], ["recognition", 25], ["spreadsheet", 15]
+    ["revenue", 15], ["sales", 15], ["technicians", 15], ["operations", 15], ["recognition", 25], ["spreadsheet", 15], ["spreadsheet-continuation", 15]
   ]);
 });
 
@@ -36,6 +36,7 @@ test("configured identifier validators accept known IDs and reject unknown or ma
   assert.equal(validation.isValidKpiId("completedJobs"), false);
   assert.equal(validation.isValidSlideId("recognition"), true);
   assert.equal(validation.isValidSlideId("spreadsheet"), true);
+  assert.equal(validation.isValidSlideId("spreadsheet-continuation"), true);
   assert.equal(validation.isValidSlideId("top-three"), false);
   assert.equal(validation.isValidSlideId("experimental"), false);
 });
@@ -76,7 +77,7 @@ test("KPI configuration validation detects count and stable-ID mismatches", () =
 
 test("slide configuration validation enforces count, approved order, and durations", () => {
   assert.deepEqual(validation.validateSlideConfiguration(), []);
-  assert.equal(validation.validateSlideConfiguration(slides.slice(0, 5)).some((error) => /6/.test(error)), true);
+  assert.equal(validation.validateSlideConfiguration(slides.slice(0, 6)).some((error) => /7/.test(error)), true);
   assert.equal(validation.validateSlideConfiguration([...slides].reverse()).some((error) => /order/.test(error)), true);
   const wrongDuration = slides.map((slide) => ({ ...slide }));
   wrongDuration[0].durationSeconds = 25;

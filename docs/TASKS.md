@@ -2296,3 +2296,12 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Make the wizard emit canonical array JSON and safely display either supported input shape.
 - [x] Run the target package's own parser against installed private configuration during read-only manual-upgrade preflight.
 - [x] Keep preflight temporary, nonmutating, offline from ServiceTitan, and ahead of transaction preparation and process shutdown.
+
+## 2026-10-21 — Spreadsheet overflow pagination
+
+- [x] Replace Spreadsheet row/column slicing with a shared deterministic paginator.
+- [x] Keep the first page on Slide 6 and conditionally expose Slide 7 only when overflow exists.
+- [x] Repeat headers, preserve fixed column widths and data order, and include every imported row and column.
+- [x] Cycle multiple continuation pages at the existing presentation interval before advancing the registry.
+- [x] Recalculate pagination for spreadsheet revisions, logical display dimensions, and display-settings updates.
+- [x] Cover fitting data, row overflow, column overflow, multiple continuation pages, eligibility, and backend timing.

@@ -35,9 +35,10 @@ test("TV display stage scales a 1920 by 1080 canvas with contain sizing", async 
 
 test("spreadsheet eligibility excludes absent content and restores present content", async () => {
   const { filterEligibleSlides, normalizePresentationSelection, resolveActiveEligibleSlide } = await import("../apps/dashboard/src/config/slideEligibility.js");
-  const slides = [{ id: "revenue" }, { id: "sales" }, { id: "technicians" }, { id: "operations" }, { id: "recognition" }, { id: "spreadsheet", requiresSpreadsheet: true }];
+  const slides = [{ id: "revenue" }, { id: "sales" }, { id: "technicians" }, { id: "operations" }, { id: "recognition" }, { id: "spreadsheet", requiresSpreadsheet: true }, { id: "spreadsheet-continuation", requiresSpreadsheet: true, requiresSpreadsheetContinuation: true }];
   assert.deepEqual(filterEligibleSlides(slides, false).map(({ id }) => id), ["revenue", "sales", "technicians", "operations", "recognition"]);
   assert.deepEqual(filterEligibleSlides(slides, true).map(({ id }) => id), ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet"]);
+  assert.deepEqual(filterEligibleSlides(slides, true, true).map(({ id }) => id), ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet", "spreadsheet-continuation"]);
   const normalized = normalizePresentationSelection({ activeSlideIndex: 5, eligibleSlideIds: ["revenue", "sales", "technicians", "operations", "recognition"] }, slides);
   assert.equal(normalized.activeSlideId, "revenue");
   assert.equal(normalized.activeSlideIndex, 0);

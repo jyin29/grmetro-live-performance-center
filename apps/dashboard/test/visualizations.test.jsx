@@ -38,7 +38,7 @@ describe("dashboard visualizations", () => {
       slides: { revenue: { rows: [] }, activity: { rows: [] }, performance: { rows: [] }, "average-ticket": { rows: [] } },
     };
     const markup = renderToStaticMarkup(<SlideDeck data={data} slideIndex={0} />);
-    expect(PRESENTATION_SLIDES).toHaveLength(5);
+    expect(PRESENTATION_SLIDES).toHaveLength(7);
     expect(PRESENTATION_SLIDES.every(({ Component }) => typeof Component === "function")).toBe(true);
     expect(markup).toContain('data-slide-id="revenue"');
     expect(markup).toContain("Revenue &amp; Goal Progress");

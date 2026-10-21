@@ -9,4 +9,5 @@ module.exports = [
   { id: "operations", label: "Operations", durationSeconds: 15 },
   { id: "recognition", label: "Recognition", durationSeconds: 25 },
   { id: "spreadsheet", label: "Spreadsheet", durationSeconds: 15 },
+  { id: "spreadsheet-continuation", label: "Spreadsheet Continued", durationSeconds: 15 },
 ];

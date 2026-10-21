@@ -7,7 +7,7 @@ const televisions = require("./televisions");
 
 const TV_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EXPECTED_KPI_COUNT = Object.keys(kpis).length;
-const EXPECTED_SLIDE_IDS = Object.freeze(["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet"]);
+const EXPECTED_SLIDE_IDS = Object.freeze(["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet", "spreadsheet-continuation"]);
 
 function hasUniqueValues(values) { return new Set(values).size === values.length; }
 function isValidTvId(id) { return typeof id === "string" && TV_ID_PATTERN.test(id) && televisions.some((tv) => tv.id === id); }

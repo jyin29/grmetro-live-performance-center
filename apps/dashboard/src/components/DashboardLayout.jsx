@@ -54,7 +54,7 @@ export function DashboardLayout({ data, displayId, displaySettings, onSetControl
   return <div className="app-shell">
     <Header refreshedAt={data.refreshedAt} refreshing={refreshing} hasError={Boolean(error)} />
     <ManagementAttention insights={attentionInsights} onDismiss={(insight) => dismissals.dismiss(insight).catch(() => {})} />
-    <SlideDeck data={data} spreadsheetSlide={spreadsheet.slide} spreadsheetAvailable={spreadsheet.available} slides={presentation.slides} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} slideId={presentation.activeSlideId} onSelectSlide={presentation.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused }} />
+    <SlideDeck data={data} spreadsheetSlide={spreadsheet.slide} spreadsheetAvailable={spreadsheet.available} slides={presentation.slides} displaySettings={displaySettings} slideIndex={presentation.activeSlideIndex} slideId={presentation.activeSlideId} onSelectSlide={presentation.selectSlide} presentationState={{ hasError: Boolean(error), refreshing, rotationPaused, isRunning: presentation.isRunning, rotationStartedAt: presentation.rotationStartedAt, timerRevision: presentation.timerRevision }} />
     <EventOverlay event={presentation.event} />
     <DiagnosticsOverlay diagnostics={diagnostics} />
     <LocalDashboardControls controller={presentation} diagnosticsVisible={viewportDiagnosticsVisible} onToggleDiagnostics={onToggleViewportDiagnostics} launcherVisible={controlsLauncherVisible} onSetLauncherVisible={(visible) => onSetControlsLauncherVisible?.(displayId, visible)} />
