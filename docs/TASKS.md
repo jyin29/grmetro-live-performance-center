@@ -2036,6 +2036,8 @@ Progress note (2026-10-19): Corrected administration presence telemetry after ph
 Progress note (2026-10-19): Refined all five TV slides for room-distance readability: Revenue uses N/A for unavailable values with aligned Remaining figures and stronger names/bars; Sales strengthens technician hierarchy and Closing bars; Technician headers remove qualification prose; Operations bars use rounded ends; and Recognition uses a scalable custom crown with tiered gold, silver, and bronze celebration accents outside the card content.
 
 Progress note (2026-10-20): Refined the first-place crown with an explicit muted metallic-gold silhouette, solid shadow/highlight layers, and clean BrowseHere-compatible SVG paint. Removed the first-place curved streamers and glyph sparkles while preserving crown scale, card geometry, tied ranks, and all leaderboard data.
+
+Progress note (2026-10-21): Restored the requested first-place framing as explicit SVG: thin symmetrical metallic-gold flourishes and four small gold four-point stars. The crown scale, position, card layout, tied rankings, and muted metallic paint remain unchanged, with no inherited color or text-glyph decoration.
 - [x] Add tests for tabs, live updates, display controls, technician selection, management, and diagnostics.
 
 The Operations Console is an active-management surface; the five-slide television dashboard remains unchanged.

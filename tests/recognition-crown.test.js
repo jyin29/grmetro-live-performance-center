@@ -13,8 +13,12 @@ test("Recognition renders a centered custom crown above the champion card", () =
   assert.match(component, /className="podium-crown__highlight" fill="none" stroke="#F1D68A"/);
   assert.match(component, /className="podium-crown__base" fill="#B78224"/);
   assert.match(component, /className="podium-crown__jewel" fill="#DDBB62" stroke="#9A6815"/);
-  const championDecoration = component.match(/if \(rank === 1\)[\s\S]*?<\/div>;/)?.[0] || "";
-  assert.doesNotMatch(championDecoration, /podium-streamer|podium-spark|✦|✧/);
+  assert.match(component, /<svg className="podium-flourish"/);
+  assert.equal((component.match(/className="podium-flourish__curve"/g) || []).length, 2);
+  assert.equal((component.match(/className="podium-flourish__star"/g) || []).length, 4);
+  assert.match(component, /podium-flourish__curve" fill="none" stroke="#B98A2E"/);
+  assert.match(component, /podium-flourish__highlight" fill="none" stroke="#E4C76E"/);
+  assert.match(component, /podium-flourish__star" fill="#D6B254"/);
   assert.doesNotMatch(component, /👑/);
   assert.match(css, /podium-decoration--gold[^}]*top:-88px/);
   assert.match(css, /podium-crown[^}]*position:absolute[^}]*width:min\(76%,300px\)[^}]*fill:#D8AE48/);
@@ -24,6 +28,9 @@ test("Recognition renders a centered custom crown above the champion card", () =
   assert.match(css, /podium-crown__base[^}]*fill:#B78224 !important/);
   assert.match(css, /podium-crown__jewel[^}]*fill:#DDBB62 !important/);
   assert.doesNotMatch(css.match(/\.podium-crown[^}]*\}/g).join("\n"), /currentColor/);
-  assert.doesNotMatch(css, /podium-streamer|podium-spark/);
+  assert.match(css, /podium-flourish__curve[^}]*stroke:#B98A2E !important/);
+  assert.match(css, /podium-flourish__highlight[^}]*stroke:#E4C76E !important/);
+  assert.match(css, /podium-flourish__star[^}]*fill:#D6B254 !important/);
+  assert.doesNotMatch(css.match(/\.podium-flourish[^}]*\}/g).join("\n"), /currentColor|#[0-9a-f]{3,6}[^;}]*gray/i);
   assert.match(css, /podium-card--champion[^}]*overflow:visible/);
 });

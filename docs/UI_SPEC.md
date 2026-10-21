@@ -2244,7 +2244,7 @@ On the Technicians slide, metric sections use larger horizontal insets without c
 identity precedes one labeled rank block. Overall Rank appears only when the backend qualifies it; otherwise Revenue
 Rank remains the explicit fallback without secondary qualification or coverage prose. Overall-rank movement
 appears only when available, so unavailable movement no longer leaves an orphan dash beside Revenue Rank. The
-Recognition places a custom scalable crown above the first-place card, integrated with its gold top border. Its refined solid-color silhouette uses explicit muted metallic-gold shadow and highlight layers for BrowseHere compatibility. The earlier first-place curved streamers and glyph sparkles are removed. Second and third place retain smaller silver and bronze accents without text ribbons. Decorations remain outside metric content, with first-place emphasis stronger than second and third.
+Recognition places a custom scalable crown above the first-place card, integrated with its gold top border. Its refined solid-color silhouette uses explicit muted metallic-gold shadow and highlight layers for BrowseHere compatibility. Thin symmetrical gold flourishes and a few small four-point gold stars frame the crown without obscuring card content. Second and third place retain smaller silver and bronze accents without text ribbons. Decorations remain outside metric content, with first-place emphasis stronger than second and third.
 
 ## 2026-10-07 — Native application update status
 

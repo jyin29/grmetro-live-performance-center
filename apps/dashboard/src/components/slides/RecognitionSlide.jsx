@@ -14,8 +14,21 @@ function CrownMark() {
   </svg>;
 }
 
+function ChampionFlourish() {
+  return <svg className="podium-flourish" viewBox="0 0 430 116" aria-hidden="true" focusable="false">
+    <path className="podium-flourish__curve" fill="none" stroke="#B98A2E" strokeWidth="3" strokeLinecap="round" d="M92 101C57 94 43 70 53 46c6-14 18-24 34-29" />
+    <path className="podium-flourish__curve" fill="none" stroke="#B98A2E" strokeWidth="3" strokeLinecap="round" d="M338 101c35-7 49-31 39-55-6-14-18-24-34-29" />
+    <path className="podium-flourish__highlight" fill="none" stroke="#E4C76E" strokeWidth="1.5" strokeLinecap="round" d="M86 94C61 86 52 68 59 50M344 94c25-8 34-26 27-44" />
+    <path className="podium-flourish__star" fill="#D6B254" d="m58 18 2.5 6.5L67 27l-6.5 2.5L58 36l-2.5-6.5L49 27l6.5-2.5Z" />
+    <path className="podium-flourish__star" fill="#E2C56B" d="m89 41 1.6 4.4L95 47l-4.4 1.6L89 53l-1.6-4.4L83 47l4.4-1.6Z" />
+    <path className="podium-flourish__star" fill="#E2C56B" d="m341 41 1.6 4.4L347 47l-4.4 1.6L341 53l-1.6-4.4L335 47l4.4-1.6Z" />
+    <path className="podium-flourish__star" fill="#D6B254" d="m372 18 2.5 6.5L381 27l-6.5 2.5L372 36l-2.5-6.5L363 27l6.5-2.5Z" />
+  </svg>;
+}
+
 function PodiumDecoration({ rank }) {
   if (rank === 1) return <div className="podium-decoration podium-decoration--gold" aria-hidden="true">
+    <ChampionFlourish/>
     <CrownMark/>
   </div>;
   return <div className={`podium-decoration podium-decoration--${rank === 2 ? "silver" : "bronze"}`} aria-hidden="true">
