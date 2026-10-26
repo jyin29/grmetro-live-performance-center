@@ -196,6 +196,8 @@ try {
   Copy-Item (Join-Path $PSScriptRoot 'process-control.ps1') $processHelper -Force
   $launchHelper=Join-Path $out 'launch-integration.ps1'
   Copy-Item (Join-Path $PSScriptRoot 'launch-integration.ps1') $launchHelper -Force
+  $updateHostInstallationHelper=Join-Path $out 'update-host-installation.ps1'
+  Copy-Item (Join-Path $PSScriptRoot 'update-host-installation.ps1') $updateHostInstallationHelper -Force
 
   # Keep a portable fallback alongside the EXE for troubleshooting.
   $cmd=Join-Path $out "install.cmd"
@@ -239,6 +241,7 @@ static class Program {
       ExtractResource("GRMetroPackageHelper", Path.Combine(temp, "package-files.ps1"));
       ExtractResource("GRMetroProcessHelper", Path.Combine(temp, "process-control.ps1"));
       ExtractResource("GRMetroLaunchHelper", Path.Combine(temp, "launch-integration.ps1"));
+      ExtractResource("GRMetroUpdateHostInstallationHelper", Path.Combine(temp, "update-host-installation.ps1"));
 
       var psi = new ProcessStartInfo(
         "powershell.exe",
@@ -283,10 +286,11 @@ static class Program {
       ("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),
       ("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),
       ("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),
+      ("/resource:`"{0}`",GRMetroUpdateHostInstallationHelper" -f $updateHostInstallationHelper),
       $tempSource
     )
     if(Test-Path $icon){
-      $args=@('/nologo','/target:winexe',("/out:`"{0}`"" -f $setupExe),("/win32icon:`"{0}`"" -f $icon),'/reference:System.dll','/reference:System.Windows.Forms.dll',("/resource:`"{0}`",GRMetroInstallerScript" -f $bootstrap),("/resource:`"{0}`",GRMetroInstallerPackage" -f $zip),("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),$tempSource)
+      $args=@('/nologo','/target:winexe',("/out:`"{0}`"" -f $setupExe),("/win32icon:`"{0}`"" -f $icon),'/reference:System.dll','/reference:System.Windows.Forms.dll',("/resource:`"{0}`",GRMetroInstallerScript" -f $bootstrap),("/resource:`"{0}`",GRMetroInstallerPackage" -f $zip),("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),("/resource:`"{0}`",GRMetroUpdateHostInstallationHelper" -f $updateHostInstallationHelper),$tempSource)
     }
 
     $args += ("/resource:`"{0}`",GRMetroPackageHelper" -f $packageHelper)

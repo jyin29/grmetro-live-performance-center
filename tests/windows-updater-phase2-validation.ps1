@@ -47,8 +47,10 @@ try{
   $result=Check $sourcePath
   Assert ($result.status-eq'available'-and$result.latest-eq'2026.10.7.2') 'Valid signed metadata was not accepted.'
   Assert ((Get-Content -LiteralPath (Join-Path $stateRoot 'trust-state.json')-Raw)-match'202610070002') 'Highest trusted sequence was not persisted.'
+  $readOnlyState=Join-Path $fixture 'read-only discovery state';$readOnly=Get-GrMetroReleaseCheck -InstallRoot $installRoot -StateRoot $readOnlyState -ReleaseSourcePath $sourcePath -PublicKeysPath $keysPath -UpdaterProtocol 1 -AllowInsecureTestTransport -AllowTestRoot -ReadOnly
+  Assert ($readOnly.status-eq'available'-and-not(Test-Path -LiteralPath $readOnlyState)) 'Read-only release discovery wrote updater state or changed its result.'
   Assert ((Get-Content -LiteralPath (Join-Path $installRoot 'README.md')-Raw)-like'OLD*') 'Update check mutated the application.'
-  Write-Output 'PASS: exact-byte RSA-SHA256 metadata verification accepts the configured key and persists replay state.'
+  Write-Output 'PASS: exact-byte RSA-SHA256 metadata verification supports read-only migration preflight and persists replay state only for normal checks.'
 
   $originalMetadata=[IO.File]::ReadAllBytes($metadataPath);$originalSignature=[IO.File]::ReadAllBytes($signaturePath)
   Write-Bytes $metadataPath ($originalMetadata+([byte[]](32)))

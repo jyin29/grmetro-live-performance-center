@@ -163,7 +163,7 @@ function Test-GrMetroTrustedReleaseMetadata($Metadata,$Source,$Installed,$TrustS
 }
 
 function Get-GrMetroReleaseCheck {
-  param([string]$InstallRoot,[string]$StateRoot,[string]$ReleaseSourcePath,[string]$PublicKeysPath,[int]$UpdaterProtocol=1,[switch]$AllowInsecureTestTransport,[switch]$AllowTestRoot)
+  param([string]$InstallRoot,[string]$StateRoot,[string]$ReleaseSourcePath,[string]$PublicKeysPath,[int]$UpdaterProtocol=1,[switch]$AllowInsecureTestTransport,[switch]$AllowTestRoot,[switch]$ReadOnly)
   $source=Read-GrMetroReleaseSource $ReleaseSourcePath -AllowInsecureTestTransport:$AllowInsecureTestTransport
   $installed=Get-GrMetroInstalledReleaseMetadata $InstallRoot
   if(-not$source.Enabled){return [pscustomobject]@{status='not-configured';updateAvailable=$false;current=[string]$installed.releaseVersion;message='Remote release source is not configured.'}}
@@ -175,9 +175,11 @@ function Get-GrMetroReleaseCheck {
   $metadata=ConvertFrom-GrMetroSignedReleaseMetadata $metadataBytes $signatureBytes $keys
   $trust=Read-GrMetroUpdateTrustState $StateRoot -AllowTestRoot:$AllowTestRoot
   $trusted=Test-GrMetroTrustedReleaseMetadata $metadata $source $installed $trust -AllowInsecureTestTransport:$AllowInsecureTestTransport
-  if([Int64]$metadata.releaseSequence-gt[Int64]$trust.highestTrustedSequence){$trust.highestTrustedSequence=[Int64]$metadata.releaseSequence}
-  $identities=[ordered]@{};foreach($property in @($trust.identities.PSObject.Properties|Sort-Object Name|Select-Object -Last 49)){$identities[$property.Name]=[string]$property.Value};$identities[$trusted.Version]=$trusted.Digest;$trust.identities=[pscustomobject]$identities
-  Write-GrMetroUpdateTrustState $StateRoot $trust -AllowTestRoot:$AllowTestRoot
+  if(-not$ReadOnly){
+    if([Int64]$metadata.releaseSequence-gt[Int64]$trust.highestTrustedSequence){$trust.highestTrustedSequence=[Int64]$metadata.releaseSequence}
+    $identities=[ordered]@{};foreach($property in @($trust.identities.PSObject.Properties|Sort-Object Name|Select-Object -Last 49)){$identities[$property.Name]=[string]$property.Value};$identities[$trusted.Version]=$trusted.Digest;$trust.identities=[pscustomobject]$identities
+    Write-GrMetroUpdateTrustState $StateRoot $trust -AllowTestRoot:$AllowTestRoot
+  }
   if($trusted.MinimumUpdaterProtocol-gt$UpdaterProtocol){return [pscustomobject]@{status='requires-setup';updateAvailable=$false;current=[string]$installed.releaseVersion;latest=$trusted.Version;message='This update requires a newer GRMetro Setup.';metadata=$metadata;source=$source}}
   $summary=if($trusted.Notes.Count){[string]$trusted.Notes[0]}else{'A newer GRMetro release is available.'}
   return [pscustomobject]@{status=$(if($trusted.Available){'available'}else{'up-to-date'});updateAvailable=[bool]$trusted.Available;current=[string]$installed.releaseVersion;latest=$trusted.Version;summary=$summary;releaseNotes=$trusted.Notes;artifactUrl=$trusted.ArtifactUri.AbsoluteUri;artifactSize=$trusted.Size;artifactSha256=$trusted.Digest;releaseSequence=$trusted.Sequence;minimumUpdaterProtocol=$trusted.MinimumUpdaterProtocol;authenticodeRequired=$trusted.AuthenticodeRequired;metadata=$metadata;source=$source}

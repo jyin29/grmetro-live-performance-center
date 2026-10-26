@@ -266,6 +266,7 @@
                   "scripts/windows/stop-performance-center.ps1",
                   "scripts/windows/supervisor-control.ps1",
                   "scripts/windows/update-performance-center.ps1",
+                  "scripts/windows/update-host-installation.ps1",
                   "scripts/workspace-status.js",
                   "shared/businessRules.js",
                   "shared/constants.js",

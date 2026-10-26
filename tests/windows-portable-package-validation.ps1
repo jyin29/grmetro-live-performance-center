@@ -20,7 +20,7 @@ Assert (Test-Path -LiteralPath $setup -PathType Leaf) 'Setup EXE is missing.'
 $header=[IO.File]::ReadAllBytes($setup)[0..1]
 Assert ($header[0] -eq 0x4d -and $header[1] -eq 0x5a) 'Setup output is not a Windows PE executable.'
 $setupAssembly=[Reflection.Assembly]::LoadFile($setup);$resources=@($setupAssembly.GetManifestResourceNames())
-  foreach($resource in @('GRMetroInstallerScript','GRMetroInstallerPackage','GRMetroPackageHelper','GRMetroProcessHelper','GRMetroLaunchHelper','GRMetroUpdateHostPackage')){Assert ($resources -contains $resource) "Setup EXE is missing embedded resource: $resource"}
+  foreach($resource in @('GRMetroInstallerScript','GRMetroInstallerPackage','GRMetroPackageHelper','GRMetroProcessHelper','GRMetroLaunchHelper','GRMetroUpdateHostInstallationHelper','GRMetroUpdateHostPackage')){Assert ($resources -contains $resource) "Setup EXE is missing embedded resource: $resource"}
 $updateHostBundle=Join-Path ([IO.Path]::GetDirectoryName($setup)) 'grmetro-update-host.zip'
 Assert (Test-Path -LiteralPath $updateHostBundle -PathType Leaf) 'Stable Update Host bundle is missing.'
 Add-Type -AssemblyName System.IO.Compression.FileSystem

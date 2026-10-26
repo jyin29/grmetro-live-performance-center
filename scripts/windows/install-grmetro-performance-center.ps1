@@ -5,54 +5,7 @@ $transactionPending=$false
 $priorProcessState=$null
 $updateHostState=$null
 $launchIntegrationState=$null
-
-function Install-GrMetroStableUpdateHost([string]$BundlePath) {
-  if(-not$BundlePath){return}
-  if(-not(Test-Path -LiteralPath $BundlePath -PathType Leaf)){throw 'The GRMetro Update Host bundle is missing.'}
-  Add-Type -AssemblyName System.IO.Compression.FileSystem
-  $parent=Join-Path $env:LOCALAPPDATA 'GRMetro';$destination=Join-Path $parent 'Update Host'
-  $stage=Join-Path $parent ('Update Host.installing-'+[guid]::NewGuid().ToString('N'));$backup=Join-Path $parent 'Update Host.previous'
-  New-Item -ItemType Directory -Force -Path $parent,$stage|Out-Null
-  try{
-    $archive=[IO.Compression.ZipFile]::OpenRead([IO.Path]::GetFullPath($BundlePath))
-    try{
-      $allowed=@('GRMetro Update Host.exe','update-host.ps1','package-files.ps1','process-control.ps1','application-validation.ps1','release-identity.ps1','release-feed.ps1','authenticode-signing.ps1','release-source.default.json','release-public-keys.json','provisioning-policy.json');$seen=@{}
-      foreach($entry in $archive.Entries){
-        $relative=$entry.FullName.Replace('\','/')
-        if($relative -notin $allowed -or $seen.ContainsKey($relative)){throw "Unexpected Update Host entry: $relative"}
-        $target=[IO.Path]::GetFullPath((Join-Path $stage $relative));if([IO.Path]::GetDirectoryName($target)-ne[IO.Path]::GetFullPath($stage).TrimEnd('\')){throw 'Update Host entry escaped its installation root.'}
-        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$target,$false);$seen[$relative]=$true
-      }
-      foreach($required in $allowed){if(-not$seen.ContainsKey($required)){throw "Update Host entry missing: $required"}}
-    }finally{$archive.Dispose()}
-    $policy=Get-Content -LiteralPath (Join-Path $stage 'provisioning-policy.json') -Raw|ConvertFrom-Json
-    if([int]$policy.schemaVersion-ne1-or[int]$policy.updaterProtocol-lt1-or$policy.applyOnSetup-isnot[bool]){throw 'Update Host provisioning policy is invalid.'}
-    . (Join-Path $stage 'release-feed.ps1')
-    $source=Read-GrMetroReleaseSource (Join-Path $stage 'release-source.default.json')
-    $keys=Get-GrMetroPinnedReleaseKeys (Join-Path $stage 'release-public-keys.json')
-    if($policy.applyOnSetup-eq$true-and(-not$source.Enabled-or$keys.Count-lt1)){throw 'Production trust provisioning requires an enabled release source and at least one production public key.'}
-    if($policy.applyOnSetup-eq$true){Assert-GrMetroProvisionedKeyFingerprints (Join-Path $stage 'release-public-keys.json')}
-    if($policy.applyOnSetup-ne$true-and($source.Enabled-or$keys.Count-ne0)){throw 'Nonprovisioning Update Host bundles must retain disabled feed and empty key defaults.'}
-    if(Test-Path -LiteralPath $backup){Remove-Item -LiteralPath $backup -Recurse -Force}
-    if(Test-Path -LiteralPath $destination){Move-Item -LiteralPath $destination -Destination $backup}
-    try{Move-Item -LiteralPath $stage -Destination $destination}catch{if((Test-Path -LiteralPath $backup) -and -not(Test-Path -LiteralPath $destination)){Move-Item -LiteralPath $backup -Destination $destination};throw}
-    if($policy.applyOnSetup-ne$true-and(Test-Path -LiteralPath (Join-Path $backup 'release-public-keys.json') -PathType Leaf)){$null=Get-GrMetroPinnedReleaseKeys (Join-Path $backup 'release-public-keys.json');Copy-Item -LiteralPath (Join-Path $backup 'release-public-keys.json') -Destination (Join-Path $destination 'release-public-keys.json') -Force}
-    $stateRoot=Join-Path $parent 'Update State';$sourceConfig=Join-Path $stateRoot 'release-source.json';$sourceExisted=Test-Path -LiteralPath $sourceConfig -PathType Leaf;$sourceBytes=if($sourceExisted){[IO.File]::ReadAllBytes($sourceConfig)}else{$null};$sourceChanged=$false
-    if($policy.applyOnSetup-eq$true-or-not$sourceExisted){New-Item -ItemType Directory -Force -Path $stateRoot|Out-Null;Copy-Item -LiteralPath (Join-Path $destination 'release-source.default.json') -Destination $sourceConfig -Force;$sourceChanged=$true}
-    return [pscustomobject]@{Destination=$destination;Backup=$backup;HadPrevious=[bool](Test-Path -LiteralPath $backup);StateRoot=$stateRoot;SourceConfig=$sourceConfig;SourceExisted=[bool]$sourceExisted;SourceBytes=$sourceBytes;SourceChanged=$sourceChanged}
-  }finally{if(Test-Path -LiteralPath $stage){Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue}}
-}
-
-function Complete-GrMetroStableUpdateHost($State) {
-  if($State -and (Test-Path -LiteralPath $State.Backup)){Remove-Item -LiteralPath $State.Backup -Recurse -Force}
-}
-
-function Restore-GrMetroStableUpdateHost($State) {
-  if(-not$State){return}
-  if(Test-Path -LiteralPath $State.Destination){Remove-Item -LiteralPath $State.Destination -Recurse -Force}
-  if($State.HadPrevious){if(-not(Test-Path -LiteralPath $State.Backup)){throw 'Previous GRMetro Update Host backup is missing.'};Move-Item -LiteralPath $State.Backup -Destination $State.Destination}
-  if($State.SourceChanged){if($State.SourceExisted){[IO.File]::WriteAllBytes($State.SourceConfig,[byte[]]$State.SourceBytes)}elseif(Test-Path -LiteralPath $State.SourceConfig){Remove-Item -LiteralPath $State.SourceConfig -Force;if((Test-Path -LiteralPath $State.StateRoot)-and@(Get-ChildItem -LiteralPath $State.StateRoot -Force).Count-eq0){Remove-Item -LiteralPath $State.StateRoot -Force}}}
-}
+. (Join-Path $PSScriptRoot 'update-host-installation.ps1')
 try {
   $installRoot=Join-Path $env:LOCALAPPDATA "GRMetro\Performance Center"
   if(-not$PackageZip){$PackageZip=Join-Path $PSScriptRoot "grmetro-performance-center-package.zip"}

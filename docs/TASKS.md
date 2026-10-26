@@ -2305,3 +2305,14 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Cycle multiple continuation pages at the existing presentation interval before advancing the registry.
 - [x] Recalculate pagination for spreadsheet revisions, logical display dimensions, and display-settings updates.
 - [x] Cover fitting data, row overflow, column overflow, multiple continuation pages, eligibility, and backend timing.
+
+## 2026-10-26 — Existing-installation Update Host migration
+
+- [x] Confirm application-only packages intentionally omit the updater-owned external host and trust state.
+- [x] Extract transactional Update Host installation into a shared installer module while preserving full Setup behavior.
+- [x] Add a host-only migration entry point that validates bundle hash, installed identity/channel, pending transactions, signing status, and live signed-feed discovery.
+- [x] Keep release discovery read-only during migration preflight so replay state changes only during normal updater checks.
+- [x] Preserve application/private files, running processes, Edge profiles, firewall state, and the exact autostart choice.
+- [x] Migrate existing shortcuts to recovery-first host launch with byte-for-byte rollback on failure.
+- [x] Add a clean-source migration builder that embeds only an approved HTTPS source and fingerprinted public keys.
+- [x] Cover successful install, late publication failure, discovery failure, rollback, incorrect hash, unsigned approval, channel mismatch, and pending transaction refusal in disposable fixtures.

@@ -45,7 +45,7 @@ try{
     'package.json','.env.example','apps/backend/src/index.js','apps/dashboard/dist/index.html','GRMetro Performance Center.exe',
     'scripts/windows/package-manifest.json','scripts/windows/package-build.json','scripts/windows/package-files.ps1','scripts/windows/process-control.ps1',
     'scripts/windows/launch-integration.ps1','scripts/windows/release-identity.ps1','scripts/windows/application-validation.ps1','scripts/windows/env-wizard.ps1',
-    'scripts/windows/runtime-versions.json','scripts/windows/runtime-paths.ps1','scripts/windows/servicetitan-profile.ps1','scripts/windows/manual-legacy-upgrade.ps1',
+    'scripts/windows/runtime-versions.json','scripts/windows/runtime-paths.ps1','scripts/windows/servicetitan-profile.ps1','scripts/windows/manual-legacy-upgrade.ps1','scripts/windows/update-host-installation.ps1',
     'scripts/validate-private-configuration.js','shared/technicianConfiguration.js',
     'runtime/node/node.exe','runtime/node/LICENSE','runtime/node/VERSION','node_modules/express/package.json','node_modules/playwright/package.json','node_modules/qrcode-terminal/package.json'
   )|Sort-Object -Unique

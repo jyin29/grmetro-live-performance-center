@@ -34,6 +34,16 @@ The root command launcher, generated launcher EXE, and `npm run launch:windows` 
 
 For a reviewed application-only manual deployment, `build-installer.ps1 -PackageOnly -OutputDirectory <path>` runs the same isolated dependency, dashboard, bundled-runtime, identity, and manifest pipeline but stops after producing the portable ZIP. It does not build Setup, the external Update Host, trust provisioning, shortcuts, tasks, firewall integration, or installer bootstrap files. Nondevelopment package identity records the full committed Git SHA; a dirty source remains marked `working-tree` and is rejected by the manual legacy wrapper.
 
+### Host-only migration for an existing application-only installation
+
+Application-only ZIPs deliberately cannot write `%LOCALAPPDATA%\GRMetro\Update Host` or updater trust state. An installation created and maintained only through those ZIPs therefore shows “The stable GRMetro Update Host is not installed” even though local transactional updates work. Use the dedicated host-only migration rather than reinstalling the application.
+
+`build-update-host-migration.ps1` requires a clean committed source tree, an enabled HTTPS release-source policy, and a fingerprinted public-key document whose channel authorization matches that source. It builds the external host, applies optional Authenticode signing, embeds only the public trust material, and emits an immutable bundle plus `migration-build.json`. It never includes a release private key or application/private runtime state.
+
+`install-update-host.ps1` validates the approved bundle SHA-256, installed release/channel, pending transaction state, bundle inventory, pinned-key fingerprints, Authenticode state, and a live signed-feed discovery before committing the migration. Feed discovery is read-only and does not advance replay state. It transactionally installs only the external host and source policy, then migrates Desktop and Start Menu shortcuts to recovery-first `Update Host -Mode Launch` while preserving the exact autostart choice. It does not replace application files, stop GRMetro, contact ServiceTitan, or inspect/change either Edge profile. Any failure restores the prior host, source policy, shortcuts, and scheduled-task state.
+
+An unsigned internal host requires the explicit `-ConfirmUnsignedInternalHost` switch after Defender scanning and authorized security review. This confirmation does not bypass Defender or signature verification for release metadata. A `testing` source/key can authorize only `testing` metadata; stable release discovery still requires a separately provisioned stable-channel public key and feed.
+
 The generated Setup EXE contains a pinned official Windows x64 Node runtime, lockfile-resolved production dependencies, and the compiled Vite dashboard. Node.js, npm, Git, the repository, development dependencies, and a compiler are build-computer concerns only. They are not target-computer prerequisites. The pinned Node archive is accepted only when its SHA-256 checksum matches `runtime-versions.json`.
 
 ## Package contents

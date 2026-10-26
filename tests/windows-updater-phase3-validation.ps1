@@ -4,6 +4,7 @@ $repository=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd('\')
 . (Join-Path $repository 'scripts\windows/release-feed.ps1')
 . (Join-Path $repository 'scripts\windows/authenticode-signing.ps1')
 . (Join-Path $repository 'scripts\windows/launch-integration.ps1')
+. (Join-Path $repository 'scripts\windows/update-host-installation.ps1')
 function Assert($condition,[string]$message){if(-not$condition){throw $message}}
 function Expect-Failure([scriptblock]$action,[string]$message){$failed=$false;try{&$action}catch{$failed=$true};Assert $failed $message}
 function Write-Text([string]$path,[string]$value){New-Item -ItemType Directory -Force -Path ([IO.Path]::GetDirectoryName($path))|Out-Null;[IO.File]::WriteAllText($path,$value,(New-Object Text.UTF8Encoding $false))}
@@ -48,8 +49,6 @@ try{
   $verifyOutput=& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repository 'scripts/windows/provision-release-signing-key.ps1') -Action VerifyPair -KeyId phase3-test -PrivateKeyPath $private -PublicKeyPath $public;if($LASTEXITCODE-ne0){throw 'Release key pair verification tool failed.'};Assert (($verifyOutput|Out-String)-match'Fingerprint') 'Release key verification omitted its public fingerprint.'
   Write-Output 'PASS: external release key tooling verifies matching material and reports an independent public fingerprint without generating a production key.'
 
-  $installerPath=Join-Path $repository 'scripts/windows/install-grmetro-performance-center.ps1';$tokens=$null;$errors=$null;$installerAst=[Management.Automation.Language.Parser]::ParseFile($installerPath,[ref]$tokens,[ref]$errors)
-  foreach($name in @('Install-GrMetroStableUpdateHost','Restore-GrMetroStableUpdateHost')){$function=$installerAst.Find({param($node)$node-is[Management.Automation.Language.FunctionDefinitionAst]-and$node.Name-eq$name},$true);Invoke-Expression $function.Extent.Text}
   $bundle=Join-Path $fixture 'provision bundle';New-Item -ItemType Directory -Force -Path $bundle|Out-Null
   foreach($name in @('GRMetro Update Host.exe','update-host.ps1','package-files.ps1','process-control.ps1','application-validation.ps1','release-identity.ps1','authenticode-signing.ps1')){Write-Text (Join-Path $bundle $name) ('HOST '+$name)}
   Copy-Item (Join-Path $repository 'scripts/windows/release-feed.ps1') (Join-Path $bundle 'release-feed.ps1')

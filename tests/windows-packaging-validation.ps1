@@ -93,7 +93,7 @@ try {
   $transitionOldZip=Join-Path $fixture 'transition-previous.zip'
   $transitionNewZip=Join-Path $fixture 'transition-current.zip'
   $transitionAdded='scripts/windows/new-version-tool.ps1'
-  $transitionPortableFiles=@('package.json','apps/backend/src/index.js','scripts/windows/package-manifest.json','scripts/windows/package-build.json','scripts/windows/package-files.ps1','scripts/windows/process-control.ps1','scripts/windows/launch-integration.ps1','scripts/windows/release-identity.ps1','scripts/windows/application-validation.ps1','scripts/windows/env-wizard.ps1','scripts/windows/servicetitan-profile.ps1','scripts/windows/manual-legacy-upgrade.ps1','scripts/validate-private-configuration.js','shared/technicianConfiguration.js','GRMetro Performance Center.exe','scripts/windows/runtime-versions.json','scripts/windows/runtime-paths.ps1','apps/dashboard/dist/index.html','runtime/node/node.exe','runtime/node/LICENSE','runtime/node/VERSION','node_modules/express/package.json','node_modules/playwright/package.json','node_modules/qrcode-terminal/package.json')
+  $transitionPortableFiles=@('package.json','apps/backend/src/index.js','scripts/windows/package-manifest.json','scripts/windows/package-build.json','scripts/windows/package-files.ps1','scripts/windows/process-control.ps1','scripts/windows/launch-integration.ps1','scripts/windows/release-identity.ps1','scripts/windows/application-validation.ps1','scripts/windows/env-wizard.ps1','scripts/windows/servicetitan-profile.ps1','scripts/windows/manual-legacy-upgrade.ps1','scripts/windows/update-host-installation.ps1','scripts/validate-private-configuration.js','shared/technicianConfiguration.js','GRMetro Performance Center.exe','scripts/windows/runtime-versions.json','scripts/windows/runtime-paths.ps1','apps/dashboard/dist/index.html','runtime/node/node.exe','runtime/node/LICENSE','runtime/node/VERSION','node_modules/express/package.json','node_modules/playwright/package.json','node_modules/qrcode-terminal/package.json')
   $transitionNodeFiles=@(1..180|ForEach-Object{"node_modules/upgrade-fixture/file-$_.js"})
   $transitionOldFiles=@($transitionPortableFiles)+$transitionNodeFiles+$obsoletePath
   $transitionNewFiles=@($transitionPortableFiles)+$transitionNodeFiles+'.env.example'+$transitionAdded
@@ -363,8 +363,7 @@ try {
   Write-Output 'PASS: all Windows scripts parse; WPF windows construct without being shown.'
 
   # Setup installs the stable host beside, never inside, the replaceable application.
-  $installerAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'scripts/windows/install-grmetro-performance-center.ps1'),[ref]$tokens,[ref]$parseErrors)
-  foreach($name in @('Install-GrMetroStableUpdateHost','Complete-GrMetroStableUpdateHost','Restore-GrMetroStableUpdateHost')){$function=$installerAst.Find({param($node)$node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name},$true);Invoke-Expression $function.Extent.Text}
+  . (Join-Path $repository 'scripts/windows/update-host-installation.ps1')
   $hostBundleSource=Join-Path $fixture 'host bundle source';$hostBundleZip=Join-Path $fixture 'host bundle.zip'
   foreach($name in @('GRMetro Update Host.exe','update-host.ps1','package-files.ps1','process-control.ps1','application-validation.ps1','release-identity.ps1','authenticode-signing.ps1')){Write-Fixture (Join-Path $hostBundleSource $name) ('HOST '+$name)}
   Copy-Item -LiteralPath (Join-Path $repository 'scripts/windows/release-feed.ps1') -Destination (Join-Path $hostBundleSource 'release-feed.ps1')
@@ -377,13 +376,13 @@ try {
   $hostRoot=Join-Path $fixture 'local app data/GRMetro/Update Host'
   Assert (Test-Path -LiteralPath (Join-Path $hostRoot 'GRMetro Update Host.exe')-PathType Leaf) 'Setup did not install the stable Update Host outside the app tree.'
   Assert (-not([IO.Path]::GetFullPath($hostRoot).StartsWith([IO.Path]::GetFullPath($installed).TrimEnd('\')+'\',[StringComparison]::OrdinalIgnoreCase))) 'Setup installed the Update Host inside the replaceable application.'
-  Restore-GrMetroStableUpdateHost $hostState
+  $env:LOCALAPPDATA=Join-Path $fixture 'local app data';try{Restore-GrMetroStableUpdateHost $hostState}finally{$env:LOCALAPPDATA=$savedLocalAppData}
   Assert (-not(Test-Path -LiteralPath $hostRoot)) 'Failed Setup did not remove a newly introduced Update Host.'
   $env:LOCALAPPDATA=Join-Path $fixture 'local app data';try{$hostState=Install-GrMetroStableUpdateHost $hostBundleZip;Complete-GrMetroStableUpdateHost $hostState}finally{$env:LOCALAPPDATA=$savedLocalAppData}
   Assert ((Test-Path -LiteralPath $hostRoot) -and -not(Test-Path -LiteralPath (Join-Path $fixture 'local app data/GRMetro/Update Host.previous'))) 'Successful Setup did not commit Update Host installation.'
   Write-Fixture (Join-Path $hostRoot 'GRMetro Update Host.exe') 'PREVIOUS HOST'
   $env:LOCALAPPDATA=Join-Path $fixture 'local app data';try{$hostState=Install-GrMetroStableUpdateHost $hostBundleZip}finally{$env:LOCALAPPDATA=$savedLocalAppData}
-  Restore-GrMetroStableUpdateHost $hostState
+  $env:LOCALAPPDATA=Join-Path $fixture 'local app data';try{Restore-GrMetroStableUpdateHost $hostState}finally{$env:LOCALAPPDATA=$savedLocalAppData}
   Assert ((Get-Content -LiteralPath (Join-Path $hostRoot 'GRMetro Update Host.exe')-Raw)-eq'PREVIOUS HOST') 'Failed Setup did not restore the previous stable Update Host.'
   Write-Output 'PASS: Setup atomically installs the stable Update Host outside the replaceable application.'
 

@@ -12,13 +12,14 @@ test("Phase 3 launch migration, trust provisioning, and signing integration fixt
   for (const evidence of ["scheduled startup migrate", "recovery precedes launch", "Authenticode fails closed", "public fingerprint", "Setup provisioning"]) assert.match(result.stdout, new RegExp(evidence, "i"));
 });
 
-test("routine updater boundary leaves Update Host and trust changes to full Setup", () => {
-  const manifest = JSON.parse(read("scripts/windows/package-manifest.json"));
-  const names = manifest.files.join("\n");
-  assert.doesNotMatch(names, /Update Host|Update State|release-public-keys\.json|release-source\.default\.json|authenticode-signing\.ps1/i);
+test("routine application updater cannot replace its external Update Host", () => {
   const host = read("scripts/windows/update-host.ps1");
   assert.match(host, /requires a newer GRMetro Setup/);
   assert.doesNotMatch(host, /Copy-Item[^\n]+Update Host|Move-Item[^\n]+Update Host/i);
+  const migration = read("scripts/windows/install-update-host.ps1");
+  assert.match(migration, /Install-GrMetroStableUpdateHost/);
+  assert.match(migration, /Save-GrMetroLaunchIntegrationState/);
+  assert.match(migration, /Get-GrMetroReleaseCheck[^\n]+-ReadOnly/);
 });
 
 test("production trust defaults stay disabled without explicit migration provisioning", () => {
@@ -39,6 +40,7 @@ test("normal launch integration targets the stable host", () => {
   assert.match(integration, /Arguments='-Mode Launch'/);
   assert.match(integration, /New-ScheduledTaskAction -Execute \$paths\.HostExecutable -Argument '-Mode Launch'/);
   assert.match(installer, /Save-GrMetroLaunchIntegrationState/);
+  assert.match(installer, /update-host-installation\.ps1/);
   assert.match(installer, /Restore-GrMetroLaunchIntegration/);
   assert.match(autostart, /Register-GrMetroHostAutostart/);
 });
