@@ -99,7 +99,8 @@ test("packaged updater delegates checks, remote handoff, and local fixtures to t
   assert.match(source, /GRMetro\\Update Host\\GRMetro Update Host\.exe/);
   assert.match(source, /-Mode','ApplyLocal'/);
   assert.match(source, /-Mode','PrepareRemote'/);
-  assert.match(source, /-Mode Check/);
+  assert.match(source, /'-Mode','Check'/);
+  assert.match(source, /RedirectStandardOutput \$stdout[^\n]+-PassThru -Wait/);
   assert.match(source, /\$InstallRemote/);
   assert.doesNotMatch(source, /\bgit\b|\bnpm\b/i);
 });

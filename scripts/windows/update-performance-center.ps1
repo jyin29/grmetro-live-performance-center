@@ -10,12 +10,24 @@ if(-not$UpdateHostPath){$UpdateHostPath=$defaultHost}
 if([IO.Path]::GetFullPath($UpdateHostPath)-ne[IO.Path]::GetFullPath($defaultHost)-and$env:GRMETRO_UPDATER_TEST_MODE-ne'true'){throw 'Update Host path override is disabled outside disposable tests.'}
 if(-not(Test-Path -LiteralPath $UpdateHostPath -PathType Leaf)){throw 'The stable GRMetro Update Host is not installed. Use the latest Setup EXE.'}
 
+function Invoke-GrMetroUpdateHostCheck {
+  $hostRoot=[IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($UpdateHostPath));$hostScript=Join-Path $hostRoot 'update-host.ps1'
+  if(-not(Test-Path -LiteralPath $hostScript -PathType Leaf)){throw 'The stable GRMetro Update Host files are incomplete.'}
+  $operationId=[guid]::NewGuid().ToString('N');$stdout=Join-Path ([IO.Path]::GetTempPath()) "grmetro-update-check-worker-$operationId.out";$stderr=$stdout+'.err'
+  try{
+    $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File',('"{0}"'-f$hostScript),'-Mode','Check','-InstallRoot',('"{0}"'-f$root),'-Quiet')
+    $process=Start-Process -FilePath powershell.exe -ArgumentList $arguments -WorkingDirectory $hostRoot -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait
+    $output=if((Test-Path -LiteralPath $stdout)-and(Get-Item -LiteralPath $stdout).Length-gt0){Get-Content -LiteralPath $stdout -Raw}else{''}
+    $errorText=if((Test-Path -LiteralPath $stderr)-and(Get-Item -LiteralPath $stderr).Length-gt0){Get-Content -LiteralPath $stderr -Raw}else{''}
+    if($process.ExitCode-ne0){$detail=@($errorText-split"`r?`n"|ForEach-Object{$_.Trim()}|Where-Object{$_-and$_-notmatch'^At .+\.ps1:'})[0];if(-not$detail){$detail='The configured release source could not be reached or verified.'};foreach($path in @($root,$hostRoot)){if($path){$detail=$detail.Replace($path,'the GRMetro installation')}};throw "GRMetro Update Host could not check the configured release source. $($detail.Substring(0,[Math]::Min(300,$detail.Length)))"}
+    $json=@($output-split"`r?`n"|Where-Object{$_.Trim().StartsWith('{')})|Select-Object -Last 1
+    if(-not$json){throw 'GRMetro Update Host returned no update-check result.'}
+    return $json
+  }finally{Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue}
+}
+
 if($CheckOnly){
-  $output=@(& $UpdateHostPath -Mode Check -InstallRoot $root -Quiet)
-  if($LASTEXITCODE-ne0){throw 'GRMetro Update Host could not check the configured release source.'}
-  $json=@($output|Where-Object{$_ -and $_.Trim().StartsWith('{')})|Select-Object -Last 1
-  if(-not$json){throw 'GRMetro Update Host returned no update-check result.'}
-  $json;exit 0
+  Invoke-GrMetroUpdateHostCheck;exit 0
 }
 
 if($InstallRemote){
@@ -38,5 +50,5 @@ if($PackageZip){
   [ordered]@{handoffStarted=$true;remote=$false;package=[IO.Path]::GetFullPath($PackageZip)}|ConvertTo-Json -Compress;exit 0
 }
 
-& $UpdateHostPath -Mode Check -InstallRoot $root -Quiet
-exit $LASTEXITCODE
+Invoke-GrMetroUpdateHostCheck
+exit 0

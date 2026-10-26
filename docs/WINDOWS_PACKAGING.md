@@ -44,6 +44,8 @@ Application-only ZIPs deliberately cannot write `%LOCALAPPDATA%\GRMetro\Update H
 
 An unsigned internal host requires the explicit `-ConfirmUnsignedInternalHost` switch after Defender scanning and authorized security review. This confirmation does not bypass Defender or signature verification for release metadata. A `testing` source/key can authorize only `testing` metadata; stable release discovery still requires a separately provisioned stable-channel public key and feed.
 
+The Control Center check bridge invokes the installed host's `update-host.ps1` worker in a hidden waited PowerShell subprocess and captures its JSON/stdout and sanitized stderr through temporary files. It must not invoke `GRMetro Update Host.exe` as a stdout-returning CLI: that executable uses the Windows GUI subsystem, so Windows PowerShell does not wait for it or update `$LASTEXITCODE`. Remote-install handoff and recovery-first launch continue through the external executable because those paths intentionally detach and report through updater-owned status files.
+
 The generated Setup EXE contains a pinned official Windows x64 Node runtime, lockfile-resolved production dependencies, and the compiled Vite dashboard. Node.js, npm, Git, the repository, development dependencies, and a compiler are build-computer concerns only. They are not target-computer prerequisites. The pinned Node archive is accepted only when its SHA-256 checksum matches `runtime-versions.json`.
 
 ## Package contents
