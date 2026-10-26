@@ -68,7 +68,7 @@ function Complete-UpdateCheck {
   $operation=$script:updateCheck;if(-not$operation-or-not$operation.Process.HasExited){return}
   $stdout=if(Test-Path $operation.StdOut){Get-Content -LiteralPath $operation.StdOut -Raw}else{''};$stderr=if(Test-Path $operation.StdErr){Get-Content -LiteralPath $operation.StdErr -Raw}else{''};$exitCode=$operation.Process.ExitCode
   Remove-Item -LiteralPath $operation.StdOut,$operation.StdErr -Force -ErrorAction SilentlyContinue;$script:updateCheck=$null;$updateProgress.Visibility='Collapsed'
-  if($exitCode-ne0){$message=Get-NativeOperationError $stderr 'The configured release source could not be reached or verified.';Set-UpdateCard 'Unable to check for updates' $message;if($operation.Manual){Show-GrMetroResult 'Update check failed' $message $false}else{Set-AutomaticUpdateBackoff $false};return}
+  if($null -ne $exitCode -and $exitCode -ne 0){$message=Get-NativeOperationError $stderr 'The configured release source could not be reached or verified.';Set-UpdateCard 'Unable to check for updates' $message;if($operation.Manual){Show-GrMetroResult 'Update check failed' $message $false}else{Set-AutomaticUpdateBackoff $false};return}
   try{$json=@($stdout-split"`r?`n"|Where-Object{$_.Trim().StartsWith('{')})|Select-Object -Last 1;$result=$json|ConvertFrom-Json}catch{Set-UpdateCard 'Unable to check for updates' 'The Update Host returned an invalid response.';if($operation.Manual){Show-GrMetroResult 'Update check failed' 'The Update Host returned an invalid response.' $false}else{Set-AutomaticUpdateBackoff $false};return}
   if(-not$operation.Manual){Set-AutomaticUpdateBackoff $true}
   switch([string]$result.status){
