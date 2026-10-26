@@ -2311,6 +2311,7 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Confirm application-only packages intentionally omit the updater-owned external host and trust state.
 - [x] Extract transactional Update Host installation into a shared installer module while preserving full Setup behavior.
 - [x] Add a host-only migration entry point that validates bundle hash, installed identity/channel, pending transactions, signing status, and live signed-feed discovery.
+- [x] Add a genuinely read-only `ValidateOnly` host migration preflight that uses a disposable host root and leaves updater replay state untouched.
 - [x] Keep release discovery read-only during migration preflight so replay state changes only during normal updater checks.
 - [x] Preserve application/private files, running processes, Edge profiles, firewall state, and the exact autostart choice.
 - [x] Migrate existing shortcuts to recovery-first host launch with byte-for-byte rollback on failure.
