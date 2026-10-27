@@ -2323,3 +2323,7 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Keep the application transaction open until Update Host trust, launch integration, and target application validation all succeed.
 - [x] Roll back both application and host state for validation and launch-integration failures while preserving disabled autostart and private files.
 - [x] Exercise the exact generated payload against disposable `d159cba`/schema-2 fixtures, including packaged backend validation and injected rollback.
+- [x] Add explicit post-success managed-file recovery from the installer-created verified legacy backup.
+- [x] Reuse the version-2 journal and current-version rollback hashes so recovery failures restore the upgraded application safely.
+- [x] Verify private/nonmanifest hashes and leave Update Host, shortcuts, firewall, autostart, and Edge outside recovery scope.
+- [x] Cover read-only validation, corrupt backup rejection, successful recovery, apply failure rollback, and interrupted recovery-only handling.
