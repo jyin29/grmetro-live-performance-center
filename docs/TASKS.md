@@ -2319,3 +2319,7 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Cover successful install, late publication failure, discovery failure, rollback, incorrect hash, unsigned approval, channel mismatch, and pending transaction refusal in disposable fixtures.
 - [x] Fix Control Center update checks to wait on the host PowerShell worker and capture JSON/errors instead of treating the GUI-subsystem host executable as a synchronous stdout CLI.
 - [x] Reproduce stale `$LASTEXITCODE` and empty stdout through the compiled host, then cover successful and failed GUI check bridges with disposable regression fixtures.
+- [x] Add a reproducible single-file legacy upgrade builder with exact outer/inner inventories and SHA-256 verification.
+- [x] Keep the application transaction open until Update Host trust, launch integration, and target application validation all succeed.
+- [x] Roll back both application and host state for validation and launch-integration failures while preserving disabled autostart and private files.
+- [x] Exercise the exact generated payload against disposable `d159cba`/schema-2 fixtures, including packaged backend validation and injected rollback.

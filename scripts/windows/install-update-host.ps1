@@ -24,7 +24,7 @@ function Assert-GrMetroUpdateHostMigrationRoot([string]$Root,[switch]$AllowTestR
 }
 
 function Get-GrMetroUpdateHostMigrationPreflight {
-  param([string]$Root,[string]$Bundle,[string]$ExpectedHash,[string]$InstalledVersion,[string]$Channel,[switch]$AllowTestRoot)
+  param([string]$Root,[string]$Bundle,[string]$ExpectedHash,[string]$InstalledVersion,[string]$Channel,[switch]$AllowTestRoot,[switch]$AllowAppliedApplicationTransaction)
   $install=Assert-GrMetroUpdateHostMigrationRoot $Root -AllowTestRoot:$AllowTestRoot
   $bundlePath=[IO.Path]::GetFullPath($Bundle)
   if(-not(Test-Path -LiteralPath $bundlePath -PathType Leaf)){throw 'The Update Host migration bundle is missing.'}
@@ -33,18 +33,26 @@ function Get-GrMetroUpdateHostMigrationPreflight {
   $installed=Get-GrMetroInstalledReleaseMetadata $install
   if($InstalledVersion-and[string]$installed.releaseVersion-ne$InstalledVersion){throw "Installed GRMetro version $($installed.releaseVersion) does not match the approved migration baseline."}
   if([string]$installed.channel-ne$Channel){throw "Installed GRMetro channel $($installed.channel) does not match the approved $Channel Update Host source."}
-  $recovery=Get-GrMetroUpgradeRecoveryAction $install;if($recovery-ne'none'){throw "A pending application transaction requires $recovery before Update Host migration."}
+  $recovery=Get-GrMetroUpgradeRecoveryAction $install
+  if($recovery-ne'none'){
+    $allowedApplied=$false
+    if($AllowAppliedApplicationTransaction-and$recovery-eq'rollback'){
+      $journalPath=Join-Path (Get-GrMetroUpgradeRoot $install) 'journal.json'
+      try{$journal=Get-Content -LiteralPath $journalPath -Raw|ConvertFrom-Json;$allowedApplied=[int]$journal.version-eq2-and[string]$journal.status-eq'applied'-and[IO.Path]::GetFullPath([string]$journal.installRoot).TrimEnd('\')-eq$install}catch{$allowedApplied=$false}
+    }
+    if(-not$allowedApplied){throw "A pending application transaction requires $recovery before Update Host migration."}
+  }
   return [pscustomobject]@{InstallRoot=$install;BundlePath=$bundlePath;BundleSha256=$hash;Installed=$installed;Channel=$Channel;RecoveryAction=$recovery}
 }
 
 function Test-GrMetroUpdateHostMigration {
   param(
     [string]$Root,[string]$Bundle,[string]$ExpectedHash,[string]$InstalledVersion,[string]$Channel,
-    [switch]$ConfirmUnsigned,[switch]$AllowTestRoot,
+    [switch]$ConfirmUnsigned,[switch]$AllowTestRoot,[switch]$AllowAppliedApplicationTransaction,
     [scriptblock]$SignatureAction={param($path)Get-AuthenticodeSignature -LiteralPath $path},
     [scriptblock]$DiscoveryAction={param($install,$state,$source,$keys,$allowTest) Get-GrMetroReleaseCheck -InstallRoot $install -StateRoot $state -ReleaseSourcePath $source -PublicKeysPath $keys -UpdaterProtocol 1 -AllowTestRoot:$allowTest -ReadOnly}
   )
-  $preflight=Get-GrMetroUpdateHostMigrationPreflight -Root $Root -Bundle $Bundle -ExpectedHash $ExpectedHash -InstalledVersion $InstalledVersion -Channel $Channel -AllowTestRoot:$AllowTestRoot
+  $preflight=Get-GrMetroUpdateHostMigrationPreflight -Root $Root -Bundle $Bundle -ExpectedHash $ExpectedHash -InstalledVersion $InstalledVersion -Channel $Channel -AllowTestRoot:$AllowTestRoot -AllowAppliedApplicationTransaction:$AllowAppliedApplicationTransaction
   $savedLocal=$env:LOCALAPPDATA;$temporaryLocal=Join-Path ([IO.Path]::GetTempPath()) ('grmetro-host-preflight-'+[guid]::NewGuid().ToString('N'));$hostState=$null
   try{
     $env:LOCALAPPDATA=$temporaryLocal

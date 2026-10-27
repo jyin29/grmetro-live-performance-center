@@ -46,6 +46,12 @@ An unsigned internal host requires the explicit `-ConfirmUnsignedInternalHost` s
 
 The Control Center check bridge invokes the installed host's `update-host.ps1` worker in a hidden waited PowerShell subprocess and captures its JSON/stdout and sanitized stderr through temporary files. It must not invoke `GRMetro Update Host.exe` as a stdout-returning CLI: that executable uses the Windows GUI subsystem, so Windows PowerShell does not wait for it or update `$LASTEXITCODE`. Remote-install handoff and recovery-first launch continue through the external executable because those paths intentionally detach and report through updater-owned status files.
 
+### Single-file legacy composite upgrade
+
+`build-legacy-single-file-upgrade.ps1` combines one already-built application-only ZIP, one reviewed Update Host migration bundle, and the shared transactional helpers into a single internal CMD. The outer payload and inner review archive use exact inventories plus SHA-256 checks before extraction. The generated installer accepts only the explicitly named legacy `applicationVersion`, commit, and schema-2 installed manifest. It runs application/private-configuration and host/feed validation before prompting or stopping anything.
+
+The composite upgrade installs the external host while retaining its rollback state, applies and validates the dashboard while the application transaction remains open, migrates shortcuts while preserving the stored autostart choice, and only then commits both components. Application validation, host installation, or launch-integration failures restore both components and restart only the prior GRMetro process state. A separate verified managed-file rollback bundle remains after success. The installer never targets Edge, its CDP port/profile, firewall rules, or private nonmanifest data. Power loss can still leave durable application transaction or host-backup evidence; the operator must preserve that evidence and use reviewed recovery rather than rerunning blindly.
+
 The generated Setup EXE contains a pinned official Windows x64 Node runtime, lockfile-resolved production dependencies, and the compiled Vite dashboard. Node.js, npm, Git, the repository, development dependencies, and a compiler are build-computer concerns only. They are not target-computer prerequisites. The pinned Node archive is accepted only when its SHA-256 checksum matches `runtime-versions.json`.
 
 ## Package contents

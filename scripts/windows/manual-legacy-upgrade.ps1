@@ -6,7 +6,9 @@ param(
   [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA 'GRMetro\Performance Center'),
   [switch]$ValidateOnly,
   [switch]$ConfirmDefenderReview,
-  [switch]$ConfirmRollbackSource
+  [switch]$ConfirmRollbackSource,
+  [switch]$DeferCommitCleanup,
+  [int]$ValidationPort=3000
 )
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'package-files.ps1')
@@ -93,11 +95,11 @@ function Test-GrMetroManualLegacyUpgrade {
 function Invoke-GrMetroManualLegacyUpgrade {
   param(
     [string]$Root,[string]$Zip,[string]$ExpectedHash,[string]$ExpectedVersion,[string]$ExpectedCommit,
-    [switch]$ValidateOnly,[switch]$ConfirmDefenderReview,[switch]$ConfirmRollbackSource,[switch]$AllowTestRoot,
+    [switch]$ValidateOnly,[switch]$ConfirmDefenderReview,[switch]$ConfirmRollbackSource,[switch]$DeferCommitCleanup,[switch]$AllowTestRoot,[int]$Port=3000,
     [scriptblock]$PrivateConfigurationAction={param($package,$install) Test-GrMetroPrivateConfigurationCompatibility -PackageZip $package -InstallRoot $install},
     [scriptblock]$CaptureProcessStateAction={param($install);$owned=@(Get-GrMetroOwnedUpgradeProcesses $install);[pscustomobject]@{OperatorWasRunning=[bool]@($owned|Where-Object{$_.Role-eq'operator'});RuntimeWasRunning=[bool]@($owned|Where-Object{$_.Role-in@('supervisor','backend')})}},
     [scriptblock]$StopProcessesAction={param($install) Stop-GrMetroUpgradeProcesses $install},
-    [scriptblock]$ValidationAction={param($install,$version) Invoke-GrMetroApplicationValidation -InstallRoot $install -ExpectedReleaseVersion $version},
+    [scriptblock]$ValidationAction={param($install,$version,$validationPort) Invoke-GrMetroApplicationValidation -InstallRoot $install -ExpectedReleaseVersion $version -Port $validationPort},
     [scriptblock]$CompleteAction={param($install) Complete-GrMetroUpgradeTransaction $install},
     [scriptblock]$StartAction={param($install) Start-GrMetroInstalledApplication $install},
     [scriptblock]$RestartAfterFailureAction={param($install,$state) Restart-GrMetroAfterFailedUpgrade $install $state}
@@ -120,7 +122,11 @@ function Invoke-GrMetroManualLegacyUpgrade {
     $null=&$StopProcessesAction $preflight.InstallRoot
     $null=Apply-GrMetroPreparedPackageTransaction $preflight.InstallRoot
     Write-GrMetroManualEvidence $evidence 'validating' $preflight.InstalledCommit $preflight.Target.releaseVersion 'Application files replaced. Validating the installed application.'
-    $null=&$ValidationAction $preflight.InstallRoot ([string]$preflight.Target.releaseVersion)
+    $null=&$ValidationAction $preflight.InstallRoot ([string]$preflight.Target.releaseVersion) $Port
+    if($DeferCommitCleanup){
+      Write-GrMetroManualEvidence $evidence 'validated-pending-commit' $preflight.InstalledCommit $preflight.Target.releaseVersion 'Application validated. Transaction remains available for composite upgrade rollback.'
+      return [pscustomobject]@{Status='validated-pending-commit';ReleaseVersion=[string]$preflight.Target.releaseVersion;EvidencePath=$evidence;PriorProcessState=$priorState;InstallRoot=$preflight.InstallRoot;TransactionRoot=(Get-GrMetroUpgradeRoot $preflight.InstallRoot)}
+    }
     $null=&$CompleteAction $preflight.InstallRoot
     $transactionPrepared=$false
     $commitCompleted=$true
@@ -156,5 +162,5 @@ function Invoke-GrMetroManualLegacyUpgrade {
 
 if($MyInvocation.InvocationName-ne'.'){
   if(-not$PackageZip-or-not$ExpectedPackageSha256-or-not$ExpectedReleaseVersion-or-not$ExpectedInstalledCommit){throw 'PackageZip, ExpectedPackageSha256, ExpectedReleaseVersion, and ExpectedInstalledCommit are required.'}
-  Invoke-GrMetroManualLegacyUpgrade -Root $InstallRoot -Zip $PackageZip -ExpectedHash $ExpectedPackageSha256 -ExpectedVersion $ExpectedReleaseVersion -ExpectedCommit $ExpectedInstalledCommit -ValidateOnly:$ValidateOnly -ConfirmDefenderReview:$ConfirmDefenderReview -ConfirmRollbackSource:$ConfirmRollbackSource
+  Invoke-GrMetroManualLegacyUpgrade -Root $InstallRoot -Zip $PackageZip -ExpectedHash $ExpectedPackageSha256 -ExpectedVersion $ExpectedReleaseVersion -ExpectedCommit $ExpectedInstalledCommit -ValidateOnly:$ValidateOnly -ConfirmDefenderReview:$ConfirmDefenderReview -ConfirmRollbackSource:$ConfirmRollbackSource -DeferCommitCleanup:$DeferCommitCleanup -Port $ValidationPort
 }
