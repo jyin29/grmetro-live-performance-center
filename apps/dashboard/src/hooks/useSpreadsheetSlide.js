@@ -1,13 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchSpreadsheetSlide } from "../api/managementApi";
 
-export function useSpreadsheetSlide() {
-  const [slide, setSlide] = useState(null);
+const POLL_MS = 30_000;
+
+export function useSpreadsheetSlide(refreshKey = null) {
+  const [resource, setResource] = useState({ available: false, loaded: false, slide: null });
+  const serializedRef = useRef(null);
   useEffect(() => {
     let alive = true;
-    const load = () => fetchSpreadsheetSlide().then((result) => { if (alive) setSlide(result.slide); }).catch(() => {});
-    load(); const timer = window.setInterval(load, 5_000);
+    const load = () => fetchSpreadsheetSlide().then((result) => {
+      if (!alive) return;
+      const next = { available: result.available === true, loaded: true, slide: result.slide ?? null };
+      const serialized = JSON.stringify(next);
+      if (serializedRef.current === serialized) return;
+      serializedRef.current = serialized;
+      setResource(next);
+    }).catch(() => {});
+    load(); const timer = window.setInterval(load, POLL_MS);
     return () => { alive = false; window.clearInterval(timer); };
-  }, []);
-  return slide;
+  }, [refreshKey]);
+  return resource;
 }

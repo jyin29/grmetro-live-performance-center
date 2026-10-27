@@ -12,7 +12,13 @@ function ControlIcon({ name }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 5.5 6.5 6.5-6.5 6.5" /></svg>;
 }
 
-export function LocalDashboardControls({ controller }) {
+export function DashboardSlideButtons({ controller }) {
+  return <div className="local-dashboard-controls__slides" aria-label="Choose slide">
+    {controller.slides.map((slide) => <button type="button" key={slide.id} className={controller.activeSlideId === slide.id ? "is-active" : ""} aria-pressed={controller.activeSlideId === slide.id} onClick={() => controller.selectSlide(slide.id)}>{slide.label}</button>)}
+  </div>;
+}
+
+export function LocalDashboardControls({ controller, diagnosticsVisible = false, onToggleDiagnostics }) {
   const [open, setOpen] = useState(false);
   const trayRef = useRef(null);
 
@@ -67,14 +73,16 @@ export function LocalDashboardControls({ controller }) {
       <button type="button" onClick={controller.nextSlide}><ControlIcon name="next" /><small>Next</small></button>
     </div>
 
-    <div className="local-dashboard-controls__slides" aria-label="Choose slide">
-      {controller.slides.map((slide, index) => <button type="button" key={slide.id} className={controller.activeSlideIndex === index ? "is-active" : ""} aria-pressed={controller.activeSlideIndex === index} onClick={() => controller.selectSlide(index)}>{slide.label}</button>)}
-    </div>
+    <DashboardSlideButtons controller={controller} />
 
     <div className="local-dashboard-controls__utility">
       <button type="button" onClick={controller.restartRotationTimer}>Restart timer</button>
       <a href="/remote">Open full controls</a>
     </div>
+    <section className="local-dashboard-controls__diagnostics" aria-label="Diagnostics controls">
+      <div><small>Diagnostics</small><span>TV viewport and browser measurements</span></div>
+      <button type="button" aria-pressed={diagnosticsVisible} onClick={onToggleDiagnostics}>{diagnosticsVisible ? "Hide Diagnostics" : "Show Diagnostics"}</button>
+    </section>
     <p className="local-dashboard-controls__hint">Keyboard: C controls · ←/→ slides · Space pause</p>
   </aside>;
 }

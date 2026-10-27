@@ -6,14 +6,16 @@ const { PRESENTATION_COMMANDS } = require("../../../shared/presentation");
 const { createPresentationManager } = require("../src/presentation/presentationManager");
 const { createPresentationCommandBus } = require("../src/presentation/presentationCommandBus");
 
-function setup() {
+function setup(options = {}) {
   let now = new Date("2026-08-12T12:00:00.000Z").getTime();
   let nextTimer = 0;
   const timers = new Map();
   const displays = [{ id: "main", name: "Main", presentationProfile: "standard" }, { id: "dispatch", name: "Dispatch", presentationProfile: "standard" }];
-  const manager = createPresentationManager({ displays, slideCount: 5, rotationMilliseconds: 30000,
+  const manager = createPresentationManager({ displays, slideCount: options.slideCount ?? 5, rotationMilliseconds: 30000,
     clock: () => new Date(now), setTimeoutFn(callback, delay) { const id = ++nextTimer; timers.set(id, { callback, at: now + delay }); return id; },
-    clearTimeoutFn(id) { timers.delete(id); } });
+    clearTimeoutFn(id) { timers.delete(id); }, getEligibleSlideIndices: options.getEligibleSlideIndices,
+    getSlideAvailabilityRevision: options.getSlideAvailabilityRevision, subscribeSlideEligibility: options.subscribeSlideEligibility,
+    slideIds: options.slideIds });
   const bus = createPresentationCommandBus({ handleCommand: manager.handleCommand });
   const command = (type, displayId = "main", payload = {}) => bus.dispatch({ type, displayId, payload });
   function advance(milliseconds) {
@@ -78,4 +80,40 @@ test("a backend restart creates a recoverable authoritative default snapshot", (
   assert.deepEqual(restarted.manager.getDisplayStates().map((state) => [state.displayId, state.activeSlideIndex, state.isRunning]),
     [["main", 0, true], ["dispatch", 0, true]]);
   restarted.manager.destroy();
+});
+
+test("spreadsheet eligibility controls direct navigation, wrapping, and automatic rotation", () => {
+  let spreadsheetAvailable = false; let eligibilityListener;
+  const options = {
+    slideCount: 6,
+    slideIds: ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet"],
+    getEligibleSlideIndices: () => spreadsheetAvailable ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4],
+    getSlideAvailabilityRevision: () => spreadsheetAvailable ? "present" : "absent",
+    subscribeSlideEligibility(listener) { eligibilityListener = listener; return () => { eligibilityListener = null; }; },
+  };
+  const { manager, command, advance } = setup(options);
+  assert.deepEqual(manager.getDisplayState("main").eligibleSlideIndices, [0, 1, 2, 3, 4]);
+  assert.deepEqual(manager.getDisplayState("main").eligibleSlideIds, ["revenue", "sales", "technicians", "operations", "recognition"]);
+  command(PRESENTATION_COMMANDS.PREVIOUS_SLIDE);
+  assert.equal(manager.getDisplayState("main").activeSlideIndex, 4);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "recognition");
+  command(PRESENTATION_COMMANDS.NEXT_SLIDE);
+  assert.equal(manager.getDisplayState("main").activeSlideIndex, 0);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "revenue");
+  assert.throws(() => command(PRESENTATION_COMMANDS.GO_TO_SLIDE, "main", { index: 5 }), /not currently available/);
+  command(PRESENTATION_COMMANDS.GO_TO_SLIDE, "main", { index: 4 });
+  advance(30000);
+  assert.equal(manager.getDisplayState("main").activeSlideIndex, 0);
+
+  spreadsheetAvailable = true; eligibilityListener();
+  assert.deepEqual(manager.getDisplayState("main").eligibleSlideIndices, [0, 1, 2, 3, 4, 5]);
+  command(PRESENTATION_COMMANDS.GO_TO_SLIDE, "main", { index: 5 });
+  assert.equal(manager.getDisplayState("main").activeSlideIndex, 5);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "spreadsheet");
+  spreadsheetAvailable = false; eligibilityListener();
+  assert.equal(manager.getDisplayState("main").activeSlideIndex, 0);
+  assert.equal(manager.getDisplayState("main").activeSlideId, "revenue");
+  assert.deepEqual(manager.getDisplayState("main").eligibleSlideIndices, [0, 1, 2, 3, 4]);
+  manager.destroy();
+  assert.equal(eligibilityListener, null);
 });

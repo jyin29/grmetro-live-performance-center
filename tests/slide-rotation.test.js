@@ -5,23 +5,18 @@ const path = require("node:path");
 
 async function registeredSlides() {
   const source = await readFile(path.join(__dirname, "../apps/dashboard/src/config/slideRegistry.jsx"), "utf8");
-  return [...source.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", Component: ([^ }]+) \}/g)];
+  return [...source.matchAll(/\{ id: "([^"]+)", label: "([^"]+)", Component: ([^ },]+)[^}]*\}/g)];
 }
 
 test("dashboard rotation uses one 30-second configuration and wraps to Slide 1", async () => {
-  const {
-    nextSlideIndex,
-    SLIDE_ROTATION_INTERVAL_MS,
-    SLIDE_TRANSITION_DURATION_MS,
-  } = await import("../apps/dashboard/src/config/slideRotation.js");
-
+  const { nextSlideIndex, SLIDE_ROTATION_INTERVAL_MS, SLIDE_TRANSITION_DURATION_MS } = await import("../apps/dashboard/src/config/slideRotation.js");
   assert.equal(SLIDE_ROTATION_INTERVAL_MS, 30_000);
   assert.ok(SLIDE_TRANSITION_DURATION_MS >= 300);
   assert.ok(SLIDE_TRANSITION_DURATION_MS <= 500);
   assert.equal(nextSlideIndex(0, 2), 1);
   assert.equal(nextSlideIndex(1, 2), 0);
   assert.equal(nextSlideIndex(0, 0), 0);
-  assert.equal(nextSlideIndex(4, 5), 0);
+  assert.equal(nextSlideIndex(5, 6), 0);
 });
 
 test("presentation controller keeps navigation and running state independent", async () => {
@@ -29,7 +24,6 @@ test("presentation controller keeps navigation and running state independent", a
   const slideCount = (await registeredSlides()).length;
   const reduce = (state, type, detail = {}) => presentationControllerReducer(state, { type, slideCount, ...detail });
   let state = createPresentationState(slideCount);
-
   state = reduce(state, PRESENTATION_ACTIONS.PAUSE);
   assert.deepEqual(state, { activeSlideIndex: 0, isRunning: false });
   state = reduce(state, PRESENTATION_ACTIONS.NEXT);
@@ -46,16 +40,16 @@ test("presentation controller keeps navigation and running state independent", a
 
 test("one shared registry owns every rendered and controlled presentation slide", async () => {
   const slides = await registeredSlides();
-  assert.deepEqual(slides.map(([, id]) => id), ["revenue", "sales", "technicians", "operations", "recognition"]);
+  assert.deepEqual(slides.map(([, id]) => id), ["revenue", "sales", "technicians", "operations", "recognition", "spreadsheet"]);
   assert.ok(slides.every((match) => match[3].endsWith("Slide")));
-
   const [deck, controller] = await Promise.all([
     readFile(path.join(__dirname, "../apps/dashboard/src/components/SlideDeck.jsx"), "utf8"),
     readFile(path.join(__dirname, "../apps/dashboard/src/controller/PresentationController.jsx"), "utf8"),
   ]);
-  assert.match(deck, /PRESENTATION_SLIDES\.length/);
-  assert.match(deck, /PRESENTATION_SLIDES\.map/);
+  assert.match(deck, /filterEligibleSlides/);
+  assert.match(deck, /registeredSlide\.id === slide\.id/);
   assert.match(controller, /slideCount = PRESENTATION_SLIDES\.length/);
+  assert.match(controller, /eligibleSlideIndices/);
 });
 
 test("operations health presentation uses only existing dashboard and presentation state", async () => {
@@ -63,7 +57,6 @@ test("operations health presentation uses only existing dashboard and presentati
   const refreshedAt = "2026-08-11T12:00:00.000Z";
   const data = { refreshedAt, technicians: [{ id: "one" }, { id: "two" }] };
   const health = operationsHealthPresentation(data, { refreshing: false, hasError: false, rotationPaused: false }, new Date(refreshedAt).getTime() + 20_000);
-
   assert.equal(health.overall.label, "Dashboard Healthy");
   assert.deepEqual(health.cards.map(({ id }) => id), ["refresh", "refresh-state", "cache", "technicians", "slide", "rotation"]);
   assert.equal(health.cards.find(({ id }) => id === "technicians").value, "2");
