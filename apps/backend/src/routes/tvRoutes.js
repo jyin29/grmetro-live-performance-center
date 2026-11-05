@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const { isValidKpiId, isValidTechnicianId, isValidTvId } = require("../../../../shared/validation");
+const { isValidKpiId, isVisibleTechnicianId, isValidTvId } = require("../../../../shared/validation");
 const { ApiError } = require("../http/apiError");
 
 const ALLOWED_OVERRIDE_FIELDS = new Set(["technicianId", "kpiId"]);
@@ -26,7 +26,7 @@ function validateOverride(body) {
   const hasTechnician = body.technicianId !== undefined && body.technicianId !== null;
   const hasKpi = body.kpiId !== undefined && body.kpiId !== null;
   if (!hasTechnician && !hasKpi) throw new ApiError(400, "NO_SELECTION", "Select at least one technician or KPI.");
-  if (hasTechnician && !isValidTechnicianId(body.technicianId)) throw new ApiError(400, "INVALID_TECHNICIAN_ID", "The requested technician does not exist.");
+  if (hasTechnician && !isVisibleTechnicianId(body.technicianId)) throw new ApiError(400, "INVALID_TECHNICIAN_ID", "The requested technician does not exist.");
   if (hasKpi && !isValidKpiId(body.kpiId)) throw new ApiError(400, "INVALID_KPI_ID", "The requested KPI does not exist.");
   return { hasTechnician, hasKpi };
 }

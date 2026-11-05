@@ -1,6 +1,7 @@
 "use strict";
 
 const technicians = require("./technicians");
+const { isTechnicianExcluded } = require("./dashboardVisibility");
 const kpis = require("./kpis");
 const slides = require("./slides");
 const televisions = require("./televisions");
@@ -12,13 +13,14 @@ const EXPECTED_SLIDE_IDS = Object.freeze(["revenue", "sales", "technicians", "op
 function hasUniqueValues(values) { return new Set(values).size === values.length; }
 function isValidTvId(id) { return typeof id === "string" && TV_ID_PATTERN.test(id) && televisions.some((tv) => tv.id === id); }
 function isValidTechnicianId(id) { const normalizedId = typeof id === "string" && /^\d+$/.test(id) ? Number(id) : id; return Number.isSafeInteger(normalizedId) && technicians.some((technician) => technician.id === normalizedId); }
+function isVisibleTechnicianId(id) { return isValidTechnicianId(id) && !isTechnicianExcluded(id); }
 function isValidKpiId(id) { return typeof id === "string" && Object.hasOwn(kpis, id) && kpis[id].id === id; }
 function isValidSlideId(id) { return typeof id === "string" && slides.some((slide) => slide.id === id); }
 function isValidRemoteSelection(selection) {
   if (!selection || typeof selection !== "object" || Array.isArray(selection)) return false;
   const { technicianId = null, kpiId = null } = selection;
   if (technicianId === null && kpiId === null) return false;
-  return (technicianId === null || isValidTechnicianId(technicianId)) && (kpiId === null || isValidKpiId(kpiId));
+  return (technicianId === null || isVisibleTechnicianId(technicianId)) && (kpiId === null || isValidKpiId(kpiId));
 }
 function validateTechnicianConfiguration(configuration = technicians) {
   const errors = [];
@@ -62,4 +64,4 @@ function validateGoalConfiguration(configuration) {
   return errors;
 }
 
-module.exports = { TV_ID_PATTERN, isValidTvId, isValidTechnicianId, isValidKpiId, isValidSlideId, isValidRemoteSelection, validateTechnicianConfiguration, validateTelevisionConfiguration, validateKpiConfiguration, validateSlideConfiguration, validateGoalConfiguration };
+module.exports = { TV_ID_PATTERN, isValidTvId, isValidTechnicianId, isVisibleTechnicianId, isValidKpiId, isValidSlideId, isValidRemoteSelection, validateTechnicianConfiguration, validateTelevisionConfiguration, validateKpiConfiguration, validateSlideConfiguration, validateGoalConfiguration };

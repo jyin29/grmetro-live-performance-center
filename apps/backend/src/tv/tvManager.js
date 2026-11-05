@@ -3,7 +3,7 @@
 const televisions = require("../../../../shared/televisions");
 const kpis = require("../../../../shared/kpis");
 const { TV_MODES } = require("../../../../shared/constants");
-const { isValidTvId, isValidTechnicianId, isValidKpiId } = require("../../../../shared/validation");
+const { isValidTvId, isVisibleTechnicianId, isValidKpiId } = require("../../../../shared/validation");
 
 const TECHNICIAN_DETAIL_SLIDE_ID = "technician-detail";
 const TECHNICIAN_KPI_DETAIL_SLIDE_ID = "technician-kpi-detail";
@@ -88,7 +88,7 @@ class TvManager {
 
   overrideTechnician(id, command) {
     assertExactFields(command, ["technicianId"], "Technician override");
-    if (!isValidTechnicianId(command.technicianId)) throw new Error(`Invalid technician ID: ${command.technicianId}.`);
+    if (!isVisibleTechnicianId(command.technicianId)) throw new Error(`Invalid technician ID: ${command.technicianId}.`);
     return this.#applyOverride(id, {
       mode: TV_MODES.REMOTE,
       viewType: REMOTE_VIEW_TYPES.TECHNICIAN_SCORECARD,
@@ -112,7 +112,7 @@ class TvManager {
 
   overrideTechnicianKpi(id, command) {
     assertExactFields(command, ["technicianId", "kpiId"], "Technician KPI override");
-    if (!isValidTechnicianId(command.technicianId)) throw new Error(`Invalid technician ID: ${command.technicianId}.`);
+    if (!isVisibleTechnicianId(command.technicianId)) throw new Error(`Invalid technician ID: ${command.technicianId}.`);
     if (!isValidKpiId(command.kpiId)) throw new Error(`Invalid KPI ID: ${command.kpiId}.`);
     return this.#applyOverride(id, {
       mode: TV_MODES.REMOTE,

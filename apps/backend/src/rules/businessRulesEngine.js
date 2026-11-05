@@ -46,7 +46,8 @@ function evaluateBusinessRules({ rules, current = [], previous = [], now = new D
         ...(context.kpiId ? { kpiId: context.kpiId } : {}), ruleId: rule.id, priority: rule.priority, createdAt, expiresAt });
       if (rule.action.type === "attention" && !attention.has(rule.action.key)) attention.set(rule.action.key, {
         id: `${rule.action.key}-${context.kpiId}`, priority: rule.priority, eyebrow: interpolate(rule.action.eyebrow, context),
-        title: interpolate(rule.action.title, context), detail: interpolate(rule.action.detail, context), ruleId: rule.id
+        title: interpolate(rule.action.title, context), detail: interpolate(rule.action.detail, context), ruleId: rule.id,
+        technicianId: context.technician.id
       });
     }
   }

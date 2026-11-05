@@ -2352,3 +2352,11 @@ No production application, authenticated browser profile, process, shortcut, tas
 
 - [x] Add a read-only Control Center history view based only on installed and cryptographically verified release identities.
 - [x] Keep version restore unavailable while preserving automatic failed-update rollback.
+
+## 2026-11-05 — Technician presentation visibility
+
+- [x] Centralize a reversible stable-ID-fingerprint exclusion without removing the technician from ServiceTitan collection or historical cache storage.
+- [x] Project a four-technician dashboard response with compacted KPI and overall ranks, rebuilt slide rows, recognition entries, and filtered event or attention identities.
+- [x] Reject excluded technician selections from remote TV overrides while retaining the underlying technician as a valid configured identity.
+- [x] Filter matching spreadsheet identity rows before availability and continuation pagination while preserving the stored spreadsheet source.
+- [x] Cover all five displays, exact spreadsheet ID and name behavior, preserved totals, and unaffected technicians.

@@ -2266,3 +2266,9 @@ Technician filtering must not leave a reserved five-person hole. Revenue, Sales,
 ## 2026-11-16 — Control Center version history
 
 The Control Center update card exposes a read-only Version History action when verified identities exist. Each entry identifies its installed, available, or previously verified state. Published or build dates and release notes appear only where supplied; missing information is labeled unavailable. No Restore Version action is enabled, and the dialog states that automatic failed-update rollback remains active.
+
+## 2026-11-05 — Technician presentation exclusion
+
+Every technician-facing dashboard surface consumes the backend-projected visible roster. KPI rows, Sales and Operations matrices, technician cards, rankings, leaderboards, podiums, Recognition, phone technician selection, and legacy TV overrides omit centrally excluded stable technician identities. Visible KPI and overall ranks are compacted after exclusion so cards and podium positions contain no gaps. The projection is identical across every configured display.
+
+Spreadsheet slides remove an excluded technician row before page-capacity and continuation calculations when a stable employee or technician ID column identifies it. An exact configured full-name match is used only in a recognized technician-name column when no row ID is available. No other spreadsheet row is removed.

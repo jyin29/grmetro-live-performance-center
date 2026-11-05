@@ -26,6 +26,7 @@ const { DisplaySettingsStore } = require("./settings/displaySettingsStore");
 const { SpreadsheetSlideStore } = require("./settings/spreadsheetSlideStore");
 const { ManagementDismissalStore } = require("./settings/managementDismissalStore");
 const { readReleaseIdentity } = require("./releaseIdentity");
+const { projectDashboardPayload } = require("./data/dashboardPresentation");
 
 function start() {
   const startedAt = new Date();
@@ -75,8 +76,9 @@ function start() {
     intervalMilliseconds: config.refreshIntervalSeconds * 1000,
     timeZone: config.timeZone,
     onSuccessfulPayload: (payload) => {
-      eventEngine.process(payload);
-      presentationWebSocket?.broadcastDashboardUpdate(payload);
+      const presentationPayload = projectDashboardPayload(payload);
+      eventEngine.process(presentationPayload);
+      presentationWebSocket?.broadcastDashboardUpdate(presentationPayload);
     },
   }) : null;
   const mockBrowserStatus = () => ({ connected: false, connecting: false, serviceTitanPageFound: false, inactiveReason: "mock-mode", lastConnectedAt: null, lastDisconnectedAt: null, reconnectAttempt: 0, lastErrorCode: null, lastErrorMessage: null });

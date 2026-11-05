@@ -14434,3 +14434,9 @@ An explicitly configured goal for the selected period is authoritative. When a p
 ## 2026-11-16 — Verified release history
 
 The Control Center may list only the installed release, identities already recorded by signed-update trust state, and the currently verified signed feed result. It displays dates and release notes only when those fields exist in trustworthy metadata. Version restore remains a future interface capability; the existing automatic rollback for a failed update is unchanged.
+
+## 2026-11-05 — Technician presentation visibility
+
+Technician collection, stored snapshots, historical comparisons, and company-wide values retain the complete configured roster. A centralized presentation-only visibility policy may exclude a technician by a fingerprint of the stable ServiceTitan technician ID. Dashboard and remote responses apply that policy after cache storage, recompute KPI and overall display ranks for the remaining technicians, rebuild slide rows and recognition entries without gaps, and remove excluded technician events or management insights. Name matching must not control dashboard visibility.
+
+Spreadsheet presentation applies the same policy before availability and continuation pagination. A recognized technician or employee ID column takes precedence. When no stable ID value is available, an exact configured full-name match is allowed only in a recognized technician-name column. The stored spreadsheet remains unchanged.
