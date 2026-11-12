@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "rootCertificateSubject": "CN=GRMetro Internal Code Signing Root CA, O=GRMetro Heating & Cooling",
+  "rootCertificateThumbprint": "229A09B55ECF417B082F235AE7D301ADBCEF02B0",
+  "rootCertificateSha256": "5DA29FD1DF2938658354F7EA4FB1BAE55B47F17E999AF64119F5041A4E36C7A9",
+  "rootCertificateFileName": "grmetro-internal-code-signing-root-ca.cer",
+  "signingCertificateSubject": "CN=GRMetro Internal Code Signing, O=GRMetro Heating & Cooling",
+  "signingCertificateThumbprint": "D1106CCFB0DCE1ADF2E199E989CE89E76D2D1581",
+  "signingCertificateSha256": "912A60DFB8436E492014A44D26D1C8C7B92B98FCF4F4C331DE0C16B73D0ABBA9",
+  "signingCertificateFileName": "grmetro-internal-code-signing.cer",
+  "minimumValidityDays": 60,
+  "timestampUrl": "http://timestamp.sectigo.com"
+}

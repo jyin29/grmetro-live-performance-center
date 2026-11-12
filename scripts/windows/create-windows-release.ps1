@@ -9,6 +9,8 @@ param(
   [string]$ArtifactZip,
   [string]$ReleaseSourceConfigPath,[string]$ReleasePublicKeysPath,[switch]$ProvisionReleaseTrust,
   [string]$SignToolPath,[string]$CertificateThumbprint,[string]$TimestampUrl,[switch]$RequireAuthenticode,
+  [string]$AuthenticodePolicyPath,[string]$AuthenticodeRootCertificatePath,
+  [switch]$PackageOnly,
   [switch]$SkipBuild,
   [switch]$AllowDirtyTest,
   [switch]$AllowInsecureTestUrl
@@ -17,6 +19,16 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..')).TrimEnd('\')
 . (Join-Path $PSScriptRoot 'release-identity.ps1')
 . (Join-Path $PSScriptRoot 'release-feed.ps1')
+. (Join-Path $PSScriptRoot 'authenticode-signing.ps1')
+if($AuthenticodePolicyPath){
+  $authenticodePolicy=Read-GrMetroAuthenticodePolicy $AuthenticodePolicyPath
+  if($CertificateThumbprint-and(ConvertTo-GrMetroCertificateThumbprint $CertificateThumbprint)-ne$authenticodePolicy.SigningCertificateThumbprint){throw 'Explicit Authenticode certificate conflicts with policy.'}
+  if($TimestampUrl-and$TimestampUrl-ne$authenticodePolicy.TimestampUrl){throw 'Explicit Authenticode timestamp conflicts with policy.'}
+  $CertificateThumbprint=$authenticodePolicy.SigningCertificateThumbprint
+  $TimestampUrl=$authenticodePolicy.TimestampUrl
+  $RequireAuthenticode=$true
+  if(-not$AuthenticodeRootCertificatePath){throw 'Internal Authenticode policy requires the external public root certificate path.'}
+}
 $identity=ConvertTo-GrMetroReleaseVersion $Version
 if($identity.Development-or$Version-eq'0.0.0.0'){throw 'Production release creation requires an explicit nondevelopment CalVer.'}
 if($KeyId-notmatch'^[A-Za-z0-9._-]{1,64}$'){throw 'Signing key ID is invalid.'}
@@ -44,9 +56,11 @@ if(-not$notes-or$notes.Count-gt100-or(($notes-join"`n").Length)-gt20000){throw '
 
 if(-not$SkipBuild){
   $buildArguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'build-installer.ps1'),'-ReleaseVersion',$Version,'-Channel',$Channel,'-UpdaterProtocol','1')
+  if($PackageOnly){$buildArguments+='-PackageOnly'}
   if($ProvisionReleaseTrust){$buildArguments+=@('-ProvisionReleaseTrust','-ReleaseSourceConfigPath',$ReleaseSourceConfigPath,'-ReleasePublicKeysPath',$ReleasePublicKeysPath)}
   if($RequireAuthenticode){$buildArguments+='-RequireAuthenticode'}
   if($SignToolPath){$buildArguments+=@('-SignToolPath',$SignToolPath)};if($CertificateThumbprint){$buildArguments+=@('-CertificateThumbprint',$CertificateThumbprint)};if($TimestampUrl){$buildArguments+=@('-TimestampUrl',$TimestampUrl)}
+  if($AuthenticodePolicyPath){$buildArguments+=@('-AuthenticodePolicyPath',$AuthenticodePolicyPath,'-AuthenticodeRootCertificatePath',$AuthenticodeRootCertificatePath)}
   & powershell.exe @buildArguments
   if($LASTEXITCODE-ne0){throw 'Windows release package build failed.'}
   $ArtifactZip=Join-Path $root 'dist\windows-installer\grmetro-performance-center-package.zip'
@@ -54,12 +68,35 @@ if(-not$SkipBuild){
 if(-not$ArtifactZip-or-not(Test-Path -LiteralPath $ArtifactZip -PathType Leaf)){throw 'Release artifact ZIP is missing.'}
 $packageMetadata=Get-GrMetroPackageReleaseMetadata $ArtifactZip
 if([string]$packageMetadata.releaseVersion-ne$Version-or[string]$packageMetadata.channel-ne$Channel){throw 'Artifact deployment identity does not match requested release.'}
+if($RequireAuthenticode){
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $signatureInspection=Join-Path $env:TEMP ('grmetro-release-signature-'+[guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $signatureInspection|Out-Null
+  try{
+    $inspectionExe=Join-Path $signatureInspection 'GRMetro Performance Center.exe'
+    $archive=[IO.Compression.ZipFile]::OpenRead([IO.Path]::GetFullPath($ArtifactZip))
+    try{
+      $entry=$archive.Entries|Where-Object{$_.FullName-eq'GRMetro Performance Center.exe'}|Select-Object -First 1
+      if(-not$entry){throw 'Release package is missing the signed native launcher.'}
+      [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$inspectionExe,$false)
+    }finally{$archive.Dispose()}
+    $assertArguments=@{Path=$inspectionExe;CertificateThumbprint=$CertificateThumbprint}
+    if($authenticodePolicy){
+      $assertArguments.PinnedRootCertificatePath=$AuthenticodeRootCertificatePath
+      $assertArguments.PinnedRootThumbprint=$authenticodePolicy.RootCertificateThumbprint
+      $assertArguments.PinnedRootSubject=$authenticodePolicy.RootCertificateSubject
+      $assertArguments.PinnedRootSha256=$authenticodePolicy.RootCertificateSha256
+    }
+    $packageSignature=Assert-GrMetroAuthenticodeSignature @assertArguments
+    if(-not$packageSignature.TimeStamperCertificate){throw 'Release package native launcher lacks an Authenticode timestamp.'}
+  }finally{Remove-Item -LiteralPath $signatureInspection -Recurse -Force -ErrorAction SilentlyContinue}
+}
 
 New-Item -ItemType Directory -Path $releaseDirectory|Out-Null
 $artifactName="grmetro-performance-center-$Version.zip";$artifactOutput=Join-Path $releaseDirectory $artifactName
 Copy-Item -LiteralPath $ArtifactZip -Destination $artifactOutput
 $artifactSize=(Get-Item -LiteralPath $artifactOutput).Length;$artifactHash=(Get-FileHash -LiteralPath $artifactOutput -Algorithm SHA256).Hash
-$metadata=[ordered]@{schemaVersion=1;releaseVersion=$identity.ReleaseVersion;releaseSequence=$identity.ReleaseSequence;channel=$Channel;artifactUrl=$uri.AbsoluteUri;artifactSize=[Int64]$artifactSize;artifactSha256=$artifactHash;minimumUpdaterProtocol=1;authenticodeRequired=[bool]$RequireAuthenticode;publishedAt=[DateTime]::UtcNow.ToString('o');releaseNotes=$notes;keyId=$KeyId}
+$metadata=[ordered]@{schemaVersion=1;releaseVersion=$identity.ReleaseVersion;releaseSequence=$identity.ReleaseSequence;channel=$Channel;sourceCommit=[string]$packageMetadata.commit;artifactUrl=$uri.AbsoluteUri;artifactSize=[Int64]$artifactSize;artifactSha256=$artifactHash;minimumUpdaterProtocol=1;authenticodeRequired=[bool]$RequireAuthenticode;publishedAt=[DateTime]::UtcNow.ToString('o');releaseNotes=$notes;keyId=$KeyId}
 $metadataBytes=(New-Object Text.UTF8Encoding $false).GetBytes(($metadata|ConvertTo-Json -Compress -Depth 5))
 $metadataPath=Join-Path $releaseDirectory 'release.json';[IO.File]::WriteAllBytes($metadataPath,$metadataBytes)
 

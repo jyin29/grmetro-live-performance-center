@@ -2,6 +2,29 @@
 
 Publication remains a separate, explicitly authorized action. The release command prepares verified local output but never uploads it.
 
+## Two-click internal staging release
+
+The development PC exposes `Publish GRMetro Update.cmd` at the repository root. After reviewed application work is committed and the tree is clean:
+
+1. Double-click `Publish GRMetro Update.cmd`.
+2. Review the displayed commit, automatically selected CalVer, testing channel, and release note, then type `PUBLISH` once.
+
+The launcher does not install anything on production. It performs the complete development-side workflow:
+
+- proves the Git tree is clean, committed, on a branch, and attached to `jyin29/grmetro-live-performance-center`;
+- verifies the external RSA-3072 staging key against its public fingerprint without copying private material into the repository or output;
+- verifies the internal Authenticode policy, non-exportable signing certificate, pinned public root, certificate lifetime, and timestamp policy;
+- verifies Cloudflare OAuth account `8d710ff406719195e28bff0bb5971269`, R2 bucket `grmetro-updates`, HTTPS source policy, existing signed feed, and target-key state;
+- chooses the next `YYYY.M.D.N` testing release and refuses a future-dated feed or daily revision overflow;
+- runs repository tests, performs an isolated application-only Windows build with a bounded Node heap, signs the launcher, creates exact-byte RSA metadata, validates manifest/private-data exclusions, and scans the ZIP plus a disposable extraction with Defender;
+- uploads the immutable versioned ZIP first, `release.json.sig` second, and `release.json` last;
+- compares direct R2 and public Worker bytes after each write, then verifies the live signed feed advertises the new version;
+- saves prior metadata/signature beneath `%USERPROFILE%\GRMetro-Cloudflare-Publication-Backups` and restores that pair once if mutable publication fails.
+
+An identical versioned ZIP left by an interrupted run is reused only when its byte size and SHA-256 match. A conflicting immutable object stops publication. Multiple unpublished local candidates also stop with an actionable error. The workflow never deletes versioned ZIPs, changes production source/trust configuration, or invokes `ApplyLocal`, `PrepareRemote`, or any installer.
+
+After publication, production remains operator-controlled. Open Control Center, review the current and available versions and signed release note, then click `Update Now`. The external Update Host reports download, verification, backup, installation, validation, completion, and rollback status. `Recovery Logs` remains the one-click diagnostic entry point. Never retry a failed installation until its displayed rollback result and recovery evidence have been reviewed.
+
 ## One-time provisioning
 
 1. Choose the real static HTTPS release origin and exact host name.

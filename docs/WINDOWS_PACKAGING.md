@@ -1,5 +1,7 @@
 # Windows packaging / local application workflow
 
+Routine internal application releases use `Publish GRMetro Update.cmd` and `scripts/windows/publish-update.ps1`. The publisher requests `create-windows-release.ps1 -PackageOnly`; it signs and packages only the replaceable application, leaving Setup, Update Host, trust roots, source policy, shortcuts, firewall, and autostart untouched. Production installation remains an explicit Control Center `Update Now` action handled by the already-installed external Update Host.
+
 The first packaging stage turns the repository into a single-machine Windows application experience without changing the ServiceTitan browser integration.
 
 ## What it does

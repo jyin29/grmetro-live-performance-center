@@ -2327,3 +2327,13 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Reuse the version-2 journal and current-version rollback hashes so recovery failures restore the upgraded application safely.
 - [x] Verify private/nonmanifest hashes and leave Update Host, shortcuts, firewall, autostart, and Edge outside recovery scope.
 - [x] Cover read-only validation, corrupt backup rejection, successful recovery, apply failure rollback, and interrupted recovery-only handling.
+
+## 2026-11-12 — Streamlined signed staging releases
+
+- [x] Add a repository-root Publish Update launcher that reduces development publication to launch plus one explicit `PUBLISH` confirmation.
+- [x] Select the next monotonic CalVer automatically and record the committed source identity in signed release metadata.
+- [x] Reuse the approved internal Authenticode policy and external RSA staging key without packaging private signing material.
+- [x] Build application-only updates while preserving the installed Update Host, trust, Windows integration, and production data ownership boundaries.
+- [x] Enforce Git, certificate, RSA pair, Cloudflare account/bucket, feed, Defender, manifest, privacy, and public-byte preflights.
+- [x] Publish ZIP, detached signature, and metadata in safe order with immutable-object resume, conflicting-object rejection, prior-metadata backup, and bounded rollback.
+- [x] Cover version selection, publication order, resumable ZIPs, metadata rollback, signing preflight, and existing Control Center update UX with focused automated tests.

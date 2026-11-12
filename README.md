@@ -1,5 +1,11 @@
 # GRmetro Live Performance Center
 
+## Publish a reviewed Windows update
+
+On the designated development PC, commit reviewed changes and leave the working tree clean. Double-click `Publish GRMetro Update.cmd`, review the automatically selected testing version, then type `PUBLISH`. The workflow tests, builds an application-only ZIP, applies Authenticode and RSA signatures, runs package/privacy/Defender checks, publishes to Cloudflare staging in fail-safe order, and verifies the public bytes. It never starts production installation.
+
+On the production PC, Control Center shows the available signed version. Review the changes and click `Update Now`; use `Recovery Logs` if validation or rollback reports a failure. See `docs/WINDOWS_RELEASE_WORKFLOW.md` for prerequisites and recovery behavior.
+
 Live technician performance digital signage for **GRmetro Heating & Cooling**, powered by ServiceTitan data.
 
 The system displays live technician KPIs across multiple independent televisions and includes a QR-code mobile remote for temporarily showing a selected technician, KPI, or both.

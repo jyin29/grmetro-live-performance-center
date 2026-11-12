@@ -2,6 +2,7 @@ param(
   [string]$ReleaseVersion='0.0.0.0',[ValidateSet('development','testing','stable')][string]$Channel='development',[int]$UpdaterProtocol=1,
   [string]$ReleaseSourceConfigPath,[string]$ReleasePublicKeysPath,[switch]$ProvisionReleaseTrust,
   [string]$SignToolPath,[string]$CertificateThumbprint,[string]$TimestampUrl,[switch]$RequireAuthenticode,
+  [string]$AuthenticodePolicyPath,[string]$AuthenticodeRootCertificatePath,
   [switch]$PackageOnly,[string]$OutputDirectory
 )
 $ErrorActionPreference="Stop"
@@ -12,17 +13,40 @@ Set-Location $root
 . (Join-Path $PSScriptRoot 'release-feed.ps1')
 . (Join-Path $PSScriptRoot 'authenticode-signing.ps1')
 
+$authenticodePolicy=$null
+if($AuthenticodePolicyPath){
+  $authenticodePolicy=Read-GrMetroAuthenticodePolicy $AuthenticodePolicyPath
+  if($CertificateThumbprint-and(ConvertTo-GrMetroCertificateThumbprint $CertificateThumbprint)-ne$authenticodePolicy.SigningCertificateThumbprint){throw 'Explicit Authenticode certificate conflicts with policy.'}
+  if($TimestampUrl-and$TimestampUrl-ne$authenticodePolicy.TimestampUrl){throw 'Explicit Authenticode timestamp conflicts with policy.'}
+  $CertificateThumbprint=$authenticodePolicy.SigningCertificateThumbprint
+  $TimestampUrl=$authenticodePolicy.TimestampUrl
+  $RequireAuthenticode=$true
+  if(-not$AuthenticodeRootCertificatePath){throw 'Internal Authenticode policy requires the external public root certificate path.'}
+}
+$authenticodeArguments=@{
+  SignToolPath=$SignToolPath
+  CertificateThumbprint=$CertificateThumbprint
+  TimestampUrl=$TimestampUrl
+  RequireAuthenticode=$RequireAuthenticode
+  PinnedRootCertificatePath=$AuthenticodeRootCertificatePath
+  PinnedRootThumbprint=$(if($authenticodePolicy){$authenticodePolicy.RootCertificateThumbprint}else{$null})
+  PinnedRootSubject=$(if($authenticodePolicy){$authenticodePolicy.RootCertificateSubject}else{$null})
+  PinnedRootSha256=$(if($authenticodePolicy){$authenticodePolicy.RootCertificateSha256}else{$null})
+  ExpectedCertificateSubject=$(if($authenticodePolicy){$authenticodePolicy.SigningCertificateSubject}else{$null})
+  MinimumCertificateValidityDays=$(if($authenticodePolicy){$authenticodePolicy.MinimumValidityDays}else{30})
+}
+
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "build-launcher-exe.ps1")
 if($LASTEXITCODE -ne 0){throw "Could not build launcher EXE."}
 $launcherExe=Join-Path $root 'GRMetro Performance Center.exe'
-$null=Invoke-GrMetroAuthenticodeSigning -Files @($launcherExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
+$null=Invoke-GrMetroAuthenticodeSigning -Files @($launcherExe) @authenticodeArguments
 $updateHostOut=Join-Path $root 'dist\windows-update-host'
 if(-not$PackageOnly){
   if(Test-Path -LiteralPath $updateHostOut){Remove-Item -LiteralPath $updateHostOut -Recurse -Force}
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'build-update-host.ps1') -OutputDirectory $updateHostOut
   if($LASTEXITCODE -ne 0){throw 'Could not build the stable GRMetro Update Host.'}
   $updateHostExe=Join-Path $updateHostOut 'GRMetro Update Host.exe'
-  $null=Invoke-GrMetroAuthenticodeSigning -Files @($updateHostExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
+  $null=Invoke-GrMetroAuthenticodeSigning -Files @($updateHostExe) @authenticodeArguments
 }
 
 if($ProvisionReleaseTrust){
@@ -196,8 +220,6 @@ try {
   Copy-Item (Join-Path $PSScriptRoot 'process-control.ps1') $processHelper -Force
   $launchHelper=Join-Path $out 'launch-integration.ps1'
   Copy-Item (Join-Path $PSScriptRoot 'launch-integration.ps1') $launchHelper -Force
-  $updateHostInstallationHelper=Join-Path $out 'update-host-installation.ps1'
-  Copy-Item (Join-Path $PSScriptRoot 'update-host-installation.ps1') $updateHostInstallationHelper -Force
 
   # Keep a portable fallback alongside the EXE for troubleshooting.
   $cmd=Join-Path $out "install.cmd"
@@ -241,7 +263,6 @@ static class Program {
       ExtractResource("GRMetroPackageHelper", Path.Combine(temp, "package-files.ps1"));
       ExtractResource("GRMetroProcessHelper", Path.Combine(temp, "process-control.ps1"));
       ExtractResource("GRMetroLaunchHelper", Path.Combine(temp, "launch-integration.ps1"));
-      ExtractResource("GRMetroUpdateHostInstallationHelper", Path.Combine(temp, "update-host-installation.ps1"));
 
       var psi = new ProcessStartInfo(
         "powershell.exe",
@@ -286,18 +307,17 @@ static class Program {
       ("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),
       ("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),
       ("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),
-      ("/resource:`"{0}`",GRMetroUpdateHostInstallationHelper" -f $updateHostInstallationHelper),
       $tempSource
     )
     if(Test-Path $icon){
-      $args=@('/nologo','/target:winexe',("/out:`"{0}`"" -f $setupExe),("/win32icon:`"{0}`"" -f $icon),'/reference:System.dll','/reference:System.Windows.Forms.dll',("/resource:`"{0}`",GRMetroInstallerScript" -f $bootstrap),("/resource:`"{0}`",GRMetroInstallerPackage" -f $zip),("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),("/resource:`"{0}`",GRMetroUpdateHostInstallationHelper" -f $updateHostInstallationHelper),$tempSource)
+      $args=@('/nologo','/target:winexe',("/out:`"{0}`"" -f $setupExe),("/win32icon:`"{0}`"" -f $icon),'/reference:System.dll','/reference:System.Windows.Forms.dll',("/resource:`"{0}`",GRMetroInstallerScript" -f $bootstrap),("/resource:`"{0}`",GRMetroInstallerPackage" -f $zip),("/resource:`"{0}`",GRMetroUpdateHostPackage" -f $updateHostZip),("/resource:`"{0}`",GRMetroProcessHelper" -f $processHelper),("/resource:`"{0}`",GRMetroLaunchHelper" -f $launchHelper),$tempSource)
     }
 
     $args += ("/resource:`"{0}`",GRMetroPackageHelper" -f $packageHelper)
     & $csc @args
     if($LASTEXITCODE -ne 0){throw "Setup EXE compiler exited with code $LASTEXITCODE."}
     if(-not(Test-Path $setupExe)){throw "Compiler completed but 'GRMetro Performance Center Setup.exe' was not created."}
-    $null=Invoke-GrMetroAuthenticodeSigning -Files @($setupExe) -SignToolPath $SignToolPath -CertificateThumbprint $CertificateThumbprint -TimestampUrl $TimestampUrl -RequireAuthenticode:$RequireAuthenticode
+    $null=Invoke-GrMetroAuthenticodeSigning -Files @($setupExe) @authenticodeArguments
 
     Write-Host "Built $setupExe" -ForegroundColor Green
     Write-Host "Self-contained installer includes the package and installer bootstrap." -ForegroundColor DarkGray
