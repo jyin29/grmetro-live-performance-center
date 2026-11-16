@@ -50,8 +50,9 @@ function Get-GrMetroPublicationPlan {
 function Invoke-GrMetroWrangler {
   param([Parameter(Mandatory=$true)][string[]]$Arguments,[switch]$AllowMissingObject)
   $npx=(Get-Command npx.cmd -ErrorAction Stop).Source
+  $wranglerRoot=Join-Path $env:LOCALAPPDATA 'GRMetro Release Publisher\Wrangler';New-Item -ItemType Directory -Force -Path $wranglerRoot|Out-Null
   $prior=$ErrorActionPreference;$ErrorActionPreference='Continue'
-  try{$output=@(& $npx --yes "wrangler@$script:PublisherWranglerVersion" @Arguments 2>&1);$code=$LASTEXITCODE}finally{$ErrorActionPreference=$prior}
+  try{$output=@(& $npx --yes "wrangler@$script:PublisherWranglerVersion" --cwd $wranglerRoot @Arguments 2>&1);$code=$LASTEXITCODE}finally{$ErrorActionPreference=$prior}
   $text=($output|ForEach-Object{$_.ToString()})-join[Environment]::NewLine
   if($code-ne0){
     if($AllowMissingObject-and$text-match'(?i)specified key does not exist'){return [pscustomobject]@{ExitCode=$code;Missing=$true;Output=$text}}
@@ -282,11 +283,10 @@ function Invoke-GrMetroPublishUpdate {
     if([string]$verified.Metadata.releaseVersion-ne$version-or[string]$verified.Metadata.artifactSha256-ne$candidate.ZipSha256){throw 'Final staging feed verification did not return the published release.'}
     $result=[pscustomobject]@{Status='SUCCESS';Version=$version;Sequence=$candidate.Sequence;Commit=$repository.Commit;Channel='testing';ArtifactUrl=$candidate.ArtifactUrl;ArtifactSha256=$candidate.ZipSha256;ArtifactSize=$candidate.ZipSize;ReleaseDirectory=$candidate.Directory;RollbackMetadata=$publication.Previous.Path;ZipReused=$publication.ZipReused}
     $result|ConvertTo-Json -Depth 5|Set-Content (Join-Path $publication.Previous.Path 'publication-result.json') -Encoding UTF8
-    $result|ConvertTo-Json -Depth 5
     return $result
   }finally{if($notesTemporary-and(Test-Path $notesTemporary)){Remove-Item $notesTemporary -Force}}
 }
 
 if($MyInvocation.InvocationName-ne'.'){
-  try{$null=Invoke-GrMetroPublishUpdate}catch{Write-Host '';Write-Host "PUBLISH FAILED: $($_.Exception.Message)" -ForegroundColor Red;exit 1}
+  try{$publishResult=Invoke-GrMetroPublishUpdate;$publishResult|ConvertTo-Json -Depth 5}catch{Write-Host '';Write-Host "PUBLISH FAILED: $($_.Exception.Message)" -ForegroundColor Red;exit 1}
 }

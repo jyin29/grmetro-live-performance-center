@@ -61,7 +61,7 @@ $publisher=Get-Content -LiteralPath (Join-Path $repository 'scripts\windows\publ
 $creator=Get-Content -LiteralPath (Join-Path $repository 'scripts\windows\create-windows-release.ps1') -Raw
 $launcher=Get-Content -LiteralPath (Join-Path $repository 'Publish GRMetro Update.cmd') -Raw
 $controlCenter=Get-Content -LiteralPath (Join-Path $repository 'scripts\windows\performance-center-launcher-v2.ps1') -Raw
-foreach($required in @('status --porcelain','Get-GrMetroCodeSigningCertificate','Get-MpComputerStatus','wrangler@','r2','bucket','list','sourceCommit','RestoreAction')){Assert ($publisher-match[regex]::Escape($required)) "Publisher preflight is missing $required."}
+foreach($required in @('status --porcelain','Get-GrMetroCodeSigningCertificate','Get-MpComputerStatus','wrangler@','--cwd','r2','bucket','list','sourceCommit','RestoreAction')){Assert ($publisher-match[regex]::Escape($required)) "Publisher preflight is missing $required."}
 Assert ($creator-match'if\(\$PackageOnly\).*buildArguments.*PackageOnly') 'Routine release creation does not request an application-only package.'
 Assert ($creator-match'sourceCommit') 'Signed release metadata does not record the source commit.'
 Assert ($launcher-match'publish-update\.ps1') 'Development launcher does not invoke the publisher.'
