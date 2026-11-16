@@ -35,9 +35,12 @@ class DashboardCache {
   storeSuccessfulPayload(payload, at = this.clock()) {
     if (!payload || typeof payload !== "object") throw new TypeError("A successful refresh requires a presentation payload.");
     const completedAt = iso(at);
+    const period = payload.period || "today";
+    const priorPeriodSnapshots = this.snapshotStore.list().filter((snapshot) => (snapshot.dashboard.period || "today") === period);
+    const previousPeriodSnapshot = priorPeriodSnapshots.at(-1) || null;
     const currentSnapshot = this.snapshotStore.append(payload, completedAt);
-    const comparison = compareDashboardSnapshots(this.snapshotStore.previous(), currentSnapshot);
-    const trends = analyzeDashboardTrends(this.snapshotStore.list(), { minimumHistory: this.trendMinimumHistory });
+    const comparison = compareDashboardSnapshots(previousPeriodSnapshot, currentSnapshot);
+    const trends = analyzeDashboardTrends([...priorPeriodSnapshots, currentSnapshot], { minimumHistory: this.trendMinimumHistory });
     this.payload = deepFreeze({ ...currentSnapshot.dashboard, historicalComparison: comparison, historicalTrends: trends });
     this.refreshCompletedAt = completedAt;
     this.lastSuccessfulRefreshAt = completedAt;

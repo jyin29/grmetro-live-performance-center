@@ -44,7 +44,7 @@ function start() {
     browserManager,
     executor: serviceTitanClient?.executor,
     logger,
-    goalsProvider: () => goalStore.getGoals(scheduler?.getPeriod?.() || "today"),
+    goalsProvider: ({ period, dateRange } = {}) => goalStore.getGoals(period || scheduler?.getPeriod?.() || "today", dateRange || scheduler?.getDateRange?.(period)),
   });
   const cache = new DashboardCache({ snapshotRetentionLimit: config.snapshotRetentionLimit, trendMinimumHistory: config.trendMinimumHistory });
   const tvManager = new TvManager({ overrideMilliseconds: config.remoteOverrideSeconds * 1000, returnTransitionMilliseconds: config.returnTransitionMilliseconds });

@@ -1,6 +1,7 @@
 "use strict";
 
 module.exports = {
+  schedule: { workingWeekdays: [1, 2, 3, 4, 5], includedDates: [], excludedDates: [] },
   defaults: {
     revenue: null,
     billableServiceCalls: null,

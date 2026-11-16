@@ -14425,3 +14425,9 @@ The latest explicit presentation decision adds `Memberships Sold` as a twelfth K
 `MembershipsSold` field already exists in the approved native ServiceTitan Technicians datasource. This
 specific decision supersedes the earlier eleven-KPI cardinality while preserving exactly five live slides.
 No other membership metric is approved without a validated native response field and business definition.
+
+## 2026-11-16 — Reporting-period goal semantics
+
+Every dashboard refresh carries one canonical reporting-period description: period ID, business label, exact calendar start and end dates, and applicable working dates. Slides and remote views render that backend description rather than substituting `Today`. Historical comparisons and trends use only earlier successful snapshots from the same reporting period.
+
+An explicitly configured goal for the selected period is authoritative. When a period-specific goal is absent, additive daily goals are summed over applicable working dates. Percentage and average-ticket goals retain the daily target because multiplying them would change their meaning. The default schedule is Monday through Friday; explicit included and excluded ISO dates allow approved exceptions without guessing holidays or changing KPI logic.

@@ -90,20 +90,21 @@ class MockRefreshProvider {
     this.scenario = this.#validateScenario(name);
   }
 
-  async refresh({ now = FIXED_TIME, date, previousPayload } = {}) {
+  async refresh({ now = FIXED_TIME, date, period = "today", dateRange, previousPayload } = {}) {
     const definition = scenarios[this.scenario];
     const timestamp = new Date(now).toISOString();
-    const goals = this.goalsProvider?.() || MOCK_GOALS;
+    const periodPrevious = previousPayload?.period === period ? previousPayload : undefined;
+    const goals = this.goalsProvider?.({ period, dateRange }) || MOCK_GOALS;
     let records = buildRecords(scenarioValues(this.scenario), definition, timestamp);
 
-    if (definition.failedTechnicianIndex !== undefined && previousPayload) {
+    if (definition.failedTechnicianIndex !== undefined && periodPrevious) {
       const failedId = technicians[definition.failedTechnicianIndex].id;
-      const retained = previousPayload.technicians?.find((record) => record.id === failedId);
+      const retained = periodPrevious.technicians?.find((record) => record.id === failedId);
       if (retained) records = records.map((record) => record.id === failedId ? { ...clone(retained), available: false, stale: true } : record);
     }
 
     const needsBaseline = ["ranking-changes", "new-leader", "entered-top-3"].includes(this.scenario);
-    const comparisonPayload = previousPayload || (needsBaseline ? baselinePayload(timestamp, goals) : undefined);
+    const comparisonPayload = periodPrevious || (needsBaseline ? baselinePayload(timestamp, goals) : undefined);
     const status = {
       browser: "bypassed",
       serviceTitan: "bypassed",
@@ -121,6 +122,9 @@ class MockRefreshProvider {
     const scenarioEvent = definition.event ? [{ type: definition.event, technicianId: payload.overallTopThree.find((entry) => entry.technicianId)?.technicianId || technicians[0].id, createdAt: timestamp }] : [];
     return {
       ...payload,
+      period,
+      dateRange: dateRange ? { from: dateRange.from, to: dateRange.to } : undefined,
+      goalSchedule: goals?.schedule,
       provider: "mock",
       scenario: this.scenario,
       lastSuccessfulRefreshAt: timestamp,

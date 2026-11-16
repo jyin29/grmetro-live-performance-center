@@ -2,6 +2,7 @@ import { AnimatedMetric } from "../AnimatedMetric";
 import { ComparisonValue } from "../ComparisonValue";
 import { TrendIndicator } from "../TrendIndicator";
 import { metricHistory } from "../../lib/historicalPresentation";
+import { reportingPeriod } from "../../lib/reportingPeriod";
 
 function RevenueValue({ metric }) {
   return metric?.hasData ? <AnimatedMetric metric={metric} /> : <span>N/A</span>;
@@ -9,8 +10,7 @@ function RevenueValue({ metric }) {
 
 export function RevenueOverviewSlide({ data }) {
   const revenue = data.slides.revenue;
-  const periodLabel = data.period === "mtd" ? "Month to Date" : "Today";
-  const periodShortLabel = data.period === "mtd" ? "MTD" : "Today";
+  const period = reportingPeriod(data);
   const revenueMetrics = revenue.rows.map((row) => row.metrics.find(({ id }) => id === "revenue"));
   const leadingRevenue = Math.max(0, ...revenueMetrics.filter((metric) => metric?.hasData).map((metric) => metric.value || 0));
   const revenueBarWidth = (metric) => {
@@ -22,10 +22,10 @@ export function RevenueOverviewSlide({ data }) {
     return Math.min(80, (metric.value / leadingRevenue) * 80);
   };
   return <main className="question-slide dashboard-slide" aria-labelledby="pace-title">
-    <header className="question-slide__heading"><div><p>{periodLabel}</p><h2 id="pace-title">Revenue</h2></div><span>{periodLabel} production by technician</span></header>
+    <header className="question-slide__heading"><div><p>{period.label}</p><h2 id="pace-title">Revenue</h2></div><span>{period.dateRangeLabel}</span></header>
     <section className="panel pace-panel">
-      <div className="panel__heading revenue-table-heading"><div><p>{periodLabel} by technician</p><h3>Revenue &amp; Goal Progress</h3></div><div className="revenue-table-columns" aria-hidden="true"><span>{periodShortLabel}</span><span>Goal</span><span className="revenue-table-columns__remaining">Remaining</span><span>Goal %</span></div></div>
-      <div className="pace-list">
+      <div className="panel__heading revenue-table-heading"><div><p>{period.label} by technician</p><h3>Revenue &amp; Goal Progress</h3></div><div className="revenue-table-columns" aria-hidden="true"><span>{period.shortLabel}</span><span>Goal</span><span className="revenue-table-columns__remaining">Remaining</span><span>Goal %</span></div></div>
+      <div className="pace-list" style={{ "--pace-row-count": revenue.rows.length }}>
         {revenue.rows.map((row) => {
           const metric = row.metrics.find(({ id }) => id === "revenue");
           const history = metricHistory(data, row.technicianId, "revenue");

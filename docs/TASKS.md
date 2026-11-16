@@ -2338,3 +2338,13 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Publish ZIP, detached signature, and metadata in safe order with immutable-object resume, conflicting-object rejection, prior-metadata backup, and bounded rollback.
 - [x] Cover version selection, publication order, resumable ZIPs, metadata rollback, signing preflight, and existing Control Center update UX with focused automated tests.
 - [x] Add a one-commit reviewed-change importer that rejects dirty, private, generated, merge, range, and conflicting inputs without touching the source development worktree.
+
+## 2026-11-16 — Period and television-readability corrections
+
+- [x] Centralize all supported reporting-period labels, exact calendar ranges, and working-date calculation.
+- [x] Prefer dedicated period goals and otherwise aggregate additive daily goals across applicable working days.
+- [x] Keep percentage and average goals semantically stable instead of multiplying them by elapsed days.
+- [x] Prevent historical comparisons and trends from crossing reporting periods.
+- [x] Render the selected period and date range consistently on every core TV slide.
+- [x] Reflow technician rows and cards by the visible roster so presentation exclusions leave no blank slot.
+- [x] Standardize Sales and Operations goal bubbles and enlarge actual values, progress bars, and revenue typography.

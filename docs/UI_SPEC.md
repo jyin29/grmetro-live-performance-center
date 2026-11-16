@@ -2257,3 +2257,9 @@ Check, download, hashing, signature verification, package validation, staging, a
 Spreadsheet remains the optional sixth presentation slide. At the 1920×1080 logical display size, its imported rows and columns are divided into deterministic pages using the available table body dimensions. Slide 6 renders the first page without changing its established heading, table, or footer structure. When additional pages exist, a conditional seventh registry entry named Spreadsheet Continued becomes eligible; it repeats the applicable column headers, preserves column width and source order, and advances through every remaining row-and-column page at the standard presentation interval. The backend holds that registry entry for one interval per continuation page so it does not advance to Revenue before the final page appears.
 
 Spreadsheet Continued is absent from rotation, indicators, phone controls, and local controls when the data fits on Slide 6. Pagination recalculates after spreadsheet revisions, logical-stage size changes, or display-settings updates. No imported row or column may be silently omitted.
+
+## 2026-11-16 — Period-aware TV hierarchy
+
+All five core dashboard slides show the selected reporting-period label and exact date range. Revenue headings and columns use the appropriate short period label. Revenue amounts are the dominant numeric element in the Revenue table, technician cards, install economics, and Recognition podium. Sales and Operations use one shared fully rounded goal-bubble treatment whose actual value is larger than its goal and percentage context.
+
+Technician filtering must not leave a reserved five-person hole. Revenue, Sales, Closing, Operations, and Technician-card regions divide their available row or column tracks by the visible technician count while retaining the established 1920×1080 layout and minimum readable typography.

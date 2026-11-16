@@ -35,3 +35,15 @@ test("a total failure preserves the previous successful presentation payload", (
   assert.equal(state.refreshCompletedAt, "2026-07-31T12:01:01.000Z");
   assert.equal(state.cacheAgeMilliseconds, 120000);
 });
+
+test("historical comparisons never compare different reporting periods", () => {
+  const cache = new DashboardCache();
+  cache.storeSuccessfulPayload({ period:"today", technicians:[] }, "2026-07-31T12:00:00Z");
+  cache.storeSuccessfulPayload({ period:"mtd", technicians:[] }, "2026-07-31T12:01:00Z");
+  assert.equal(cache.getPayload().historicalComparison.available, false);
+  assert.equal(cache.getPayload().historicalComparison.reason, "no-history");
+  cache.storeSuccessfulPayload({ period:"today", technicians:[] }, "2026-07-31T12:02:00Z");
+  assert.equal(cache.getPayload().historicalComparison.available, true);
+  assert.equal(cache.getPayload().historicalComparison.baselineSnapshotId, "snapshot-00000001");
+  assert.equal(cache.getPayload().historicalComparison.currentSnapshotId, "snapshot-00000003");
+});
