@@ -25,6 +25,17 @@ An identical versioned ZIP left by an interrupted run is reused only when its by
 
 After publication, production remains operator-controlled. Open Control Center, review the current and available versions and signed release note, then click `Update Now`. The external Update Host reports download, verification, backup, installation, validation, completion, and rollback status. `Recovery Logs` remains the one-click diagnostic entry point. Never retry a failed installation until its displayed rollback result and recovery evidence have been reviewed.
 
+## Import reviewed application commits safely
+
+Keep active dashboard development in its existing worktree, even when that worktree also contains unrelated or uncommitted experiments. Commit only the reviewed application files with explicit Git paths, copy the resulting full 40-character commit SHA, then:
+
+1. Open `Import Reviewed GRMetro Commit.cmd` in the clean `grmetro-release-publisher` worktree.
+2. Paste the one full commit SHA.
+3. Review the displayed subject and complete file list, then type `IMPORT`.
+4. Repeat once per dependent reviewed commit, in dependency order.
+5. Run or review the focused application tests, then use `Publish GRMetro Update.cmd` only while the release worktree is clean.
+
+The importer accepts exactly one ordinary commit at a time. It rejects ranges, branches, tags, abbreviated SHAs, merge commits, already-imported commits, private/runtime/generated paths, and release-infrastructure changes. It uses `git cherry-pick` only inside the release worktree. A conflict triggers one automatic `cherry-pick --abort` and verifies the original clean HEAD; it never resets, cleans, stages broadly, or touches the source development worktree. Uncommitted source files therefore cannot enter a release.
 ## One-time provisioning
 
 1. Choose the real static HTTPS release origin and exact host name.

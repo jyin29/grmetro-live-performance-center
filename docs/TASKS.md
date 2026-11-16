@@ -2337,3 +2337,4 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Enforce Git, certificate, RSA pair, Cloudflare account/bucket, feed, Defender, manifest, privacy, and public-byte preflights.
 - [x] Publish ZIP, detached signature, and metadata in safe order with immutable-object resume, conflicting-object rejection, prior-metadata backup, and bounded rollback.
 - [x] Cover version selection, publication order, resumable ZIPs, metadata rollback, signing preflight, and existing Control Center update UX with focused automated tests.
+- [x] Add a one-commit reviewed-change importer that rejects dirty, private, generated, merge, range, and conflicting inputs without touching the source development worktree.

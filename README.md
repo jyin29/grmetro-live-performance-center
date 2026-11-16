@@ -4,6 +4,8 @@
 
 On the designated development PC, commit reviewed changes and leave the working tree clean. Double-click `Publish GRMetro Update.cmd`, review the automatically selected testing version, then type `PUBLISH`. The workflow tests, builds an application-only ZIP, applies Authenticode and RSA signatures, runs package/privacy/Defender checks, publishes to Cloudflare staging in fail-safe order, and verifies the public bytes. It never starts production installation.
 
+For reviewed development changes, double-click `Import Reviewed GRMetro Commit.cmd` in the clean release worktree and paste one full commit SHA. The importer cannot carry uncommitted files and safely aborts conflicts before publication.
+
 On the production PC, Control Center shows the available signed version. Review the changes and click `Update Now`; use `Recovery Logs` if validation or rollback reports a failure. See `docs/WINDOWS_RELEASE_WORKFLOW.md` for prerequisites and recovery behavior.
 
 Live technician performance digital signage for **GRmetro Heating & Cooling**, powered by ServiceTitan data.
