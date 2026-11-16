@@ -2348,3 +2348,7 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Render the selected period and date range consistently on every core TV slide.
 - [x] Reflow technician rows and cards by the visible roster so presentation exclusions leave no blank slot.
 - [x] Standardize Sales and Operations goal bubbles and enlarge actual values, progress bars, and revenue typography.
+## 2026-11-16 — Verified release history
+
+- [x] Add a read-only Control Center history view based only on installed and cryptographically verified release identities.
+- [x] Keep version restore unavailable while preserving automatic failed-update rollback.

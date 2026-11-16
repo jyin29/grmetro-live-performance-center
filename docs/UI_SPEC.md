@@ -2263,3 +2263,6 @@ Spreadsheet Continued is absent from rotation, indicators, phone controls, and l
 All five core dashboard slides show the selected reporting-period label and exact date range. Revenue headings and columns use the appropriate short period label. Revenue amounts are the dominant numeric element in the Revenue table, technician cards, install economics, and Recognition podium. Sales and Operations use one shared fully rounded goal-bubble treatment whose actual value is larger than its goal and percentage context.
 
 Technician filtering must not leave a reserved five-person hole. Revenue, Sales, Closing, Operations, and Technician-card regions divide their available row or column tracks by the visible technician count while retaining the established 1920×1080 layout and minimum readable typography.
+## 2026-11-16 — Control Center version history
+
+The Control Center update card exposes a read-only Version History action when verified identities exist. Each entry identifies its installed, available, or previously verified state. Published or build dates and release notes appear only where supplied; missing information is labeled unavailable. No Restore Version action is enabled, and the dialog states that automatic failed-update rollback remains active.

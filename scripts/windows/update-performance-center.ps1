@@ -26,8 +26,42 @@ function Invoke-GrMetroUpdateHostCheck {
   }finally{Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue}
 }
 
+function Get-GrMetroReleaseHistory($CheckResult) {
+  $identityScript=Join-Path $PSScriptRoot 'release-identity.ps1'
+  if(-not(Test-Path -LiteralPath $identityScript -PathType Leaf)){return @()}
+  . $identityScript
+  $entries=[ordered]@{}
+  $stateRoot=Join-Path $env:LOCALAPPDATA 'GRMetro\Update State';$trustPath=Join-Path $stateRoot 'trust-state.json'
+  try{
+    if(Test-Path -LiteralPath $trustPath -PathType Leaf){
+      $trust=Get-Content -LiteralPath $trustPath -Raw|ConvertFrom-Json
+      foreach($property in @($trust.identities.PSObject.Properties)){
+        try{$identity=ConvertTo-GrMetroReleaseVersion ([string]$property.Name)}catch{continue}
+        $entries[$identity.ReleaseVersion]=[ordered]@{version=$identity.ReleaseVersion;sequence=$identity.ReleaseSequence;status='verified';artifactSha256=[string]$property.Value;date=$null;dateSource=$null;releaseNotes=@();notesAvailable=$false;restoreAvailable=$false}
+      }
+    }
+  }catch{/* a corrupt history view must not weaken or block the signed update check */}
+  $installed=Get-GrMetroInstalledReleaseMetadata $root;$installedIdentity=ConvertTo-GrMetroReleaseVersion ([string]$installed.releaseVersion) -AllowDevelopment:([string]$installed.channel-eq'development')
+  $installedEntry=if($entries.Contains($installedIdentity.ReleaseVersion)){$entries[$installedIdentity.ReleaseVersion]}else{[ordered]@{version=$installedIdentity.ReleaseVersion;sequence=$installedIdentity.ReleaseSequence;artifactSha256=$null;releaseNotes=@();notesAvailable=$false;restoreAvailable=$false}}
+  $installedEntry.status='installed';$installedEntry.date=if($installed.builtAt){[string]$installed.builtAt}else{$null};$installedEntry.dateSource=if($installed.builtAt){'build'}else{$null};$installedEntry.commit=if($installed.commit){[string]$installed.commit}else{$null};$entries[$installedIdentity.ReleaseVersion]=$installedEntry
+  if($CheckResult -and $CheckResult.metadata -and $CheckResult.metadata.releaseVersion){
+    $metadata=$CheckResult.metadata;$latestIdentity=ConvertTo-GrMetroReleaseVersion ([string]$metadata.releaseVersion)
+    $latest=if($entries.Contains($latestIdentity.ReleaseVersion)){$entries[$latestIdentity.ReleaseVersion]}else{[ordered]@{version=$latestIdentity.ReleaseVersion;sequence=$latestIdentity.ReleaseSequence;artifactSha256=[string]$metadata.artifactSha256;restoreAvailable=$false}}
+    if($latest.status-ne'installed'){$latest.status=if($CheckResult.updateAvailable){'available'}else{'verified'}}
+    $latest.date=if($metadata.publishedAt){[string]$metadata.publishedAt}else{$latest.date};$latest.dateSource=if($metadata.publishedAt){'published'}else{$latest.dateSource};$latest.releaseNotes=@($metadata.releaseNotes|ForEach-Object{[string]$_});$latest.notesAvailable=[bool]$latest.releaseNotes.Count;$entries[$latestIdentity.ReleaseVersion]=$latest
+  }
+  return @($entries.Values|Sort-Object {[Int64]$_.sequence} -Descending|Select-Object -First 50|ForEach-Object{[pscustomobject]$_})
+}
+
+function Add-GrMetroReleaseHistory($CheckResult) {
+  try{$history=@(Get-GrMetroReleaseHistory $CheckResult)}catch{$history=@()}
+  $CheckResult|Add-Member -NotePropertyName versionHistory -NotePropertyValue $history -Force
+  $CheckResult|Add-Member -NotePropertyName restoreVersionSupported -NotePropertyValue $false -Force
+  return $CheckResult
+}
+
 if($CheckOnly){
-  Invoke-GrMetroUpdateHostCheck;exit 0
+  $check=Invoke-GrMetroUpdateHostCheck|ConvertFrom-Json;Add-GrMetroReleaseHistory $check|ConvertTo-Json -Compress -Depth 10;exit 0
 }
 
 if($InstallRemote){
@@ -50,5 +84,5 @@ if($PackageZip){
   [ordered]@{handoffStarted=$true;remote=$false;package=[IO.Path]::GetFullPath($PackageZip)}|ConvertTo-Json -Compress;exit 0
 }
 
-Invoke-GrMetroUpdateHostCheck
+$check=Invoke-GrMetroUpdateHostCheck|ConvertFrom-Json;Add-GrMetroReleaseHistory $check|ConvertTo-Json -Compress -Depth 10
 exit 0

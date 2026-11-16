@@ -36,7 +36,7 @@ function invokeFixture(workerSource) {
 test("GUI update check waits for the host worker and returns its JSON result", () => {
   const { result, leftovers } = invokeFixture("param([string]$Mode,[string]$InstallRoot,[switch]$Quiet)\nStart-Sleep -Milliseconds 250\n[ordered]@{status='up-to-date';current='2026.10.21.2';latest='2026.10.8.1';updateAvailable=$false}|ConvertTo-Json -Compress\n");
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.deepEqual(JSON.parse(result.stdout.trim()), { status: "up-to-date", current: "2026.10.21.2", latest: "2026.10.8.1", updateAvailable: false });
+  assert.deepEqual(JSON.parse(result.stdout.trim()), { status: "up-to-date", current: "2026.10.21.2", latest: "2026.10.8.1", updateAvailable: false, versionHistory: [], restoreVersionSupported: false });
   assert.deepEqual(leftovers, []);
 });
 

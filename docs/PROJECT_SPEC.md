@@ -14431,3 +14431,6 @@ No other membership metric is approved without a validated native response field
 Every dashboard refresh carries one canonical reporting-period description: period ID, business label, exact calendar start and end dates, and applicable working dates. Slides and remote views render that backend description rather than substituting `Today`. Historical comparisons and trends use only earlier successful snapshots from the same reporting period.
 
 An explicitly configured goal for the selected period is authoritative. When a period-specific goal is absent, additive daily goals are summed over applicable working dates. Percentage and average-ticket goals retain the daily target because multiplying them would change their meaning. The default schedule is Monday through Friday; explicit included and excluded ISO dates allow approved exceptions without guessing holidays or changing KPI logic.
+## 2026-11-16 — Verified release history
+
+The Control Center may list only the installed release, identities already recorded by signed-update trust state, and the currently verified signed feed result. It displays dates and release notes only when those fields exist in trustworthy metadata. Version restore remains a future interface capability; the existing automatic rollback for a failed update is unchanged.
