@@ -47,18 +47,63 @@ function Get-GrMetroPublicationPlan {
   )
 }
 
-function Invoke-GrMetroWrangler {
-  param([Parameter(Mandatory=$true)][string[]]$Arguments,[switch]$AllowMissingObject)
-  $npx=(Get-Command npx.cmd -ErrorAction Stop).Source
-  $wranglerRoot=Join-Path $env:LOCALAPPDATA 'GRMetro Release Publisher\Wrangler';New-Item -ItemType Directory -Force -Path $wranglerRoot|Out-Null
-  $prior=$ErrorActionPreference;$ErrorActionPreference='Continue'
-  try{$output=@(& $npx --yes "wrangler@$script:PublisherWranglerVersion" --cwd $wranglerRoot @Arguments 2>&1);$code=$LASTEXITCODE}finally{$ErrorActionPreference=$prior}
-  $text=($output|ForEach-Object{$_.ToString()})-join[Environment]::NewLine
-  if($code-ne0){
-    if($AllowMissingObject-and$text-match'(?i)specified key does not exist'){return [pscustomobject]@{ExitCode=$code;Missing=$true;Output=$text}}
-    throw "Cloudflare Wrangler failed (exit $code): $($text.Trim())"
+function Test-GrMetroTransientNetworkError($ErrorRecord) {
+  $exception=if($ErrorRecord -is [System.Management.Automation.ErrorRecord]){$ErrorRecord.Exception}else{$ErrorRecord}
+  for($current=$exception;$current;$current=$current.InnerException){
+    if($current -is [Net.WebException]-or$current -is [Net.Sockets.SocketException]-or$current.GetType().FullName-eq'System.Net.Http.HttpRequestException'){return $true}
   }
-  return [pscustomobject]@{ExitCode=0;Missing=$false;Output=$text}
+  $text=[string]$exception.Message
+  return $text-match'(?i)(transport connection|forcibly closed|connection (?:reset|aborted|closed|timed out)|socket hang up|ECONNRESET|ECONNABORTED|ETIMEDOUT|EAI_AGAIN|network name is no longer available|temporary failure|timed out|timeout|HTTP (?:408|429|500|502|503|504)|status code (?:408|429|500|502|503|504)|error code: (?:408|429|500|502|503|504))'
+}
+
+function Invoke-GrMetroTransientNetworkOperation {
+  param(
+    [Parameter(Mandatory=$true)][string]$Stage,
+    [Parameter(Mandatory=$true)][scriptblock]$Action,
+    [int]$MaximumAttempts=4,[int]$InitialDelayMilliseconds=1000,
+    [scriptblock]$SleepAction={param($milliseconds)Start-Sleep -Milliseconds $milliseconds}
+  )
+  if($MaximumAttempts-lt1-or$MaximumAttempts-gt6-or$InitialDelayMilliseconds-lt0-or$InitialDelayMilliseconds-gt30000){throw "Invalid transient retry policy for $Stage."}
+  for($attempt=1;$attempt-le$MaximumAttempts;$attempt++){
+    try{return &$Action}
+    catch{
+      $failure=$_
+      if(-not(Test-GrMetroTransientNetworkError $failure)){throw "Publisher stage '$Stage' failed without retry: $($failure.Exception.Message)"}
+      if($attempt-eq$MaximumAttempts){throw "Publisher stage '$Stage' failed after $attempt transient attempts: $($failure.Exception.Message)"}
+      $delay=[int]($InitialDelayMilliseconds*[Math]::Pow(2,$attempt-1))
+      Write-Warning "Publisher stage '$Stage' hit a transient network error on attempt $attempt/$MaximumAttempts. Retrying in $delay ms. $($failure.Exception.Message)"
+      &$SleepAction $delay
+    }
+  }
+}
+
+function Invoke-GrMetroWrangler {
+  param([Parameter(Mandatory=$true)][string[]]$Arguments,[switch]$AllowMissingObject,[switch]$RetryTransient,[string]$Stage='Cloudflare Wrangler command',[scriptblock]$SleepAction=$null)
+  $invoke={
+    $npx=(Get-Command npx.cmd -ErrorAction Stop).Source
+    $wranglerRoot=Join-Path $env:LOCALAPPDATA 'GRMetro Release Publisher\Wrangler';New-Item -ItemType Directory -Force -Path $wranglerRoot|Out-Null
+    $prior=$ErrorActionPreference;$ErrorActionPreference='Continue'
+    try{$output=@(& $npx --yes "wrangler@$script:PublisherWranglerVersion" --cwd $wranglerRoot @Arguments 2>&1);$code=$LASTEXITCODE}finally{$ErrorActionPreference=$prior}
+    $text=($output|ForEach-Object{$_.ToString()})-join[Environment]::NewLine
+    if($code-ne0){
+      if($AllowMissingObject-and$text-match'(?i)specified key does not exist'){return [pscustomobject]@{ExitCode=$code;Missing=$true;Output=$text}}
+      throw "Cloudflare Wrangler failed (exit $code): $($text.Trim())"
+    }
+    return [pscustomobject]@{ExitCode=0;Missing=$false;Output=$text}
+  }
+  if(-not$RetryTransient){return &$invoke}
+  $retry=@{Stage=$Stage;Action=$invoke};if($SleepAction){$retry.SleepAction=$SleepAction}
+  return Invoke-GrMetroTransientNetworkOperation @retry
+}
+
+function Invoke-GrMetroHttpDownload {
+  param([string]$Stage,[string]$Uri,[string]$OutFile,[int]$TimeoutSeconds,[scriptblock]$SleepAction=$null)
+  $action={
+    if(Test-Path -LiteralPath $OutFile){Remove-Item -LiteralPath $OutFile -Force}
+    Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $OutFile -MaximumRedirection 0 -TimeoutSec $TimeoutSeconds
+  }
+  $retry=@{Stage=$Stage;Action=$action};if($SleepAction){$retry.SleepAction=$SleepAction}
+  $null=Invoke-GrMetroTransientNetworkOperation @retry
 }
 
 function Get-GrMetroRemoteStagingRelease {
@@ -71,8 +116,8 @@ function Get-GrMetroRemoteStagingRelease {
   New-Item -ItemType Directory -Path $temporary|Out-Null
   try{
     $metadataPath=Join-Path $temporary 'release.json';$signaturePath=Join-Path $temporary 'release.json.sig'
-    Invoke-WebRequest -UseBasicParsing -Uri $source.MetadataUrl -OutFile $metadataPath -TimeoutSec $source.ResponseTimeoutSeconds
-    Invoke-WebRequest -UseBasicParsing -Uri $source.SignatureUrl -OutFile $signaturePath -TimeoutSec $source.ResponseTimeoutSeconds
+    Invoke-GrMetroHttpDownload -Stage "read signed staging metadata $($source.MetadataUrl)" -Uri $source.MetadataUrl -OutFile $metadataPath -TimeoutSeconds $source.ResponseTimeoutSeconds
+    Invoke-GrMetroHttpDownload -Stage "read signed staging signature $($source.SignatureUrl)" -Uri $source.SignatureUrl -OutFile $signaturePath -TimeoutSeconds $source.ResponseTimeoutSeconds
     $keys=Get-GrMetroPinnedReleaseKeys $PublicKeysPath
     $metadata=ConvertFrom-GrMetroSignedReleaseMetadata ([IO.File]::ReadAllBytes($metadataPath)) ([IO.File]::ReadAllBytes($signaturePath)) $keys
     if([string]$metadata.channel-ne'testing'){throw 'Published metadata is not on the testing channel.'}
@@ -123,11 +168,39 @@ function Test-GrMetroReleaseRepository {
   return [pscustomobject]@{Commit=$commit;Branch=$branch;Origin=$origin}
 }
 
+function Test-GrMetroPublisherOnlyResumeDelta([string[]]$Paths) {
+  $allowed=@(
+    '^scripts/windows/publish-update\.ps1$',
+    '^tests/windows-release-publisher(?:-validation\.ps1|\.test\.js)$',
+    '^docs/(?:TASKS|WINDOWS_RELEASE_WORKFLOW)\.md$'
+  )
+  $rejected=@($Paths|Where-Object{$path=$_;-not@($allowed|Where-Object{$path-match$_}).Count})
+  return [pscustomobject]@{Safe=$rejected.Count-eq0;Rejected=@($rejected)}
+}
+
+function Get-GrMetroResumableCandidateCommit([string]$ReleaseDirectory,[string]$PublisherCommit) {
+  $metadataPath=Join-Path $ReleaseDirectory 'release.json'
+  if(-not(Test-Path -LiteralPath $metadataPath -PathType Leaf)){throw 'Pending release metadata is missing.'}
+  try{$metadata=Get-Content -LiteralPath $metadataPath -Raw|ConvertFrom-Json}catch{throw 'Pending release metadata is malformed.'}
+  $candidateCommit=[string]$metadata.sourceCommit
+  if($candidateCommit-notmatch'^[a-f0-9]{40}$'){throw 'Pending release source commit is invalid.'}
+  $git=(Get-Command git.exe -ErrorAction Stop).Source
+  $null=&$git -C $script:PublisherRoot cat-file -e "$candidateCommit^{commit}" 2>$null;if($LASTEXITCODE-ne0){throw 'Pending release source commit is unavailable.'}
+  $null=&$git -C $script:PublisherRoot merge-base --is-ancestor $candidateCommit $PublisherCommit
+  if($LASTEXITCODE-ne0){throw 'Pending release source is not an ancestor of the publisher commit.'}
+  if($candidateCommit-ne$PublisherCommit){
+    $paths=@(&$git -C $script:PublisherRoot diff --name-only "$candidateCommit..$PublisherCommit");if($LASTEXITCODE-ne0){throw 'Could not audit changes made after the pending release was built.'}
+    $audit=Test-GrMetroPublisherOnlyResumeDelta $paths
+    if(-not$audit.Safe){throw "Pending release cannot resume because application-affecting files changed after it was built: $($audit.Rejected-join', ')"}
+  }
+  return $candidateCommit
+}
+
 function Test-GrMetroCloudflareAccess {
   param([string]$AccountId,[string]$BucketName)
-  $who=Invoke-GrMetroWrangler @('whoami')
+  $who=Invoke-GrMetroWrangler @('whoami') -RetryTransient -Stage 'verify Cloudflare account authentication'
   if($who.Output-notmatch[regex]::Escape($AccountId)){throw 'Wrangler is authenticated to the wrong Cloudflare account.'}
-  $buckets=Invoke-GrMetroWrangler @('r2','bucket','list')
+  $buckets=Invoke-GrMetroWrangler @('r2','bucket','list') -RetryTransient -Stage 'verify Cloudflare R2 bucket access'
   if($buckets.Output-notmatch("(?m)^name:\s+"+[regex]::Escape($BucketName)+"\s*$")){throw "Cloudflare R2 bucket $BucketName is unavailable."}
   return [pscustomobject]@{AccountId=$AccountId;Bucket=$BucketName}
 }
@@ -136,7 +209,7 @@ function Test-GrMetroR2Object {
   param([string]$BucketName,[string]$Key)
   $temporary=Join-Path $env:TEMP ('grmetro-r2-object-'+[guid]::NewGuid().ToString('N'))
   try{
-    $result=Invoke-GrMetroWrangler @('r2','object','get',"$BucketName/$Key",'--remote','--file',$temporary) -AllowMissingObject
+    $result=Invoke-GrMetroWrangler @('r2','object','get',"$BucketName/$Key",'--remote','--file',$temporary) -AllowMissingObject -RetryTransient -Stage "read R2 object $Key"
     if($result.Missing){return [pscustomobject]@{Exists=$false;Key=$Key}}
     return [pscustomobject]@{Exists=$true;Key=$Key;Path=$temporary;Length=(Get-Item $temporary).Length;Sha256=(Get-FileHash $temporary -Algorithm SHA256).Hash}
   }finally{if(Test-Path -LiteralPath $temporary){Remove-Item -LiteralPath $temporary -Force}}
@@ -188,6 +261,31 @@ function Test-GrMetroDefenderRelease {
   return [pscustomobject]@{AntivirusEnabled=$true;RealTimeProtectionEnabled=$true;NewDetections=0}
 }
 
+function Invoke-GrMetroImmutablePublicationPut {
+  param(
+    [Parameter(Mandatory=$true)]$Item,[Parameter(Mandatory=$true)][string]$Local,
+    [Parameter(Mandatory=$true)][string]$ExpectedHash,[Parameter(Mandatory=$true)][Int64]$ExpectedLength,
+    [Parameter(Mandatory=$true)][scriptblock]$ProbeAction,[Parameter(Mandatory=$true)][scriptblock]$PutAction,
+    [int]$MaximumAttempts=4,[int]$InitialDelayMilliseconds=1000,
+    [scriptblock]$SleepAction={param($milliseconds)Start-Sleep -Milliseconds $milliseconds}
+  )
+  if($ExpectedHash-notmatch'^[A-Fa-f0-9]{64}$'-or$ExpectedLength-lt1){throw 'Immutable publication identity is invalid.'}
+  for($attempt=1;$attempt-le$MaximumAttempts;$attempt++){
+    try{&$PutAction $Item $Local;return [pscustomobject]@{RecoveredAfterTransient=$false;Attempts=$attempt}}
+    catch{
+      $failure=$_
+      if(-not(Test-GrMetroTransientNetworkError $failure)){throw "Publisher stage 'upload immutable R2 object $($Item.Key)' failed without retry: $($failure.Exception.Message)"}
+      $observed=&$ProbeAction $Item
+      if($observed.Exists){
+        if([string]$observed.Sha256-eq$ExpectedHash-and[Int64]$observed.Length-eq$ExpectedLength){return [pscustomobject]@{RecoveredAfterTransient=$true;Attempts=$attempt}}
+        throw "Publisher stage 'upload immutable R2 object $($Item.Key)' found conflicting remote bytes after a transient failure. The object was not overwritten."
+      }
+      if($attempt-eq$MaximumAttempts){throw "Publisher stage 'upload immutable R2 object $($Item.Key)' failed after $attempt transient attempts and the object remains absent: $($failure.Exception.Message)"}
+      $delay=[int]($InitialDelayMilliseconds*[Math]::Pow(2,$attempt-1));Write-Warning "Immutable upload $($Item.Key) was not committed after transient attempt $attempt/$MaximumAttempts. Retrying in $delay ms.";&$SleepAction $delay
+    }
+  }
+}
+
 function Invoke-GrMetroPublicationTransaction {
   param(
     [Parameter(Mandatory=$true)]$Candidate,
@@ -195,25 +293,30 @@ function Invoke-GrMetroPublicationTransaction {
     [Parameter(Mandatory=$true)][scriptblock]$PutAction,
     [Parameter(Mandatory=$true)][scriptblock]$VerifyAction,
     [Parameter(Mandatory=$true)][scriptblock]$BackupAction,
-    [Parameter(Mandatory=$true)][scriptblock]$RestoreAction
+    [Parameter(Mandatory=$true)][scriptblock]$RestoreAction,
+    [scriptblock]$SleepAction={param($milliseconds)Start-Sleep -Milliseconds $milliseconds}
   )
   $plan=Get-GrMetroPublicationPlan $Candidate.Version
-  $previous=&$BackupAction
-  $zipState=&$ProbeAction $plan[0]
+  $previous=Invoke-GrMetroTransientNetworkOperation -Stage 'capture prior signed staging metadata for rollback' -Action $BackupAction -SleepAction $SleepAction
+  $zipState=Invoke-GrMetroTransientNetworkOperation -Stage "probe immutable R2 object $($plan[0].Key)" -Action {&$ProbeAction $plan[0]} -SleepAction $SleepAction
   if($zipState.Exists-and([string]$zipState.Sha256-ne[string]$Candidate.ZipSha256-or[Int64]$zipState.Length-ne[Int64]$Candidate.ZipSize)){throw 'The immutable versioned ZIP key already exists with different bytes.'}
   $zipReused=[bool]$zipState.Exists
-  if(-not$zipReused){&$PutAction $plan[0] $Candidate.Zip}
-  &$VerifyAction $plan[0] $Candidate.Zip
+  $zipRecovered=$false
+  if(-not$zipReused){$zipPut=Invoke-GrMetroImmutablePublicationPut -Item $plan[0] -Local $Candidate.Zip -ExpectedHash $Candidate.ZipSha256 -ExpectedLength $Candidate.ZipSize -ProbeAction $ProbeAction -PutAction $PutAction -SleepAction $SleepAction;$zipRecovered=[bool]$zipPut.RecoveredAfterTransient}
+  $null=Invoke-GrMetroTransientNetworkOperation -Stage "verify immutable ZIP through R2 and public HTTPS $($plan[0].Url)" -Action {&$VerifyAction $plan[0] $Candidate.Zip} -SleepAction $SleepAction
   $mutableStarted=$false
   try{
-    $mutableStarted=$true;&$PutAction $plan[1] $Candidate.Signature;&$VerifyAction $plan[1] $Candidate.Signature
-    &$PutAction $plan[2] $Candidate.Metadata;&$VerifyAction $plan[2] $Candidate.Metadata
+    $mutableStarted=$true
+    $null=Invoke-GrMetroTransientNetworkOperation -Stage "upload detached signature to R2 $($plan[1].Key)" -Action {&$PutAction $plan[1] $Candidate.Signature} -SleepAction $SleepAction
+    $null=Invoke-GrMetroTransientNetworkOperation -Stage "verify detached signature through R2 and public HTTPS $($plan[1].Url)" -Action {&$VerifyAction $plan[1] $Candidate.Signature} -SleepAction $SleepAction
+    $null=Invoke-GrMetroTransientNetworkOperation -Stage "upload signed release metadata last to R2 $($plan[2].Key)" -Action {&$PutAction $plan[2] $Candidate.Metadata} -SleepAction $SleepAction
+    $null=Invoke-GrMetroTransientNetworkOperation -Stage "verify signed release metadata through R2 and public HTTPS $($plan[2].Url)" -Action {&$VerifyAction $plan[2] $Candidate.Metadata} -SleepAction $SleepAction
   }catch{
     $failure=$_
-    if($mutableStarted){try{&$RestoreAction $previous}catch{throw "Publication failed: $($failure.Exception.Message). Staging metadata rollback also failed: $($_.Exception.Message)"}}
+    if($mutableStarted){try{$null=Invoke-GrMetroTransientNetworkOperation -Stage 'restore prior signed staging metadata after publication failure' -Action {&$RestoreAction $previous} -SleepAction $SleepAction}catch{throw "Publication failed: $($failure.Exception.Message). Staging metadata rollback also failed: $($_.Exception.Message)"}}
     throw $failure
   }
-  return [pscustomobject]@{Status='published';Version=$Candidate.Version;Sequence=$Candidate.Sequence;ZipReused=$zipReused;Plan=$plan;Previous=$previous}
+  return [pscustomobject]@{Status='published';Version=$Candidate.Version;Sequence=$Candidate.Sequence;ZipReused=$zipReused;ZipRecoveredAfterTransient=$zipRecovered;Plan=$plan;Previous=$previous}
 }
 
 function Invoke-GrMetroPublishUpdate {
@@ -227,11 +330,13 @@ function Invoke-GrMetroPublishUpdate {
   $pending=@(Get-ChildItem -LiteralPath $script:OutputRoot -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name-match'^GRMetro-(\d{4}\.\d{1,2}\.\d{1,2}\.\d{1,4})$' -and (Compare-GrMetroReleaseVersion $matches[1] ([string]$remote.Metadata.releaseVersion))-gt0})
   if($pending.Count-gt1){throw 'Multiple unpublished local releases exist. Resolve them before one-click publication.'}
   $notesTemporary=$null
+  $candidateCommit=$repository.Commit
   try{
     if($pending.Count-eq1){
       $releaseDirectory=$pending[0].FullName;$version=$pending[0].Name.Substring(8)
-      if($PlanOnly){return [pscustomobject]@{Status='planned-resume';Version=$version;Commit=$repository.Commit;Channel='testing';ReleaseDirectory=$releaseDirectory;Cloudflare=$cloudflare;SigningKeyFingerprint=$signing.KeyFingerprint}}
-      if(-not$ConfirmPublish){$answer=Read-Host "Resume validated publication of $version from commit $($repository.Commit.Substring(0,12))? Type PUBLISH";if($answer-ne'PUBLISH'){throw 'Publication was cancelled.'}}
+      $candidateCommit=Get-GrMetroResumableCandidateCommit $releaseDirectory $repository.Commit
+      if($PlanOnly){return [pscustomobject]@{Status='planned-resume';Version=$version;Commit=$candidateCommit;PublisherCommit=$repository.Commit;Channel='testing';ReleaseDirectory=$releaseDirectory;Cloudflare=$cloudflare;SigningKeyFingerprint=$signing.KeyFingerprint}}
+      if(-not$ConfirmPublish){$answer=Read-Host "Resume validated publication of $version from candidate commit $($candidateCommit.Substring(0,12)) using publisher $($repository.Commit.Substring(0,12))? Type PUBLISH";if($answer-ne'PUBLISH'){throw 'Publication was cancelled.'}}
     }else{
       $notes=$ReleaseNotesPath
       if(-not$notes){$notesTemporary=Join-Path $env:TEMP ('grmetro-release-notes-'+[guid]::NewGuid().ToString('N')+'.txt');$subject=(& git.exe -C $script:PublisherRoot log -1 --format=%s).Trim();if(-not$subject){throw 'The latest commit has no release-note subject.'};[IO.File]::WriteAllText($notesTemporary,$subject+[Environment]::NewLine,(New-Object Text.UTF8Encoding $false));$notes=$notesTemporary}
@@ -246,11 +351,12 @@ function Invoke-GrMetroPublishUpdate {
       }finally{$env:NODE_OPTIONS=$previousNodeOptions}
       $releaseDirectory=Join-Path $script:OutputRoot "GRMetro-$version"
     }
-    $candidate=Test-GrMetroReleaseCandidate $releaseDirectory $version $repository.Commit $ReleasePublicKeysPath $signing
+    $candidate=Test-GrMetroReleaseCandidate $releaseDirectory $version $candidateCommit $ReleasePublicKeysPath $signing
     $null=Test-GrMetroDefenderRelease $candidate
     $currentRemote=Get-GrMetroRemoteStagingRelease $ReleasePublicKeysPath $Origin
     if([Int64]$currentRemote.Metadata.releaseSequence-ne[Int64]$remote.Metadata.releaseSequence-or[string]$currentRemote.Metadata.artifactSha256-ne[string]$remote.Metadata.artifactSha256){throw 'Staging metadata changed after preflight; refusing to publish.'}
     $backupRoot=Join-Path $env:USERPROFILE 'GRMetro-Cloudflare-Publication-Backups'
+    $backupPath=Join-Path $backupRoot ("staging-$($remote.Metadata.releaseVersion)-before-$version-"+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ'))
     $publication=Invoke-GrMetroPublicationTransaction -Candidate $candidate `
       -ProbeAction {param($item)Test-GrMetroR2Object $Bucket $item.Key} `
       -PutAction {param($item,$local)$null=Invoke-GrMetroWrangler @('r2','object','put',"$Bucket/$($item.Key)",'--remote','--file',$local,'--content-type',$item.ContentType,'--cache-control',$item.CacheControl)} `
@@ -258,19 +364,19 @@ function Invoke-GrMetroPublishUpdate {
         $r2=Test-GrMetroR2Object $Bucket $item.Key;if(-not$r2.Exists){throw "Published R2 object is missing: $($item.Key)"}
         $localHash=(Get-FileHash $local -Algorithm SHA256).Hash;$localSize=(Get-Item $local).Length;if($r2.Sha256-ne$localHash-or$r2.Length-ne$localSize){throw "R2 object differs from local bytes: $($item.Key)"}
         $public=Join-Path $env:TEMP ('grmetro-public-verify-'+[guid]::NewGuid().ToString('N'));try{
-          $head=Invoke-WebRequest -UseBasicParsing -Uri $item.Url -Method Head -MaximumRedirection 0 -TimeoutSec 30
-          Invoke-WebRequest -UseBasicParsing -Uri $item.Url -OutFile $public -MaximumRedirection 0 -TimeoutSec 180
+          $head=Invoke-GrMetroTransientNetworkOperation -Stage "read public HEAD $($item.Url)" -Action {Invoke-WebRequest -UseBasicParsing -Uri $item.Url -Method Head -MaximumRedirection 0 -TimeoutSec 30}
+          Invoke-GrMetroHttpDownload -Stage "download public object $($item.Url)" -Uri $item.Url -OutFile $public -TimeoutSeconds 180
           if((Get-FileHash $public -Algorithm SHA256).Hash-ne$localHash-or(Get-Item $public).Length-ne$localSize){throw "Public object differs from local bytes: $($item.Key)"}
           $expectedType=($item.ContentType-split';')[0];if([int]$head.StatusCode-ne200-or-not([string]$head.Headers['Content-Type']).StartsWith($expectedType,[StringComparison]::OrdinalIgnoreCase)){throw "Public object has an unexpected Content-Type: $($item.Key)"}
           if([string]$head.Headers['Cache-Control']-ne$item.CacheControl){throw "Public object has an unexpected cache policy: $($item.Key)"}
         }finally{if(Test-Path $public){Remove-Item $public -Force}}
       } `
       -BackupAction {
-        New-Item -ItemType Directory -Force -Path $backupRoot|Out-Null;$path=Join-Path $backupRoot ("staging-$($remote.Metadata.releaseVersion)-before-$version-"+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ'));New-Item -ItemType Directory -Path $path|Out-Null
-        $oldMetadata=Join-Path $path 'release.json';$oldSignature=Join-Path $path 'release.json.sig';$null=Invoke-GrMetroWrangler @('r2','object','get',"$Bucket/staging/release.json",'--remote','--file',$oldMetadata);$null=Invoke-GrMetroWrangler @('r2','object','get',"$Bucket/staging/release.json.sig",'--remote','--file',$oldSignature)
-        $state=[pscustomobject]@{Path=$path;Metadata=$oldMetadata;Signature=$oldSignature;Version=[string]$remote.Metadata.releaseVersion;MetadataSha256=(Get-FileHash $oldMetadata -Algorithm SHA256).Hash;SignatureSha256=(Get-FileHash $oldSignature -Algorithm SHA256).Hash}
+        New-Item -ItemType Directory -Force -Path $backupRoot,$backupPath|Out-Null
+        $oldMetadata=Join-Path $backupPath 'release.json';$oldSignature=Join-Path $backupPath 'release.json.sig';Remove-Item -LiteralPath $oldMetadata,$oldSignature -Force -ErrorAction SilentlyContinue;$null=Invoke-GrMetroWrangler @('r2','object','get',"$Bucket/staging/release.json",'--remote','--file',$oldMetadata);$null=Invoke-GrMetroWrangler @('r2','object','get',"$Bucket/staging/release.json.sig",'--remote','--file',$oldSignature)
+        $state=[pscustomobject]@{Path=$backupPath;Metadata=$oldMetadata;Signature=$oldSignature;Version=[string]$remote.Metadata.releaseVersion;MetadataSha256=(Get-FileHash $oldMetadata -Algorithm SHA256).Hash;SignatureSha256=(Get-FileHash $oldSignature -Algorithm SHA256).Hash}
         if($state.MetadataSha256-ne$remote.MetadataSha256-or$state.SignatureSha256-ne$remote.SignatureSha256){throw 'Direct R2 metadata differs from the signed public feed during rollback capture.'}
-        [ordered]@{schemaVersion=1;capturedAt=[DateTime]::UtcNow.ToString('o');bucket=$Bucket;channel='testing';priorVersion=$state.Version;targetVersion=$version;metadataSha256=$state.MetadataSha256;signatureSha256=$state.SignatureSha256}|ConvertTo-Json|Set-Content (Join-Path $path 'rollback-metadata.json') -Encoding UTF8
+        [ordered]@{schemaVersion=1;capturedAt=[DateTime]::UtcNow.ToString('o');bucket=$Bucket;channel='testing';priorVersion=$state.Version;targetVersion=$version;metadataSha256=$state.MetadataSha256;signatureSha256=$state.SignatureSha256}|ConvertTo-Json|Set-Content (Join-Path $backupPath 'rollback-metadata.json') -Encoding UTF8
         $state
       } `
       -RestoreAction {param($previous)
@@ -281,7 +387,7 @@ function Invoke-GrMetroPublishUpdate {
       }
     $verified=Get-GrMetroRemoteStagingRelease $ReleasePublicKeysPath $Origin
     if([string]$verified.Metadata.releaseVersion-ne$version-or[string]$verified.Metadata.artifactSha256-ne$candidate.ZipSha256){throw 'Final staging feed verification did not return the published release.'}
-    $result=[pscustomobject]@{Status='SUCCESS';Version=$version;Sequence=$candidate.Sequence;Commit=$repository.Commit;Channel='testing';ArtifactUrl=$candidate.ArtifactUrl;ArtifactSha256=$candidate.ZipSha256;ArtifactSize=$candidate.ZipSize;ReleaseDirectory=$candidate.Directory;RollbackMetadata=$publication.Previous.Path;ZipReused=$publication.ZipReused}
+    $result=[pscustomobject]@{Status='SUCCESS';Version=$version;Sequence=$candidate.Sequence;Commit=$candidateCommit;PublisherCommit=$repository.Commit;Channel='testing';ArtifactUrl=$candidate.ArtifactUrl;ArtifactSha256=$candidate.ZipSha256;ArtifactSize=$candidate.ZipSize;ReleaseDirectory=$candidate.Directory;RollbackMetadata=$publication.Previous.Path;ZipReused=$publication.ZipReused;ZipRecoveredAfterTransient=$publication.ZipRecoveredAfterTransient}
     $result|ConvertTo-Json -Depth 5|Set-Content (Join-Path $publication.Previous.Path 'publication-result.json') -Encoding UTF8
     return $result
   }finally{if($notesTemporary-and(Test-Path $notesTemporary)){Remove-Item $notesTemporary -Force}}

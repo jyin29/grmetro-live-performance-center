@@ -2341,6 +2341,7 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Serialize root test files during publication while retaining every root and workspace test after concurrent Vite, esbuild, PowerShell, and packaging workers exhausted development-PC memory.
 - [x] Make legacy single-file validation build disposable application and Update Host payloads from committed source instead of depending on ignored historical `dist` artifacts.
 - [x] Add both reporting-period runtime modules to the authoritative Windows package manifest and cover their inclusion before isolated release builds.
+- [x] Add bounded transient-network retries with stage-specific diagnostics, uncertain immutable-upload verification, metadata rollback, and publisher-only candidate resume coverage.
 
 ## 2026-11-16 — Period and television-readability corrections
 

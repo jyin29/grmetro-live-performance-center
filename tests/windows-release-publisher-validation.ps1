@@ -29,6 +29,38 @@ $success=Invoke-GrMetroPublicationTransaction -Candidate $candidate `
 Assert ($success.Status-eq'published'-and-not$success.ZipReused) 'Successful publication result is incorrect.'
 Assert (($events-join',')-eq'backup,probe:zip,put:zip,verify:zip,put:signature,verify:signature,put:metadata,verify:metadata') 'Successful publication did not follow the safe object order.'
 
+$attempt=0;$delays=New-Object Collections.Generic.List[int]
+$transient=Invoke-GrMetroTransientNetworkOperation -Stage 'synthetic HTTPS verification' -Action {$script:attempt++;if($script:attempt-lt3){throw (New-Object IO.IOException 'An existing connection was forcibly closed by the remote host.')};'recovered'} -SleepAction {param($milliseconds)$delays.Add($milliseconds)|Out-Null}
+Assert ($transient-eq'recovered'-and$attempt-eq3-and($delays-join',')-eq'1000,2000') 'Transient network operation did not use bounded exponential retry.'
+$attempt=0
+Expect-Failure {Invoke-GrMetroTransientNetworkOperation -Stage 'synthetic integrity rejection' -Action {$script:attempt++;throw 'HASH MISMATCH'} -SleepAction {param($milliseconds)}} 'failed without retry.*HASH MISMATCH' 'Nontransient integrity failure was retried or obscured.'
+Assert ($attempt-eq1) 'Nontransient integrity failure executed more than once.'
+
+$events.Clear();$verifyAttempts=0;$delays.Clear()
+$retried=Invoke-GrMetroPublicationTransaction -Candidate $candidate `
+  -ProbeAction {param($item)$events.Add("probe:$($item.Kind)")|Out-Null;[pscustomobject]@{Exists=$false}} `
+  -PutAction {param($item,$local)$events.Add("put:$($item.Kind)")|Out-Null} `
+  -VerifyAction {param($item,$local)$events.Add("verify:$($item.Kind)")|Out-Null;if($item.Kind-eq'zip'){$script:verifyAttempts++;if($script:verifyAttempts-lt3){throw (New-Object IO.IOException 'transport connection was forcibly closed')}}} `
+  -BackupAction {$events.Add('backup')|Out-Null;[pscustomobject]@{Version='old'}} `
+  -RestoreAction {param($previous)$events.Add('restore')|Out-Null} `
+  -SleepAction {param($milliseconds)$delays.Add($milliseconds)|Out-Null}
+Assert ($retried.Status-eq'published'-and$verifyAttempts-eq3-and@($events|Where-Object{$_-eq'put:zip'}).Count-eq1) 'Transient public verification did not retry without re-uploading the immutable ZIP.'
+Assert (($delays-join',')-eq'1000,2000'-and'restore'-notin$events) 'Transient public verification retry timing or rollback behavior is incorrect.'
+
+$events.Clear();$remoteZip=$false
+$uncertain=Invoke-GrMetroPublicationTransaction -Candidate $candidate `
+  -ProbeAction {param($item)$events.Add("probe:$($item.Kind)")|Out-Null;if($item.Kind-eq'zip'-and$script:remoteZip){[pscustomobject]@{Exists=$true;Sha256=('A'*64);Length=100}}else{[pscustomobject]@{Exists=$false}}} `
+  -PutAction {param($item,$local)$events.Add("put:$($item.Kind)")|Out-Null;if($item.Kind-eq'zip'){$script:remoteZip=$true;throw (New-Object IO.IOException 'connection reset after upload')}} `
+  -VerifyAction {param($item,$local)$events.Add("verify:$($item.Kind)")|Out-Null} `
+  -BackupAction {$events.Add('backup')|Out-Null;[pscustomobject]@{Version='old'}} `
+  -RestoreAction {param($previous)$events.Add('restore')|Out-Null} `
+  -SleepAction {param($milliseconds)}
+Assert ($uncertain.ZipRecoveredAfterTransient-and@($events|Where-Object{$_-eq'put:zip'}).Count-eq1) 'Uncertain immutable upload did not recover by verifying matching remote bytes.'
+
+$allowedResume=Test-GrMetroPublisherOnlyResumeDelta @('scripts/windows/publish-update.ps1','tests/windows-release-publisher-validation.ps1','docs/WINDOWS_RELEASE_WORKFLOW.md')
+$blockedResume=Test-GrMetroPublisherOnlyResumeDelta @('apps/backend/src/index.js')
+Assert ($allowedResume.Safe-and-not$blockedResume.Safe-and$blockedResume.Rejected[0]-eq'apps/backend/src/index.js') 'Pending release resume path policy is not fail closed for application changes.'
+
 $events.Clear()
 $reused=Invoke-GrMetroPublicationTransaction -Candidate $candidate `
   -ProbeAction {param($item)$events.Add("probe:$($item.Kind)")|Out-Null;[pscustomobject]@{Exists=$true;Sha256=('A'*64);Length=100}} `

@@ -23,6 +23,10 @@ The launcher does not install anything on production. It performs the complete d
 
 An identical versioned ZIP left by an interrupted run is reused only when its byte size and SHA-256 match. A conflicting immutable object stops publication. Multiple unpublished local candidates also stop with an actionable error. The workflow never deletes versioned ZIPs, changes production source/trust configuration, or invokes `ApplyLocal`, `PrepareRemote`, or any installer.
 
+Cloudflare commands and public HTTPS reads use at most four attempts with 1, 2, and 4 second exponential delays, and only for classified transient transport, timeout, throttling, or server errors. Authentication, policy, signature, hash, size, content-type, cache, and other integrity failures are never retried. If an immutable ZIP upload disconnects after Cloudflare may have accepted it, the publisher reads the exact R2 key and resumes only when both SHA-256 and byte size match; conflicting bytes are never overwritten. Detached signature and metadata remain mutable rollback-controlled objects, with metadata still written last.
+
+A locally complete candidate may resume after a publisher-only reliability fix when its signed source commit is an ancestor of the current publisher commit and every intervening path is restricted to the publisher script, its focused tests, or release-workflow documentation. Any application-affecting change blocks resume and requires a new immutable release identity.
+
 After publication, production remains operator-controlled. Open Control Center, review the current and available versions and signed release note, then click `Update Now`. The external Update Host reports download, verification, backup, installation, validation, completion, and rollback status. `Recovery Logs` remains the one-click diagnostic entry point. Never retry a failed installation until its displayed rollback result and recovery evidence have been reviewed.
 
 ## Import reviewed application commits safely
