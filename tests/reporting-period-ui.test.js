@@ -52,3 +52,9 @@ test("revenue values receive dedicated large-screen emphasis", () => {
   assert.match(css, /\.technician-metric--revenue strong/);
   assert.match(css, /\.podium-card__metric--revenue/);
 });
+
+test("Windows packages include both reporting-period runtime modules", () => {
+  const manifest = JSON.parse(read("scripts/windows/package-manifest.json"));
+  assert.ok(manifest.files.includes("apps/backend/src/reporting/reportingPeriods.js"));
+  assert.ok(manifest.files.includes("apps/dashboard/src/lib/reportingPeriod.js"));
+});
