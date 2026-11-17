@@ -34,6 +34,12 @@ test("root package declares the three application workspaces and required comman
   }
 });
 
+test("root tests run every suite with bounded file concurrency", () => {
+  const command = require(path.join(root, "package.json")).scripts.test;
+  assert.match(command, /^node --test --test-concurrency=1 tests\/\*\.test\.js/);
+  assert.match(command, /&& npm run test --workspaces --if-present$/);
+});
+
 test("required PNG assets have PNG signatures", () => {
   for (const asset of [
     "assets/branding/grmetro-logo.png",

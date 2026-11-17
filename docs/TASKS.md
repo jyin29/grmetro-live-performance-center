@@ -2338,6 +2338,8 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Publish ZIP, detached signature, and metadata in safe order with immutable-object resume, conflicting-object rejection, prior-metadata backup, and bounded rollback.
 - [x] Cover version selection, publication order, resumable ZIPs, metadata rollback, signing preflight, and existing Control Center update UX with focused automated tests.
 - [x] Add a one-commit reviewed-change importer that rejects dirty, private, generated, merge, range, and conflicting inputs without touching the source development worktree.
+- [x] Serialize root test files during publication while retaining every root and workspace test after concurrent Vite, esbuild, PowerShell, and packaging workers exhausted development-PC memory.
+- [x] Make legacy single-file validation build disposable application and Update Host payloads from committed source instead of depending on ignored historical `dist` artifacts.
 
 ## 2026-11-16 — Period and television-readability corrections
 

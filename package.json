@@ -10,7 +10,7 @@
     "dev:dashboard": "npm run dev --workspace=@grmetro/dashboard",
     "dev:remote": "npm run dev --workspace=@grmetro/remote",
     "build": "npm run build --workspaces --if-present",
-    "test": "node --test tests/*.test.js && npm run test --workspaces --if-present",
+    "test": "node --test --test-concurrency=1 tests/*.test.js && npm run test --workspaces --if-present",
     "start": "npm run start --workspace=@grmetro/backend",
     "setup:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/setup-performance-center.ps1",
     "start:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/start-performance-center.ps1",

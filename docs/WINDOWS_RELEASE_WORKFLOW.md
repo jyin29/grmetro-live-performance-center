@@ -16,7 +16,7 @@ The launcher does not install anything on production. It performs the complete d
 - verifies the internal Authenticode policy, non-exportable signing certificate, pinned public root, certificate lifetime, and timestamp policy;
 - verifies Cloudflare OAuth account `8d710ff406719195e28bff0bb5971269`, R2 bucket `grmetro-updates`, HTTPS source policy, existing signed feed, and target-key state;
 - chooses the next `YYYY.M.D.N` testing release and refuses a future-dated feed or daily revision overflow;
-- runs repository tests, performs an isolated application-only Windows build with a bounded Node heap, signs the launcher, creates exact-byte RSA metadata, validates manifest/private-data exclusions, and scans the ZIP plus a disposable extraction with Defender;
+- runs every repository and workspace test while serializing root test files to keep Vite, esbuild, PowerShell, and Windows packaging fixtures within development-PC memory limits; performs an isolated application-only Windows build with a bounded Node heap; signs the launcher; creates exact-byte RSA metadata; validates manifest/private-data exclusions; and scans the ZIP plus a disposable extraction with Defender;
 - uploads the immutable versioned ZIP first, `release.json.sig` second, and `release.json` last;
 - compares direct R2 and public Worker bytes after each write, then verifies the live signed feed advertises the new version;
 - saves prior metadata/signature beneath `%USERPROFILE%\GRMetro-Cloudflare-Publication-Backups` and restores that pair once if mutable publication fails.
