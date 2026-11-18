@@ -1,14 +1,16 @@
 import { formatComparison, trendPresentation } from "../lib/historicalPresentation";
 import { formatMetric, refreshLabel } from "../lib/presentation";
 import { technicianDetailModel } from "../lib/technicianDetail";
+import { GoalProgressValue } from "./GoalProgressValue";
 
 function MetricCard({ item }) {
   const { metric, comparison, trend } = item;
+  const showClosingHierarchy = item.id === "closingRate";
   const valueTrend = trendPresentation(trend?.value);
   const comparisonText = formatComparison(comparison?.value, metric?.format);
   return <article className="technician-detail__metric">
-    <p>{item.label}</p><strong>{formatMetric(metric)}</strong>
-    {metric?.goal !== undefined && metric.goal !== null && <dl>
+    <p>{item.label}</p>{showClosingHierarchy ? <GoalProgressValue metric={metric}/> : <strong>{formatMetric(metric)}</strong>}
+    {!showClosingHierarchy && metric?.goal !== undefined && metric.goal !== null && <dl>
       <div><dt>Goal</dt><dd>{formatMetric({ ...metric, value: metric.goal, hasData: true })}</dd></div>
       <div><dt>Remaining</dt><dd>{metric.remaining === null ? "No data" : formatMetric({ ...metric, value: metric.remaining, hasData: true })}</dd></div>
       <div><dt>Goal Progress</dt><dd>{Number.isFinite(metric.percentComplete) ? `${Math.round(metric.percentComplete)}%` : "No data"}</dd></div>

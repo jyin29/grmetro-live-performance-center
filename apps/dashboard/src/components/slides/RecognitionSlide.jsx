@@ -1,4 +1,5 @@
 import { AnimatedMetric } from "../AnimatedMetric";
+import { GoalProgressValue } from "../GoalProgressValue";
 import { displayRank, rankedTechnicians } from "../../lib/presentation";
 import { reportingPeriod } from "../../lib/reportingPeriod";
 
@@ -52,7 +53,7 @@ export function RecognitionSlide({ data }) {
           <span className="recognition-hero__avatar">{technician.initials}</span>
           <h3>{technician.name}</h3>
           <div className="podium-card__metric podium-card__metric--revenue"><span>Revenue</span><AnimatedMetric metric={technician.kpis?.revenue}/></div>
-          <div><span>Closing</span><AnimatedMetric metric={technician.kpis?.closingRate}/></div>
+          <div className="podium-card__metric podium-card__metric--closing"><span>Closing</span><GoalProgressValue metric={technician.kpis?.closingRate}/></div>
         </article>;
       })}
     </section>

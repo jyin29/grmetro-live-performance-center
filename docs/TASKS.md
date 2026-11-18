@@ -2364,3 +2364,10 @@ No production application, authenticated browser profile, process, shortcut, tas
 - [x] Reject excluded technician selections from remote TV overrides while retaining the underlying technician as a valid configured identity.
 - [x] Filter matching spreadsheet identity rows before availability and continuation pagination while preserving the stored spreadsheet source.
 - [x] Cover all five displays, exact spreadsheet ID and name behavior, preserved totals, and unaffected technicians.
+
+## 2026-11-18 — Closing metric readability
+
+- [x] Replace duplicated slash-separated goal values with one shared labeled actual, goal, and attainment component.
+- [x] Apply the hierarchy to Sales, Operations, technician cards, technician detail, and Recognition closing values.
+- [x] Enlarge rounded goal bubbles and the Closing % horizontal progress bar with late TV-specific overrides.
+- [x] Cover output order, labels, zero/unavailable handling, typography hierarchy, CSS load order, and Windows package inclusion.

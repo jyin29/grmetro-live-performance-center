@@ -2272,3 +2272,9 @@ The Control Center update card exposes a read-only Version History action when v
 Every technician-facing dashboard surface consumes the backend-projected visible roster. KPI rows, Sales and Operations matrices, technician cards, rankings, leaderboards, podiums, Recognition, phone technician selection, and legacy TV overrides omit centrally excluded stable technician identities. Visible KPI and overall ranks are compacted after exclusion so cards and podium positions contain no gaps. The projection is identical across every configured display.
 
 Spreadsheet slides remove an excluded technician row before page-capacity and continuation calculations when a stable employee or technician ID column identifies it. An exact configured full-name match is used only in a recognized technician-name column when no row ID is available. No other spreadsheet row is removed.
+
+## 2026-11-18 — Closing goal hierarchy
+
+Closing metrics use one shared labeled hierarchy everywhere they appear. The actual Closing % is the largest value, followed by `of [goal] goal` as secondary context and `[percentage]% of goal achieved` as a separate attainment statement. Slash-separated current/goal notation is not allowed. Existing backend-prepared goal and `percentComplete` values remain authoritative.
+
+Sales and Operations goal bubbles use the same hierarchy and larger rounded tracks. The Closing % panel uses a substantially thicker horizontal progress bar. Late-loaded TV styles explicitly preserve the actual-over-goal typography order in technician cards and the Recognition podium without changing calculations, reporting periods, or slide layout ownership.

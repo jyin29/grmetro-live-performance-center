@@ -120,6 +120,7 @@
                   "apps/dashboard/src/components/EmptyState.jsx",
                   "apps/dashboard/src/components/ErrorView.jsx",
                   "apps/dashboard/src/components/EventOverlay.jsx",
+                  "apps/dashboard/src/components/GoalProgressValue.jsx",
                   "apps/dashboard/src/components/Header.jsx",
                   "apps/dashboard/src/components/KpiCard.jsx",
                   "apps/dashboard/src/components/KpiComparisonChart.jsx",

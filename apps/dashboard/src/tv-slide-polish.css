@@ -66,20 +66,28 @@
 
 /* Slides 2 and 4 share one rounded goal-bubble hierarchy. */
 .display-stage .goal-progress-bubble {
-  min-height:clamp(58px,4vw,76px);
+  min-height:clamp(76px,5vw,96px);
+  padding:clamp(6px,.45vw,9px) clamp(8px,.6vw,12px);
   overflow:hidden;
   border-radius:999px;
   background:#eef2f4;
 }
 .display-stage .goal-progress-bubble > span { border-radius:inherit; }
-.display-stage .goal-progress-bubble .metric-goal-inline { font-size:clamp(31px,2.08vw,42px); }
-.display-stage .goal-progress-bubble .metric-goal-inline b { font-size:1.18em; font-weight:950; letter-spacing:-.035em; }
-.display-stage .goal-progress-bubble .metric-goal-inline strong { font-size:.62em; }
-.display-stage .goal-progress-bubble .metric-goal-inline span { font-size:.62em; }
-.display-stage .goal-progress-bubble .metric-goal-inline em { font-size:.6em; }
+.display-stage .goal-progress-value__actual { font-size:clamp(40px,2.6vw,52px); }
+.display-stage .goal-progress-value__goal { font-size:clamp(14px,.9vw,18px); }
+.display-stage .goal-progress-value__goal strong { display:inline; color:#43545f; font:inherit; font-weight:950; letter-spacing:0; }
+.display-stage .goal-progress-value__attainment { font-size:clamp(13px,.84vw,17px); }
+.display-stage .closing-row .goal-progress-value { justify-items:end; }
+.display-stage .closing-row .goal-progress-value__actual { font-size:clamp(48px,3.15vw,64px); }
+.display-stage .closing-row__bar { height:clamp(38px,2.55vw,50px); }
+.display-stage .technician-metric--closingRate .goal-progress-value { width:100%; justify-items:start; }
+.display-stage .technician-metric--closingRate .goal-progress-value__actual { font-size:clamp(50px,3.2vw,65px); }
+.display-stage .podium-card__metric--closing .goal-progress-value { justify-items:end; }
+.display-stage .podium-card__metric--closing .goal-progress-value__actual { font-size:clamp(34px,2.2vw,45px); }
+.display-stage .install-economics-row__metric .goal-progress-value__actual { font-size:clamp(28px,1.8vw,36px); }
 
 /* Actual revenue remains the dominant number throughout the TV presentation. */
 .display-stage .pace-row__value { font-size:clamp(38px,2.55vw,52px); line-height:1; letter-spacing:-.035em; }
 .display-stage .technician-metric--revenue strong { font-size:clamp(54px,3.5vw,70px); }
 .display-stage .podium-card__metric--revenue > span:last-child { font-size:clamp(48px,3.3vw,68px); }
-.display-stage .install-economics-row__metric--installRevenue .metric-goal-inline { font-size:clamp(25px,1.58vw,32px); }
+.display-stage .install-economics-row__metric--installRevenue .goal-progress-value__actual { font-size:clamp(32px,2.05vw,42px); }

@@ -1,4 +1,4 @@
-import { AnimatedMetric } from "../AnimatedMetric";
+import { GoalProgressValue } from "../GoalProgressValue";
 import { reportingPeriod } from "../../lib/reportingPeriod";
 
 const PIPELINE_METRICS = ["opportunities", "techLeads", "marketedLeads", "membershipsSold"];
@@ -12,8 +12,6 @@ function pipelineBarRatio(slide, metricId, metric) {
   const maximum = Math.max(0, ...values);
   return maximum > 0 ? Math.max(0, Math.min(.8, (Number(metric.value) || 0) / maximum * .8)) : 0;
 }
-function goalProgress(metric) { const goal = Number(metric?.goal) || 0; if (!metric?.hasData || goal <= 0) return null; const value = Number(metric.value) || 0; return { goal, percentage: Math.max(0, Math.round((value / goal) * 100)) }; }
-function MetricValue({ metric, unavailable = "—" }) { if (!metric?.hasData) return <b>{unavailable}</b>; const progress = goalProgress(metric); if (!progress) return <b><AnimatedMetric metric={metric} /></b>; return <div className="metric-goal-inline"><b><AnimatedMetric metric={metric} /></b><span>/</span><strong>{progress.goal.toLocaleString()}</strong><em>{progress.percentage}%</em></div>; }
 
 export function SalesPipelineMatrix({ slide, metricVisibility }) {
   const metrics = PIPELINE_METRICS.filter((id) => enabled(metricVisibility, id)).map((id) => slide?.metrics?.find((metric) => metric.id === id)).filter(Boolean);
@@ -21,14 +19,14 @@ export function SalesPipelineMatrix({ slide, metricVisibility }) {
   return <div className="sales-pipeline" role="table" aria-label="Sales Pipeline and Lead Activity" style={{ "--pipeline-metric-count": metrics.length, "--sales-row-count": slide.rows.length }}>
     <div className="sales-pipeline__header" role="row"><strong role="columnheader">Technician</strong>{metrics.map((metric) => <strong role="columnheader" key={metric.id}>{metric.shortLabel || metric.label}</strong>)}</div>
     <div className="sales-pipeline__body">{slide.rows.map((row) => <div className="sales-pipeline__row" role="row" key={row.technicianId}>
-      <strong role="rowheader">{row.shortName || row.name}</strong>{metrics.map((definition) => { const metric = metricFor(row, definition.id); return <div className="sales-pipeline__metric goal-progress-bubble" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}><span style={{ width: `${pipelineBarRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} /><MetricValue metric={metric} /></div>; })}
+      <strong role="rowheader">{row.shortName || row.name}</strong>{metrics.map((definition) => { const metric = metricFor(row, definition.id); return <div className="sales-pipeline__metric goal-progress-bubble" role="cell" aria-label={`${definition.label}: ${metric?.hasData ? metric.value : "Unavailable"}`} key={`${row.technicianId}-${definition.id}`}><span style={{ width: `${pipelineBarRatio(slide, definition.id, metric) * 100}%`, backgroundColor: definition.color }} /><GoalProgressValue metric={metric} /></div>; })}
     </div>)}</div>
   </div>;
 }
 
 export function ClosingRateRows({ slide }) {
   if (!slide?.rows?.length) return <p className="chart-empty">Closing data is not available yet.</p>;
-  return <div className="closing-list" aria-label="Closing percentage by technician" style={{ "--closing-row-count": slide.rows.length }}>{slide.rows.map((row) => { const metric = metricFor(row, "closingRate"); return <div className="closing-row" key={row.technicianId}><div><strong>{row.shortName || row.name}</strong><MetricValue metric={metric} unavailable="No data" /></div><div className="closing-row__bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%` }} /></div></div>; })}</div>;
+  return <div className="closing-list" aria-label="Closing percentage by technician" style={{ "--closing-row-count": slide.rows.length }}>{slide.rows.map((row) => { const metric = metricFor(row, "closingRate"); return <div className="closing-row" key={row.technicianId}><div><strong>{row.shortName || row.name}</strong><GoalProgressValue metric={metric} /></div><div className="closing-row__bar" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, Number(metric?.normalizedRatio) * 100 || 0))}%` }} /></div></div>; })}</div>;
 }
 
 export function BusinessPerformanceSlide({ data, metricVisibility }) {

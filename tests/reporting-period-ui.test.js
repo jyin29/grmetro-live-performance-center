@@ -43,7 +43,8 @@ test("Slides 2 and 4 share rounded goal bubbles with prominent actual values", (
   assert.match(sales, /goal-progress-bubble/);
   assert.match(operations, /goal-progress-bubble/);
   assert.match(css, /\.goal-progress-bubble\s*\{[^}]*border-radius:999px/s);
-  assert.match(css, /\.goal-progress-bubble \.metric-goal-inline b\s*\{[^}]*font-size:1\.18em/s);
+  assert.match(css, /\.goal-progress-value__actual\s*\{[^}]*font-size:clamp\(40px,2\.6vw,52px\)/s);
+  assert.doesNotMatch(`${sales}\n${operations}`, /metric-goal-inline|<span>\/<\/span>/);
 });
 
 test("revenue values receive dedicated large-screen emphasis", () => {
